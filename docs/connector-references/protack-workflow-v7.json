@@ -1,0 +1,412 @@
+{
+  "name": "Protack workflow v7 final",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## PROtack \n [Guide](https://docspace.lhsystems.com/spaces/NDITLSY/pages/1820921310/PROTack+Asset+Export+v4)",
+        "height": 912,
+        "width": 2960,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "0078f486-176c-4f5f-8453-4e3a0dd77e09",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ═══════════════════════════════════════════════════════════════\n// CONFIG – Alle Credentials und Konstanten hier pflegen\n// ═══════════════════════════════════════════════════════════════\n\nreturn [{\n  json: {\n    KACE_URL:      'https://k1000.lidozrh.ch',\n    KACE_USER:     'christianstebler',\n    KACE_PASS:     'Ke1neschanz20262!',\n    JAMF_URL:          'https://lidozrh.jamfcloud.com',\n    JAMF_CLIENT_ID:    '2ca045fd-0e12-4665-84ef-fc6eaa205232',\n    JAMF_CLIENT_SECRET:'u2-alWnB1yI-pBnTK3WiCsdSmMi3FuISzO5SEkW-7sRpvahR7oaPJiSJPx6wMSCm',\n    COMPANY_NAME:  'Lufthansa Systems FlightNav AG',\n    COMPANY_SHORT: 'LSY FN',\n    COMPANY_PG:    '678',\n    DC_CITY:       'ZRH',\n    DC_COUNTRY:    'CH',\n    CONTACT:       'it_zrh@lhsystems.com'\n  }\n}];"
+      },
+      "id": "8592e11a-7fe5-41fa-b2ec-954033124fc7",
+      "name": "⚙️ Config & Credentials",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        192,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// JAMF Pro: OAuth2 Client Credentials → Bearer Token\nconst cfg = $('⚙️ Config & Credentials').first().json;\n\nconst resp = await this.helpers.httpRequest({\n  method: 'POST',\n  url: cfg.JAMF_URL + '/api/oauth/token',\n  headers: { 'Content-Type': 'application/x-www-form-urlencoded' },\n  body: 'grant_type=client_credentials'\n    + '&client_id='     + encodeURIComponent(cfg.JAMF_CLIENT_ID)\n    + '&client_secret=' + encodeURIComponent(cfg.JAMF_CLIENT_SECRET),\n  returnFullResponse: false\n});\n\nif (!resp.access_token) {\n  throw new Error('JAMF OAuth fehlgeschlagen: ' + JSON.stringify(resp));\n}\n\nconsole.log('✅ JAMF Token erhalten, expires_in:', resp.expires_in, 's');\nreturn [{ json: { jamfToken: resp.access_token, jamfUrl: cfg.JAMF_URL } }];"
+      },
+      "id": "9c75cf98-29ca-47d2-8325-37bbb74cf54b",
+      "name": "🔐 JAMF Login",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// JAMF Pro: Alle Computer mit Pagination abrufen\nconst { jamfToken, jamfUrl } = $input.first().json;\nconst headers = {\n  'Authorization': 'Bearer ' + jamfToken,\n  'Accept': 'application/json'\n};\n\nlet allComputers = [];\nlet page = 0;\nconst pageSize = 500;\nlet totalCount = 0;\n\ndo {\n  const response = await this.helpers.httpRequest({\n    method: 'GET',\n    url: jamfUrl + '/api/v1/computers-inventory?page=' + page + '&page-size=' + pageSize,\n    headers,\n    returnFullResponse: false\n  });\n\n  totalCount = response.totalCount || 0;\n  const results = response.results || [];\n  allComputers = allComputers.concat(results);\n  page++;\n  console.log('JAMF Seite ' + page + ': ' + results.length + ' (' + allComputers.length + '/' + totalCount + ')');\n} while (allComputers.length < totalCount);\n\nconsole.log('✅ JAMF: ' + allComputers.length + ' Computer');\nreturn [{ json: { computers: allComputers } }];"
+      },
+      "id": "5bdfd6b4-1104-4428-86e2-720165346350",
+      "name": "🍎 JAMF Daten abrufen",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        640,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// JAMF → PROTack Format (mit ProTack Mapping Anreicherung)\nconst computers = $input.first().json.computers || [];\n\n// ProTack Translation Mapping (aus ProTack_Translation.xlsx)\n// s=secondlevel, a=app_name, i=app_id\nconst PROTACK_MAP = {\n  'lidozrhs01': {s:'it_zrh@lhsystems.com', a:'LSYFN Active Directory (LIDOZRH)', i:'APP-17974'},\n  'lidozrhv01': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv02': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv03': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv04': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv06': {s:'lido.scrum.goat-data@lhsystems.com', a:'LSYFN Norman', i:'APP-20450'},\n  'lidozrhv10': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv100': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv102': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv104': {s:'lido.scrum.goat-data@lhsystems.com', a:'LSYFN AMDB Applications', i:'APP-20237'},\n  'lidozrhv107': {s:'pausanias@lhsystems.com'},\n  'lidozrhv108': {s:'lido.scrum.goat-data@lhsystems.com', a:'LSYFN AMDB Applications', i:'APP-20237'},\n  'lidozrhv109': {s:'lido.scrum.logistics@lhsystems.com', a:'LSYFN Hermes Applications', i:'APP-20360'},\n  'lidozrhv110': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv113': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv114': {s:'lido.scrum.goat-data@lhsystems.com'},\n  'lidozrhv116': {s:'pausanias@lhsystems.com'},\n  'lidozrhv117': {s:'pausanias@lhsystems.com'},\n  'lidozrhv121': {s:'pausanias@lhsystems.com'},\n  'lidozrhv130': {s:'lido.scrum.goat-data@lhsystems.com', a:'LSYFN Norman', i:'APP-20450'},\n  'lidozrhv132': {s:'lido.scrum.goat-data@lhsystems.com', a:'LSYFN AMDB Applications', i:'APP-20237'},\n  'lidozrhv133': {s:'lido.scrum.goat-data@lhsystems.com', a:'LSYFN AMDB Applications', i:'APP-20237'},\n  'lidozrhv134': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv135': {s:'lido.scrum.logistics@lhsystems.com'},\n  'lidozrhv139': {s:'pausanias@lhsystems.com'},\n  'lidozrhv140': {s:'lido.scrum.logistics@lhsystems.com', a:'LSYFN Hermes Applications', i:'APP-20360'},\n  'lidozrhv142': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv143': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv144': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv145': {s:'lido.scrum.logistics@lhsystems.com', a:'LSYFN Hermes Applications', i:'APP-20360'},\n  'lidozrhv146': {s:'pausanias@lhsystems.com'},\n  'lidozrhv148': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv15': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv150': {s:'pausanias@lhsystems.com'},\n  'lidozrhv16': {s:'lido.scrum.goat-data@lhsystems.com'},\n  'lidozrhv164': {s:'nav-data.standards@lhsystems.com'},\n  'lidozrhv167': {s:'pausanias@lhsystems.com'},\n  'lidozrhv168': {s:'pausanias@lhsystems.com'},\n  'lidozrhv169': {s:'pausanias@lhsystems.com'},\n  'lidozrhv170': {s:'pausanias@lhsystems.com'},\n  'lidozrhv171': {s:'pausanias@lhsystems.com'},\n  'lidozrhv172': {s:'lido.scrum.logistics@lhsystems.com'},\n  'lidozrhv173': {s:'lido.scrum.logistics@lhsystems.com'},\n  'lidozrhv174': {s:'lido.scrum.logistics@lhsystems.com'},\n  'lidozrhv175': {s:'lido.scrum.logistics@lhsystems.com'},\n  'lidozrhv18': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv183': {s:'nav-data.standards@lhsystems.com'},\n  'lidozrhv185': {s:'pausanias@lhsystems.com'},\n  'lidozrhv186': {s:'lido.scrum.logistics@lhsystems.com', a:'LSYFN Kairos Application', i:'APP-20390'},\n  'lidozrhv187': {s:'lido.scrum.logistics@lhsystems.com', a:'LSYFN Kairos Application', i:'APP-20390'},\n  'lidozrhv188': {s:'lido.scrum.logistics@lhsystems.com', a:'LSYFN Kairos Application', i:'APP-20390'},\n  'lidozrhv189': {s:'lido.scrum.logistics@lhsystems.com', a:'LSYFN Kairos Application', i:'APP-20390'},\n  'lidozrhv19': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv200': {s:'it_zrh@lhsystems.com', a:'LSYFN Active Directory (LIDOZRH)', i:'APP-17974'},\n  'lidozrhv201': {s:'it_zrh@lhsystems.com', a:'LSYFN Active Directory (LIDOZRH)', i:'APP-17974'},\n  'lidozrhv202': {s:'pausanias@lhsystems.com'},\n  'lidozrhv204': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv205': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv222': {s:'lido.scrum.logistics@lhsystems.com', a:'LSYFN Kairos Application', i:'APP-20390'},\n  'lidozrhv223': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv224': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv225': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv238': {s:'lido.scrum.logistics@lhsystems.com', a:'LSYFN Hermes Applications', i:'APP-20360'},\n  'lidozrhv24': {s:'lido.scrum.logistics@lhsystems.com', a:'LSYFN Hermes Applications', i:'APP-20360'},\n  'lidozrhv25': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv26': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv27': {s:'pausanias@lhsystems.com'},\n  'lidozrhv31': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv33': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv37': {s:'pausanias@lhsystems.com'},\n  'lidozrhv41': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv45': {s:'lido.scrum.logistics@lhsystems.com', a:'LSYFN Kairos Application', i:'APP-20390'},\n  'lidozrhv48': {s:'lido.scrum.goat-data@lhsystems.com'},\n  'lidozrhv56': {s:'lido.scrum.logistics@lhsystems.com'},\n  'lidozrhv57': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv59': {s:'pausanias@lhsystems.com', a:'LSYFN Post Office', i:'APP-21022'},\n  'lidozrhv60': {s:'lido.scrum.goat-data@lhsystems.com', a:'LSYFN AMDB Applications', i:'APP-20237'},\n  'lidozrhv62': {s:'lido.scrum.logistics@lhsystems.com', a:'LSYFN Kairos Application', i:'APP-20390'},\n  'lidozrhv63': {s:'lido.scrum.logistics@lhsystems.com', a:'LSYFN Kairos Application', i:'APP-20390'},\n  'lidozrhv64': {s:'lido.scrum.logistics@lhsystems.com'},\n  'lidozrhv66': {s:'lido.scrum.logistics@lhsystems.com'},\n  'lidozrhv69': {s:'lido.scrum.logistics@lhsystems.com', a:'LSYFN Kairos Application', i:'APP-20390'},\n  'lidozrhv70': {s:'pausanias@lhsystems.com'},\n  'lidozrhv74': {s:'lido.scrum.logistics@lhsystems.com'},\n  'lidozrhv81': {s:'pausanias@lhsystems.com'},\n  'lidozrhv88': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv93': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv94': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv98': {s:'lido.scrum.logistics@lhsystems.com', a:'LSYFN Hermes Applications', i:'APP-20360'},\n  'lidozrhv99': {s:'it_zrh@lhsystems.com'}\n};\n\nconst protackMapping = PROTACK_MAP;\nconsole.log('ProTack Mapping geladen: ' + Object.keys(protackMapping).length + ' Eintraege');\n\nconst COMPANY_NAME  = 'Lufthansa Systems FlightNav AG';\nconst COMPANY_SHORT = 'LSY FN';\nconst COMPANY_PG    = '678';\nconst ITSM_TOOL     = 'JAMF Pro';\nconst DC_CITY       = 'ZRH';\nconst DC_COUNTRY    = 'CH';\nconst CONTACT       = 'it_zrh@lhsystems.com';\n\nfunction normalizeFQDN(raw) {\n  let h = (raw || '').trim().toLowerCase();\n  if (h.endsWith('.lidozrh.ch') && !h.endsWith('.lidozrh.ch.lidozrh.ch')) return h;\n  h = h.replace(/\\.lidozrh\\.ch\\.lidozrh\\.ch$/, '.lidozrh.ch');\n  if (h.endsWith('.lidozrh.ch')) return h;\n  h = h.replace(/\\.cluster\\.local$/, '');\n  h = h.replace(/\\.lidozrh\\.ch\\.empty$/, '');\n  h = h.replace(/\\.lidozrh\\.empty$/, '');\n  h = h.replace(/\\.empty$/, '');\n  h = h.replace(/\\.workgroup$/i, '');\n  h = h.replace(/\\.lidozrh$/, '');\n  return h.split('.')[0] + '.lidozrh.ch';\n}\n\nfunction extractHostname(raw) {\n  return (raw || '').trim().toLowerCase().split('.')[0];\n}\n\nfunction getAssetTypeFromPrefix(h) {\n  const u = (h || '').toUpperCase();\n  if (u.startsWith('LIDOZRHL'))  return 'workstation';\n  if (u.startsWith('LIDOZRHA'))  return 'workstation';\n  if (u.startsWith('LIDOZRHW'))  return 'workstation';\n  if (u.startsWith('LIDOZRHM'))  return 'workstation';\n  if (u.startsWith('LIDOPCTL'))  return 'workstation';\n  if (u.startsWith('LIDOPCTM'))  return 'workstation';\n  if (u.startsWith('LIDOZRHV'))  return 'virtual server';\n  if (u.startsWith('LIDOZRHC'))  return 'virtual server';\n  if (u.startsWith('LIDOZRHS'))  return 'physical server';\n  if (u.startsWith('ZRHSTSW'))   return 'network';\n  if (u.startsWith('ZRHBASW'))   return 'network';\n  if (u.startsWith('ZRH-NG-FW')) return 'network';\n  if (u.startsWith('ZRHSTG'))    return 'physical server';\n  return 'workstation';\n}\n\nfunction getDataCenter(assetType, hostname) {\n  if (assetType === 'workstation') return '';\n  const h = (hostname || '').toUpperCase();\n  if (h.startsWith('ZRHSTSW'))           return 'LSYFN Stelzenstrasse';\n  if (h.startsWith('ZRHBASW'))           return 'LSYFN BAS Datacenter';\n  if (assetType === 'virtual server')    return 'LSYFN Atlas Edge (Nugolo)';\n  if (assetType === 'physical server')   return 'LSYFN On premises';\n  if (assetType === 'network')           return 'LSYFN On premises';\n  return '';\n}\n\nfunction getITProvider(hostname) {\n  const h = (hostname || '').toUpperCase();\n  // LIDOPCTL/LIDOPCTM = LSYFN IT Infrastructure\n  return 'LSYFN IT Infrastructure';\n}\n\nfunction getEnvironment(hostname, assetType) {\n  if (assetType === 'workstation') return 'Prod';\n  const h = (hostname || '').toLowerCase();\n  if (h.includes('dev') || h.includes('test') ||\n      h.includes('uat') || h.includes('stg')) return 'Dev/Test';\n  return 'Prod';\n}\n\nconst rows = [];\nlet mappingHits = 0;\n\nfor (const c of computers) {\n  const general = c.general || {};\n  const rawHostname = (general.name || '').trim();\n  const hostname = extractHostname(rawHostname);\n  const fqdn = normalizeFQDN(rawHostname);\n  const ipAddress = general.lastReportedIp || general.lastIpAddress || '';\n  const assetType = getAssetTypeFromPrefix(hostname);\n  const dcName = getDataCenter(assetType, hostname);\n\n  // ProTack Mapping anwenden\n  const pm = protackMapping[hostname] || null;\n  if (pm) mappingHits++;\n\n  const secondLevel = pm\n    ? pm.s\n    : CONTACT;\n\n  rows.push({\n    'legal company name': COMPANY_NAME,\n    'legal company short code ': COMPANY_SHORT,\n    'legal company pg number': COMPANY_PG,\n    'itsm tool name': ITSM_TOOL,\n    'id itsm tool': '',\n    'secondlevelsupport Itsm tool': secondLevel,\n    'thirdlevelsuppert Itsm tool': secondLevel,\n    'asset type': assetType,\n    'ip address': assetType === 'workstation' ? '' : ipAddress,\n    'fqdn': fqdn,\n    'hardware name': hostname,\n    'hwSourceSystem': 'Apple Mac',\n    'operating system & version': 'macOS',\n    'asset criticality': '',\n    'business service name itsm tool': ITSM_TOOL,\n    'asset manufacturer': 'Apple',\n    'asset model': '',\n    'timezone': 'Europe/Zurich',\n    'system environment': getEnvironment(hostname, assetType),\n    'asset lifecycle status': 'active',\n    'hardware contact name & email adress': CONTACT,\n    'IT provider name': getITProvider(hostname),\n    'data center name': dcName,\n    'data center city': dcName ? DC_CITY : '',\n    'data center country': dcName ? DC_COUNTRY : '',\n    'application name': pm?.a || '',\n    'applicationID ': pm?.i || '',\n    'application confidentiality': '',\n    'application integrity': '',\n    'application availability': '',\n    'application pci scope': '',\n    'application vulnerability scan frequency': '',\n    'application internet exposure': '',\n    'application legal criticality ': '',\n    'application contact  e-mail address': '',\n    'application contact phone': '',\n    '_source': 'jamf'\n  });\n}\n\nconsole.log('✅ JAMF transformiert: ' + rows.length + ' Mac-Assets | ProTack Mapping Hits: ' + mappingHits);\nreturn rows.map(r => ({ json: r }));"
+      },
+      "id": "5efe9be5-f6d4-4c9c-9f4f-a3dce5e5b6c2",
+      "name": "⚙️ JAMF Transformieren & Normalisieren",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        400
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "4df6a89e-3c94-4dba-8359-82b04a823252",
+      "name": "🔗 KACE + JAMF zusammenführen",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        1472,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// KACE-Eintraege haben Prioritaet über JAMF bei Duplikaten\nconst rows = $input.all().map(i => i.json);\nconst seen = {};\nconst deduped = [];\nfor (const row of rows) {\n  const key = (row['hardware name'] || '').toLowerCase().trim();\n  if (!key) { deduped.push(row); continue; }\n  if (!seen[key]) {\n    seen[key] = true;\n    deduped.push(row);\n  } else {\n    console.log('Duplikat entfernt:', key, '(Quelle:', row._source + ')');\n  }\n}\nconsole.log('Dedup: ' + deduped.length + ' unique Assets (' + (rows.length - deduped.length) + ' Duplikate entfernt)');\nreturn deduped.map(r => ({ json: r }));"
+      },
+      "id": "1a8d7fa2-5041-4aa6-a71a-da903a8f180b",
+      "name": "🧹 Duplikate entfernen",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1664,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "months"
+            }
+          ]
+        }
+      },
+      "id": "0d0be021-bb14-47d1-965b-8a176135eb3b",
+      "name": "📅 Monthly Trigger2",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        160,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://k1000.lidozrh.ch/ams/shared/api/security/login",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "x-kace-api-version",
+              "value": "14"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"userName\": \"christianstebler\",\n  \"password\": \"Ke1neschanz20262!\",\n  \"organizationName\": \"Default\"\n}",
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "6fb6567b-b6cd-49aa-af9b-a995af57c270",
+      "name": "🔐 KACE Login2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        400,
+        128
+      ],
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "1kH5cG5gbVlE0Dnm",
+          "name": "n8n"
+        },
+        "httpHeaderAuth": {
+          "id": "eGP5cug1MK88Ajfl",
+          "name": "KaceLogin CST"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// KACE: JWT Token + kboxid aus Set-Cookie lesen\nconst response = $input.first().json;\nconst body = response.body || response;\n\nif (body.errorCode || body.errorDescription) {\n  throw new Error('KACE Login failed: ' + (body.errorDescription || body.errorCode));\n}\n\nconst cookies = response.headers?.['set-cookie'] || [];\nconst cookieList = Array.isArray(cookies) ? cookies : [cookies];\n\nlet token  = null;\nlet kboxid = null;\n\nfor (const cookie of cookieList) {\n  const jwtMatch  = cookie.match(/x-kace-auth-jwt=([^;]+)/i);\n  const kboxMatch = cookie.match(/kboxid=([^;]+)/i);\n  if (jwtMatch)  token  = jwtMatch[1].trim();\n  if (kboxMatch) kboxid = kboxMatch[1].trim();\n}\n\nif (!token)  throw new Error('x-kace-auth-jwt not found in response cookies!');\nif (!kboxid) throw new Error('kboxid not found in response cookies!');\n\nconsole.log('✅ Token:', token.substring(0, 20) + '...');\nconsole.log('✅ kboxid:', kboxid.substring(0, 10) + '...');\n\nreturn [{\n  json: {\n    token,\n    kboxid,\n    bearerHeader: 'Bearer ' + token,\n    cookieHeader: 'kboxid=' + kboxid + '; x-kace-auth-jwt=' + token\n  }\n}];"
+      },
+      "id": "eba9eb5f-eea0-4bd3-a5de-5dd28edc9906",
+      "name": "✅ KACE Token extrahieren2",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        640,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// KACE: Machines + Assets abrufen | API v14\nconst { token, kboxid } = $input.first().json;\n\nif (!token)  throw new Error('Token missing!');\nif (!kboxid) throw new Error('kboxid missing!');\n\nconst headers = {\n  'Authorization': 'Bearer ' + token,\n  'Cookie':        'kboxid=' + kboxid + '; x-kace-auth-jwt=' + token,\n  'x-kace-api-version': '14',\n  'Accept': 'application/json'\n};\nconst opts = { json: true, rejectUnauthorized: false };\n\nconsole.log('Fetching Machines...');\nconst machinesResp = await this.helpers.request({\n  method: 'GET',\n  url: 'https://k1000.lidozrh.ch/api/inventory/machines',\n  headers,\n  qs: { shaping: 'machine all', paging: 'limit 0' },\n  ...opts\n});\n\nconsole.log('Fetching Assets...');\nconst assetsResp = await this.helpers.request({\n  method: 'GET',\n  url: 'https://k1000.lidozrh.ch/api/asset/assets',\n  headers,\n  qs: { paging: 'limit 0', shaping: 'asset all' },\n  ...opts\n});\n\nconst machines = machinesResp.Machines || [];\nconst assets   = assetsResp.Assets   || [];\n\nconsole.log(`✅ Machines: ${machines.length} | Assets: ${assets.length}`);\nreturn [{ json: { Machines: machines, Assets: assets } }];"
+      },
+      "id": "644b9a27-17c5-4ecb-b0ce-4136ae767846",
+      "name": "🖥️ KACE Daten abrufen2",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ═══════════════════════════════════════════════════════════════\n// KACE → PROTack Format (mit ProTack Mapping Anreicherung)\n// ProTack Mapping wird aus Static Workflow Data geladen\n// Upload via: POST /webhook/protack-mapping-upload (XLSX)\n// ═══════════════════════════════════════════════════════════════\n\nconst kaceData = $input.first().json;\nconst machines = kaceData.Machines || [];\nconst assets   = kaceData.Assets   || [];\n\n// ProTack Translation Mapping (aus ProTack_Translation.xlsx)\n// s=secondlevel, a=app_name, i=app_id\nconst PROTACK_MAP = {\n  'lidozrhs01': {s:'it_zrh@lhsystems.com', a:'LSYFN Active Directory (LIDOZRH)', i:'APP-17974'},\n  'lidozrhv01': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv02': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv03': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv04': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv06': {s:'lido.scrum.goat-data@lhsystems.com', a:'LSYFN Norman', i:'APP-20450'},\n  'lidozrhv10': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv100': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv102': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv104': {s:'lido.scrum.goat-data@lhsystems.com', a:'LSYFN AMDB Applications', i:'APP-20237'},\n  'lidozrhv107': {s:'pausanias@lhsystems.com'},\n  'lidozrhv108': {s:'lido.scrum.goat-data@lhsystems.com', a:'LSYFN AMDB Applications', i:'APP-20237'},\n  'lidozrhv109': {s:'lido.scrum.logistics@lhsystems.com', a:'LSYFN Hermes Applications', i:'APP-20360'},\n  'lidozrhv110': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv113': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv114': {s:'lido.scrum.goat-data@lhsystems.com'},\n  'lidozrhv116': {s:'pausanias@lhsystems.com'},\n  'lidozrhv117': {s:'pausanias@lhsystems.com'},\n  'lidozrhv121': {s:'pausanias@lhsystems.com'},\n  'lidozrhv130': {s:'lido.scrum.goat-data@lhsystems.com', a:'LSYFN Norman', i:'APP-20450'},\n  'lidozrhv132': {s:'lido.scrum.goat-data@lhsystems.com', a:'LSYFN AMDB Applications', i:'APP-20237'},\n  'lidozrhv133': {s:'lido.scrum.goat-data@lhsystems.com', a:'LSYFN AMDB Applications', i:'APP-20237'},\n  'lidozrhv134': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv135': {s:'lido.scrum.logistics@lhsystems.com'},\n  'lidozrhv139': {s:'pausanias@lhsystems.com'},\n  'lidozrhv140': {s:'lido.scrum.logistics@lhsystems.com', a:'LSYFN Hermes Applications', i:'APP-20360'},\n  'lidozrhv142': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv143': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv144': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv145': {s:'lido.scrum.logistics@lhsystems.com', a:'LSYFN Hermes Applications', i:'APP-20360'},\n  'lidozrhv146': {s:'pausanias@lhsystems.com'},\n  'lidozrhv148': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv15': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv150': {s:'pausanias@lhsystems.com'},\n  'lidozrhv16': {s:'lido.scrum.goat-data@lhsystems.com'},\n  'lidozrhv164': {s:'nav-data.standards@lhsystems.com'},\n  'lidozrhv167': {s:'pausanias@lhsystems.com'},\n  'lidozrhv168': {s:'pausanias@lhsystems.com'},\n  'lidozrhv169': {s:'pausanias@lhsystems.com'},\n  'lidozrhv170': {s:'pausanias@lhsystems.com'},\n  'lidozrhv171': {s:'pausanias@lhsystems.com'},\n  'lidozrhv172': {s:'lido.scrum.logistics@lhsystems.com'},\n  'lidozrhv173': {s:'lido.scrum.logistics@lhsystems.com'},\n  'lidozrhv174': {s:'lido.scrum.logistics@lhsystems.com'},\n  'lidozrhv175': {s:'lido.scrum.logistics@lhsystems.com'},\n  'lidozrhv18': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv183': {s:'nav-data.standards@lhsystems.com'},\n  'lidozrhv185': {s:'pausanias@lhsystems.com'},\n  'lidozrhv186': {s:'lido.scrum.logistics@lhsystems.com', a:'LSYFN Kairos Application', i:'APP-20390'},\n  'lidozrhv187': {s:'lido.scrum.logistics@lhsystems.com', a:'LSYFN Kairos Application', i:'APP-20390'},\n  'lidozrhv188': {s:'lido.scrum.logistics@lhsystems.com', a:'LSYFN Kairos Application', i:'APP-20390'},\n  'lidozrhv189': {s:'lido.scrum.logistics@lhsystems.com', a:'LSYFN Kairos Application', i:'APP-20390'},\n  'lidozrhv19': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv200': {s:'it_zrh@lhsystems.com', a:'LSYFN Active Directory (LIDOZRH)', i:'APP-17974'},\n  'lidozrhv201': {s:'it_zrh@lhsystems.com', a:'LSYFN Active Directory (LIDOZRH)', i:'APP-17974'},\n  'lidozrhv202': {s:'pausanias@lhsystems.com'},\n  'lidozrhv204': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv205': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv222': {s:'lido.scrum.logistics@lhsystems.com', a:'LSYFN Kairos Application', i:'APP-20390'},\n  'lidozrhv223': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv224': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv225': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv238': {s:'lido.scrum.logistics@lhsystems.com', a:'LSYFN Hermes Applications', i:'APP-20360'},\n  'lidozrhv24': {s:'lido.scrum.logistics@lhsystems.com', a:'LSYFN Hermes Applications', i:'APP-20360'},\n  'lidozrhv25': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv26': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv27': {s:'pausanias@lhsystems.com'},\n  'lidozrhv31': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv33': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv37': {s:'pausanias@lhsystems.com'},\n  'lidozrhv41': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv45': {s:'lido.scrum.logistics@lhsystems.com', a:'LSYFN Kairos Application', i:'APP-20390'},\n  'lidozrhv48': {s:'lido.scrum.goat-data@lhsystems.com'},\n  'lidozrhv56': {s:'lido.scrum.logistics@lhsystems.com'},\n  'lidozrhv57': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv59': {s:'pausanias@lhsystems.com', a:'LSYFN Post Office', i:'APP-21022'},\n  'lidozrhv60': {s:'lido.scrum.goat-data@lhsystems.com', a:'LSYFN AMDB Applications', i:'APP-20237'},\n  'lidozrhv62': {s:'lido.scrum.logistics@lhsystems.com', a:'LSYFN Kairos Application', i:'APP-20390'},\n  'lidozrhv63': {s:'lido.scrum.logistics@lhsystems.com', a:'LSYFN Kairos Application', i:'APP-20390'},\n  'lidozrhv64': {s:'lido.scrum.logistics@lhsystems.com'},\n  'lidozrhv66': {s:'lido.scrum.logistics@lhsystems.com'},\n  'lidozrhv69': {s:'lido.scrum.logistics@lhsystems.com', a:'LSYFN Kairos Application', i:'APP-20390'},\n  'lidozrhv70': {s:'pausanias@lhsystems.com'},\n  'lidozrhv74': {s:'lido.scrum.logistics@lhsystems.com'},\n  'lidozrhv81': {s:'pausanias@lhsystems.com'},\n  'lidozrhv88': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv93': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv94': {s:'it_zrh@lhsystems.com'},\n  'lidozrhv98': {s:'lido.scrum.logistics@lhsystems.com', a:'LSYFN Hermes Applications', i:'APP-20360'},\n  'lidozrhv99': {s:'it_zrh@lhsystems.com'}\n};\n\nconst protackMapping = PROTACK_MAP;\nconsole.log('ProTack Mapping geladen: ' + Object.keys(protackMapping).length + ' Eintraege');\n\nconst COMPANY_NAME  = 'Lufthansa Systems FlightNav AG';\nconst COMPANY_SHORT = 'LSY FN';\nconst COMPANY_PG    = '678';\nconst ITSM_TOOL     = 'Quest KACE';\nconst DC_CITY       = 'ZRH';\nconst DC_COUNTRY    = 'CH';\n\nconst assetMap = {};\nfor (const asset of assets) {\n  const name = (asset.name || asset.Name || '').toLowerCase().trim();\n  if (name) assetMap[name] = asset;\n}\n\nfunction normalizeFQDN(raw) {\n  let h = (raw || '').trim().toLowerCase();\n  if (h.endsWith('.lidozrh.ch') && !h.endsWith('.lidozrh.ch.lidozrh.ch')) return h;\n  h = h.replace(/\\.lidozrh\\.ch\\.lidozrh\\.ch$/, '.lidozrh.ch');\n  if (h.endsWith('.lidozrh.ch')) return h;\n  h = h.replace(/\\.cluster\\.local$/, '');\n  h = h.replace(/\\.lidozrh\\.ch\\.empty$/, '');\n  h = h.replace(/\\.lidozrh\\.empty$/, '');\n  h = h.replace(/\\.empty$/, '');\n  h = h.replace(/\\.workgroup$/i, '');\n  h = h.replace(/\\.lidozrh$/, '');\n  return h.split('.')[0] + '.lidozrh.ch';\n}\n\nfunction extractHostname(raw) {\n  return (raw || '').trim().toLowerCase().split('.')[0];\n}\n\nfunction getAssetTypeFromPrefix(hostname) {\n  const h = (hostname || '').toUpperCase();\n  if (h.startsWith('LIDOZRHL'))  return 'workstation';\n  if (h.startsWith('LIDOZRHA'))  return 'workstation';\n  if (h.startsWith('LIDOZRHW'))  return 'workstation';\n  if (h.startsWith('LIDOZRHM'))  return 'workstation';\n  if (h.startsWith('LIDOPCTL'))  return 'workstation';\n  if (h.startsWith('LIDOZRHV'))  return 'virtual server';\n  if (h.startsWith('LIDOZRHC'))  return 'virtual server';\n  if (h.startsWith('LIDOZRHS'))  return 'physical server';\n  if (h.startsWith('ZRHSTSW'))   return 'network';\n  if (h.startsWith('ZRHBASW'))   return 'network';\n  if (h.startsWith('ZRH-NG-FW')) return 'network';\n  if (h.startsWith('ZRHSTG'))    return 'physical server';\n  return null;\n}\n\nfunction getAssetTypeFromOS(osName, chassisType, model, isVirtual) {\n  if (isVirtual) return 'virtual server';\n  const ch = (chassisType || '').toLowerCase();\n  const m  = (model       || '').toLowerCase();\n  if (ch === 'notebook' || ch === 'laptop' ||\n      m.includes('latitude') || m.includes('macbook') ||\n      m.includes('thinkpad') || m.includes('elitebook')) return 'workstation';\n  if (ch === 'desktop' || ch === 'workstation') return 'workstation';\n  if ((osName || '').toLowerCase().includes('server')) return 'physical server';\n  return 'workstation';\n}\n\nfunction getDataCenter(assetType, hostname) {\n  const h = (hostname || '').toUpperCase();\n  if (assetType === 'workstation') return '';\n  if (h.startsWith('ZRHSTSW'))    return 'LSYFN On premises';\n  if (h.startsWith('ZRHBASW'))    return 'LSYFN On premisesr';\n  if (assetType === 'virtual server')  return 'LSYFN Atlas Edge (Nugolo)';\n  if (assetType === 'physical server') return 'LSYFN On premises';\n  if (assetType === 'network')         return 'LSYFN On premises';\n  return '';\n}\n\nfunction getITProvider(hostname) {\n  const h = (hostname || '').toUpperCase();\n  // LIDOPCTL = LSYFN IT Infrastructure\n  return 'LSYFN IT Infrastructure';\n}\n\nfunction getEnvironment(hostname, assetType) {\n  if (assetType === 'workstation') return 'Prod';\n  const h = (hostname || '').toLowerCase();\n  if (h.includes('dev') || h.includes('test') ||\n      h.includes('uat') || h.includes('stg')) return 'Dev/Test';\n  return 'Prod';\n}\n\nfunction getCustomField(asset, fieldNamePart) {\n  if (!asset) return '';\n  const fields = asset.asset_data || asset.custom_fields || [];\n  if (!Array.isArray(fields)) return '';\n  const f = fields.find(x => x.name && x.name.toLowerCase().includes(fieldNamePart.toLowerCase()));\n  return f ? (f.value || '') : '';\n}\n\n// getCriticality entfernt - Feld bleibt leer\n\nfunction getLifecycle(asset) {\n  const s = getCustomField(asset, 'lifecycle');\n  const valid = ['active', 'in stock', 'expired'];\n  return valid.includes((s || '').toLowerCase()) ? s.toLowerCase() : 'active';\n}\n\nconst rows = [];\nlet mappingHits = 0;\n\nfor (const m of machines) {\n  const rawHostname = (m.Name || '').trim();\n  const hostname    = extractHostname(rawHostname);\n  const fqdn        = normalizeFQDN(rawHostname);\n  const asset       = assetMap[hostname] || assetMap[rawHostname.toLowerCase()];\n\n  const osName    = m.Os_name         || '';\n  const ipAddress = m.Ip              || '';\n  const maker     = m.Cs_manufacturer || '';\n  const model     = m.Cs_model        || '';\n  const chassis   = m.Chassis_type    || '';\n  const timezone  = m.Tz_agent        || 'Europe/Zurich';\n  const isVirtual = (m.Virtual || '').toUpperCase() === 'YES';\n\n  const assetType = getAssetTypeFromPrefix(hostname) ?? getAssetTypeFromOS(osName, chassis, model, isVirtual);\n  const dcName    = getDataCenter(assetType, hostname);\n  const hwSource  = isVirtual ? 'VMware Virtual Platform' : ((maker + ' ' + model).trim());\n\n  // ProTack Mapping anwenden\n  const pm = protackMapping[hostname] || null;\n  if (pm) mappingHits++;\n\n  const secondLevel = pm\n    ? pm.s\n    : (assetType === 'workstation' ? 'it_zrh@lhsystems.com' : 'team Product/ownership');\n\n  rows.push({\n    'legal company name':                        COMPANY_NAME,\n    'legal company short code ':                 COMPANY_SHORT,\n    'legal company pg number':                   COMPANY_PG,\n    'itsm tool name':                            ITSM_TOOL,\n    'id itsm tool':                              '',\n    'secondlevelsupport Itsm tool':              secondLevel,\n    'thirdlevelsuppert Itsm tool':               secondLevel,\n    'asset type':                                assetType,\n    'ip address':                                assetType === 'workstation' ? '' : ipAddress,\n    'fqdn':                                      fqdn,\n    'hardware name':                             hostname,\n    'hwSourceSystem':                            hwSource,\n    'operating system & version':                osName,\n    'asset criticality':                         '',\n    'business service name itsm tool':           ITSM_TOOL,\n    'asset manufacturer':                        maker,\n    'asset model':                               model,\n    'timezone':                                  timezone,\n    'system environment':                        getEnvironment(hostname, assetType),\n    'asset lifecycle status':                    getLifecycle(asset),\n    'hardware contact name & email adress':      'it_zrh@lhsystems.com',\n    'IT provider name':                          getITProvider(hostname),\n    'data center name':                          dcName,\n    'data center city':                          dcName ? DC_CITY : '',\n    'data center country':                       dcName ? DC_COUNTRY : '',\n    'application name':                          pm?.a || '',\n    'applicationID ':                            pm?.i   || '',\n    'application confidentiality':               '',\n    'application integrity':                     '',\n    'application availability':                  '',\n    'application pci scope':                     '',\n    'application vulnerability scan frequency':  '',\n    'application internet exposure':             '',\n    'application legal criticality ':            '',\n    'application contact  e-mail address':       '',\n    'application contact phone':                 '',\n    '_source': 'kace'\n  });\n}\n\nconsole.log(`✅ KACE transformiert: ${rows.length} Assets | ProTack Mapping Hits: ${mappingHits}`);\nreturn rows.map(r => ({ json: r }));"
+      },
+      "id": "e490349c-c9bb-4715-870e-359a5f007c52",
+      "name": "⚙️ KACE Transformieren & Normalisieren",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// PROTack Merge: Neue Assets hinzufügen, bestehende aktualisieren,\n// manuell gepflegte Felder (Application*) erhalten\n// Merge ohne Static Data - nur aktuellen Lauf verarbeiten\nconst newRows    = $input.all().map(i => i.json);\n\nconst PRESERVE_FIELDS = [\n  'application name',\n  'applicationID ',\n  'application confidentiality',\n  'application integrity',\n  'application availability',\n  'application pci scope',\n  'application vulnerability scan frequency',\n  'application internet exposure',\n  'application legal criticality ',\n  'application contact  e-mail address',\n  'application contact phone'\n];\n\nconst existingRows = [];\nconst existingMap  = {};\nfor (const row of existingRows) {\n  const key = (row['hardware name'] || '').toLowerCase().trim();\n  if (key) existingMap[key] = row;\n}\n\nconst mergedRows = [];\nlet cntNew = 0, cntUpdated = 0;\n\nfor (const row of newRows) {\n  const key      = (row['hardware name'] || '').toLowerCase().trim();\n  const existing = existingMap[key];\n\n  if (existing) {\n    const merged = { ...row };\n    for (const field of PRESERVE_FIELDS) {\n      // Nur aus existing übernehmen wenn NICHT bereits vom ProTack Mapping befüllt\n      if (existing[field] && existing[field].toString().trim() !== '' &&\n          (!row[field] || row[field].toString().trim() === '')) {\n        merged[field] = existing[field];\n      }\n    }\n    mergedRows.push(merged);\n    delete existingMap[key];\n    cntUpdated++;\n  } else {\n    mergedRows.push(row);\n    cntNew++;\n  }\n}\n\nconst onlyInProtack = Object.values(existingMap);\nfor (const row of onlyInProtack) mergedRows.push(row);\n\n// Export direkt ohne Static Data Persistenz\n\nconsole.log(`✅ Merge: ${cntNew} neu | ${cntUpdated} aktualisiert | ${onlyInProtack.length} nur in PROTack`);\nconsole.log(`   Total: ${mergedRows.length} Einträge`);\nreturn mergedRows.map(r => ({ json: r }));"
+      },
+      "id": "cbb7ee29-d94a-4070-baa1-c2126ded2a7c",
+      "name": "🔀 Mit bestehendem PROTack Export mergen",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1872,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Interne Hilfsfelder (_source etc.) vor dem CSV-Export entfernen\nreturn $input.all().map(item => {\n  const row = { ...item.json };\n  delete row._source;\n  return { json: row };\n});"
+      },
+      "id": "24b2b20f-c4d5-48f6-9c07-33e4abe2a51c",
+      "name": "🧹 Intern Felder entfernen",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2096,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "toFile",
+        "fileFormat": "csv",
+        "options": {
+          "fileName": "=PROTack_assetdata_sheet_LSYFN_{{ $now.format('yyyy-MM') }}.csv",
+          "headerRow": true
+        }
+      },
+      "id": "585188b7-6ea3-42d6-a63d-ba7bc0cb643f",
+      "name": "📄 CSV Export",
+      "type": "n8n-nodes-base.spreadsheetFile",
+      "typeVersion": 2,
+      "position": [
+        2320,
+        352
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "⚙️ Config & Credentials": {
+      "main": [
+        [
+          {
+            "node": "🔐 KACE Login2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "🔐 JAMF Login",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔐 JAMF Login": {
+      "main": [
+        [
+          {
+            "node": "🍎 JAMF Daten abrufen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🍎 JAMF Daten abrufen": {
+      "main": [
+        [
+          {
+            "node": "⚙️ JAMF Transformieren & Normalisieren",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⚙️ JAMF Transformieren & Normalisieren": {
+      "main": [
+        [
+          {
+            "node": "🔗 KACE + JAMF zusammenführen",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "🔗 KACE + JAMF zusammenführen": {
+      "main": [
+        [
+          {
+            "node": "🧹 Duplikate entfernen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🧹 Duplikate entfernen": {
+      "main": [
+        [
+          {
+            "node": "🔀 Mit bestehendem PROTack Export mergen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📅 Monthly Trigger2": {
+      "main": [
+        [
+          {
+            "node": "⚙️ Config & Credentials",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔐 KACE Login2": {
+      "main": [
+        [
+          {
+            "node": "✅ KACE Token extrahieren2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "✅ KACE Token extrahieren2": {
+      "main": [
+        [
+          {
+            "node": "🖥️ KACE Daten abrufen2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🖥️ KACE Daten abrufen2": {
+      "main": [
+        [
+          {
+            "node": "⚙️ KACE Transformieren & Normalisieren",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⚙️ KACE Transformieren & Normalisieren": {
+      "main": [
+        [
+          {
+            "node": "🔗 KACE + JAMF zusammenführen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔀 Mit bestehendem PROTack Export mergen": {
+      "main": [
+        [
+          {
+            "node": "🧹 Intern Felder entfernen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🧹 Intern Felder entfernen": {
+      "main": [
+        [
+          {
+            "node": "📄 CSV Export",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "35f46bc3-0ab6-4055-baae-59f25f9ba453",
+  "meta": {
+    "instanceId": "c8e3ae150590b056814188bafe4731a5422f62ae7d8da3056e4feb56ae691abb"
+  },
+  "id": "ElQfIXGrFXVWyDkOYwWCb",
+  "tags": []
+}

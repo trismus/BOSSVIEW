@@ -1,0 +1,451 @@
+{
+  "name": "Qualys Open Vulnerabilities + KACE Users",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "bfd10af9-9551-4cda-afd0-c1ef2aee9eb7",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        208,
+        -176
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://trackspace.lhsystems.com/rest/api/2/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "jql",
+              "value": "project = ISLSYZRH AND type = Vulnerability AND status = Open ORDER BY summary ASC"
+            },
+            {
+              "name": "maxResults",
+              "value": "2200"
+            },
+            {
+              "name": "startAt",
+              "value": "0"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "dbf15449-46a9-4090-a8d6-7e00921ee1cd",
+      "name": "1. Jira - Get Total Count",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        528,
+        -272
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "bSw8UlxTZlPBdFSl",
+          "name": "n8n_qualis"
+        },
+        "httpBearerAuth": {
+          "id": "1kH5cG5gbVlE0Dnm",
+          "name": "n8n"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// KACE Maschinen in Lookup-Map umwandeln\nconst kaceData = $input.first().json;\nconst machines = kaceData.Machines || [];\n\n// Erstelle Map: hostname (lowercase) -> user info\nconst userLookup = new Map();\n\nfor (const machine of machines) {\n  const name = (machine.Name || '').toLowerCase().trim();\n  const user = machine.User || machine.Last_User || '';\n  const userFullname = machine.User_Fullname || '';\n  const ip = machine.Ip || '';\n  \n  if (name) {\n    userLookup.set(name, {\n      user: user,\n      userFullname: userFullname,\n      kaceIp: ip,\n      kaceName: machine.Name\n    });\n    \n    // Auch FQDN-Varianten speichern\n    // z.B. 'server01' und 'server01.domain.com' sollten matchen\n    const shortName = name.split('.')[0];\n    if (shortName && !userLookup.has(shortName)) {\n      userLookup.set(shortName, {\n        user: user,\n        userFullname: userFullname,\n        kaceIp: ip,\n        kaceName: machine.Name\n      });\n    }\n  }\n}\n\nconsole.log(`KACE Lookup erstellt: ${userLookup.size} Einträge`);\n\nreturn [{\n  json: {\n    userLookup: Object.fromEntries(userLookup),\n    totalMachines: machines.length\n  }\n}];"
+      },
+      "id": "6130730a-f93e-4171-b694-5ccae448b918",
+      "name": "2. Build KACE Lookup",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1296,
+        -32
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst total = response.total;\nconst maxResults = 2500;\nconst pages = Math.ceil(total / maxResults);\n\nconsole.log(`Total Open Jira Tickets: ${total}, Pages needed: ${pages}`);\n\nconst pageRequests = [];\nfor (let i = 0; i < pages; i++) {\n  pageRequests.push({\n    startAt: i * maxResults,\n    pageNumber: i + 1,\n    totalPages: pages,\n    totalTickets: total\n  });\n}\n\nreturn pageRequests.map(p => ({ json: p }));"
+      },
+      "id": "87e491b3-ace3-4cee-9c9a-264a3d5ad664",
+      "name": "2. Calculate Pagination",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        752,
+        -272
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://trackspace.lhsystems.com/rest/api/2/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "jql",
+              "value": "project = ISLSYZRH AND type = Vulnerability AND status = Open ORDER BY summary ASC"
+            },
+            {
+              "name": "maxResults",
+              "value": "2200"
+            },
+            {
+              "name": "startAt",
+              "value": "={{ $json.startAt }}"
+            },
+            {
+              "name": "fields",
+              "value": "summary,status,priority,customfield_34832,customfield_35049,customfield_34800,customfield_34904,customfield_34803"
+            }
+          ]
+        },
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1000,
+              "batchInterval": 500
+            }
+          }
+        }
+      },
+      "id": "4efb49dc-3217-458c-9d85-5098c69d1ac0",
+      "name": "3. Jira - Fetch All Tickets",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        -272
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "dj4RruRN5W72D8EZ",
+          "name": "Header Auth Jira"
+        },
+        "httpBearerAuth": {
+          "id": "1kH5cG5gbVlE0Dnm",
+          "name": "n8n"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Hole alle Inputs\nconst allItems = $input.all();\n\n// Finde KACE Lookup (kommt aus dem zweiten Input)\nlet userLookup = {};\nlet allIssues = [];\n\nfor (const item of allItems) {\n  if (item.json.userLookup) {\n    userLookup = item.json.userLookup;\n  }\n  if (item.json.issues) {\n    allIssues.push(...item.json.issues);\n  }\n}\n\nconsole.log(`Verarbeite ${allIssues.length} Jira Tickets mit ${Object.keys(userLookup).length} KACE Einträgen`);\n\n// Gruppiere nach Vulnerability (Summary)\nconst vulnerabilityMap = new Map();\nlet matchedHosts = 0;\nlet unmatchedHosts = 0;\n\nfor (const issue of allIssues) {\n  const summary = issue.fields.summary || 'Unknown Vulnerability';\n  const key = issue.key;\n  const status = issue.fields.status?.name || 'Unknown';\n  const priority = issue.fields.priority?.name || 'Unknown';\n  \n  // Custom Fields auslesen\n  const hostname = issue.fields.customfield_34832 || 'Unknown Host';\n  const ip = issue.fields.customfield_35049 || '';\n  const severity = issue.fields.customfield_34800?.value || 'Unknown';\n  const os = issue.fields.customfield_34904?.value || '';\n  const cveLink = issue.fields.customfield_34803 || '';\n  \n  // KACE User Lookup\n  const hostnameLower = hostname.toLowerCase().trim();\n  const shortHostname = hostnameLower.split('.')[0];\n  \n  let kaceUser = '';\n  let kaceUserFullname = '';\n  \n  // Versuche verschiedene Matching-Strategien\n  if (userLookup[hostnameLower]) {\n    kaceUser = userLookup[hostnameLower].user;\n    kaceUserFullname = userLookup[hostnameLower].userFullname;\n    matchedHosts++;\n  } else if (userLookup[shortHostname]) {\n    kaceUser = userLookup[shortHostname].user;\n    kaceUserFullname = userLookup[shortHostname].userFullname;\n    matchedHosts++;\n  } else {\n    unmatchedHosts++;\n  }\n  \n  if (!vulnerabilityMap.has(summary)) {\n    vulnerabilityMap.set(summary, {\n      vulnerability: summary,\n      severity: severity,\n      cveLink: cveLink,\n      affectedHosts: [],\n      ticketKeys: [],\n      count: 0\n    });\n  }\n  \n  const vuln = vulnerabilityMap.get(summary);\n  \n  // Prüfe ob Host bereits in der Liste\n  const existingHost = vuln.affectedHosts.find(h => h.hostname === hostname);\n  if (!existingHost) {\n    vuln.affectedHosts.push({\n      hostname: hostname,\n      ip: ip,\n      os: os,\n      status: status,\n      ticketKey: key,\n      user: kaceUser,\n      userFullname: kaceUserFullname\n    });\n    vuln.ticketKeys.push(key);\n    vuln.count++;\n  }\n}\n\n// Sortiere nach Anzahl betroffener Hosts\nconst consolidated = Array.from(vulnerabilityMap.values())\n  .sort((a, b) => b.count - a.count);\n\n// Statistiken\nconst stats = {\n  totalTickets: allIssues.length,\n  uniqueVulnerabilities: consolidated.length,\n  criticalCount: consolidated.filter(v => v.severity === 'Critical').length,\n  highCount: consolidated.filter(v => v.severity === 'High').length,\n  mediumCount: consolidated.filter(v => v.severity === 'Medium').length,\n  lowCount: consolidated.filter(v => v.severity === 'Low').length,\n  maxAffectedHosts: consolidated.length > 0 ? consolidated[0].count : 0,\n  kaceMatchedHosts: matchedHosts,\n  kaceUnmatchedHosts: unmatchedHosts,\n  kaceMatchRate: allIssues.length > 0 ? Math.round((matchedHosts / allIssues.length) * 100) : 0\n};\n\nconsole.log(`KACE Match Rate: ${stats.kaceMatchRate}% (${matchedHosts} matched, ${unmatchedHosts} unmatched)`);\n\nreturn [{\n  json: {\n    stats: stats,\n    consolidated: consolidated\n  }\n}];"
+      },
+      "id": "d2f76bb1-9ca7-43e5-9fc4-4c0805be2404",
+      "name": "5. Consolidate + Enrich with KACE",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1664,
+        -176
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nconst stats = data.stats;\nconst consolidated = data.consolidated;\n\nconst now = new Date().toLocaleString('de-CH', { \n  timeZone: 'Europe/Zurich',\n  year: 'numeric',\n  month: '2-digit',\n  day: '2-digit',\n  hour: '2-digit',\n  minute: '2-digit'\n});\n\nfunction escapeHtml(text) {\n  if (!text) return '';\n  return String(text)\n    .replace(/&/g, '&amp;')\n    .replace(/</g, '&lt;')\n    .replace(/>/g, '&gt;')\n    .replace(/\"/g, '&quot;');\n}\n\nfunction getSeverityClass(severity) {\n  const sev = (severity || '').toLowerCase();\n  if (sev === 'critical') return 'critical';\n  if (sev === 'high') return 'high';\n  if (sev === 'medium') return 'medium';\n  return 'low';\n}\n\nlet html = `<!DOCTYPE html>\n<html lang=\"de\">\n<head>\n  <meta charset=\"UTF-8\">\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n  <title>Qualys Open Vulnerabilities - ISLSYZRH</title>\n  <style>\n    :root {\n      --lh-blue: #05164d;\n      --lh-yellow: #ffc72c;\n      --lh-light-blue: #e8f4fc;\n      --critical: #9b1c1c;\n      --high: #dc3545;\n      --medium: #fd7e14;\n      --low: #28a745;\n    }\n    \n    * { margin: 0; padding: 0; box-sizing: border-box; }\n    \n    body {\n      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;\n      background: #f5f7fa;\n      color: #333;\n      line-height: 1.6;\n    }\n    \n    .header {\n      background: linear-gradient(135deg, var(--lh-blue) 0%, #0a2875 100%);\n      color: white;\n      padding: 25px 40px;\n      display: flex;\n      justify-content: space-between;\n      align-items: center;\n    }\n    \n    .header h1 { font-size: 26px; font-weight: 600; }\n    .header .subtitle { font-size: 13px; opacity: 0.8; margin-top: 5px; }\n    .header .branding { text-align: right; }\n    .header .company { font-size: 20px; font-weight: bold; }\n    .header .division { font-size: 11px; opacity: 0.8; }\n    \n    .stats-bar {\n      background: white;\n      padding: 20px 40px;\n      display: flex;\n      gap: 25px;\n      flex-wrap: wrap;\n      border-bottom: 4px solid var(--lh-yellow);\n      box-shadow: 0 2px 10px rgba(0,0,0,0.1);\n    }\n    \n    .stat-item { text-align: center; min-width: 80px; }\n    .stat-value { font-size: 26px; font-weight: 700; color: var(--lh-blue); }\n    .stat-value.critical { color: var(--critical); }\n    .stat-value.high { color: var(--high); }\n    .stat-value.medium { color: var(--medium); }\n    .stat-value.low { color: var(--low); }\n    .stat-value.kace { color: #17a2b8; }\n    .stat-label { font-size: 10px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }\n    \n    .stat-divider {\n      width: 1px;\n      background: #ddd;\n      margin: 0 10px;\n    }\n    \n    .container { max-width: 1500px; margin: 25px auto; padding: 0 20px; }\n    \n    .controls {\n      display: flex;\n      gap: 15px;\n      margin-bottom: 20px;\n      flex-wrap: wrap;\n      align-items: center;\n    }\n    \n    .search-box { flex: 1; min-width: 250px; }\n    \n    .search-box input {\n      width: 100%;\n      padding: 10px 15px;\n      font-size: 14px;\n      border: 2px solid #ddd;\n      border-radius: 6px;\n      outline: none;\n      transition: border-color 0.3s;\n    }\n    \n    .search-box input:focus { border-color: var(--lh-blue); }\n    \n    .filter-buttons { display: flex; gap: 8px; flex-wrap: wrap; }\n    \n    .filter-btn {\n      padding: 8px 14px;\n      border: 2px solid #ddd;\n      background: white;\n      border-radius: 6px;\n      cursor: pointer;\n      font-size: 11px;\n      font-weight: 600;\n      transition: all 0.2s;\n    }\n    \n    .filter-btn:hover { border-color: var(--lh-blue); }\n    .filter-btn.active { background: var(--lh-blue); color: white; border-color: var(--lh-blue); }\n    .filter-btn.critical { border-color: var(--critical); color: var(--critical); }\n    .filter-btn.critical.active { background: var(--critical); color: white; }\n    .filter-btn.high { border-color: var(--high); color: var(--high); }\n    .filter-btn.high.active { background: var(--high); color: white; }\n    .filter-btn.medium { border-color: var(--medium); color: var(--medium); }\n    .filter-btn.medium.active { background: var(--medium); color: white; }\n    .filter-btn.low { border-color: var(--low); color: var(--low); }\n    .filter-btn.low.active { background: var(--low); color: white; }\n    \n    .vuln-card {\n      background: white;\n      border-radius: 8px;\n      margin-bottom: 12px;\n      box-shadow: 0 2px 6px rgba(0,0,0,0.08);\n      overflow: hidden;\n      transition: transform 0.2s, box-shadow 0.2s;\n    }\n    \n    .vuln-card:hover {\n      transform: translateY(-2px);\n      box-shadow: 0 4px 12px rgba(0,0,0,0.12);\n    }\n    \n    .vuln-header {\n      padding: 12px 18px;\n      background: #f8f9fa;\n      border-left: 5px solid var(--lh-blue);\n      cursor: pointer;\n      display: flex;\n      justify-content: space-between;\n      align-items: center;\n      gap: 15px;\n    }\n    \n    .vuln-header.critical { border-left-color: var(--critical); background: #fef2f2; }\n    .vuln-header.high { border-left-color: var(--high); background: #fff5f5; }\n    .vuln-header.medium { border-left-color: var(--medium); background: #fff8f0; }\n    .vuln-header.low { border-left-color: var(--low); background: #f0fff4; }\n    \n    .vuln-info { flex: 1; min-width: 0; }\n    .vuln-title { font-size: 14px; font-weight: 600; color: var(--lh-blue); word-break: break-word; }\n    \n    .vuln-meta {\n      display: flex;\n      gap: 15px;\n      margin-top: 5px;\n      font-size: 11px;\n      color: #666;\n    }\n    \n    .severity-badge {\n      padding: 3px 10px;\n      border-radius: 12px;\n      font-size: 11px;\n      font-weight: 600;\n      color: white;\n    }\n    \n    .severity-badge.critical { background: var(--critical); }\n    .severity-badge.high { background: var(--high); }\n    .severity-badge.medium { background: var(--medium); }\n    .severity-badge.low { background: var(--low); }\n    \n    .host-count {\n      background: var(--lh-blue);\n      color: white;\n      padding: 5px 14px;\n      border-radius: 15px;\n      font-size: 12px;\n      font-weight: 600;\n      white-space: nowrap;\n    }\n    \n    .expand-icon {\n      font-size: 16px;\n      transition: transform 0.3s;\n      color: #666;\n    }\n    \n    .vuln-header.expanded .expand-icon { transform: rotate(180deg); }\n    \n    .vuln-details {\n      display: none;\n      padding: 15px 18px;\n      border-top: 1px solid #eee;\n      background: white;\n      overflow-x: auto;\n    }\n    \n    .vuln-details.active { display: block; }\n    \n    .hosts-table {\n      width: 100%;\n      border-collapse: collapse;\n      font-size: 12px;\n      min-width: 800px;\n    }\n    \n    .hosts-table th {\n      background: #f1f3f4;\n      padding: 10px 12px;\n      text-align: left;\n      font-weight: 600;\n      color: var(--lh-blue);\n      border-bottom: 2px solid #dee2e6;\n      position: sticky;\n      top: 0;\n      white-space: nowrap;\n    }\n    \n    .hosts-table td {\n      padding: 8px 12px;\n      border-bottom: 1px solid #eee;\n    }\n    \n    .hosts-table tr:hover { background: #f8f9fa; }\n    \n    .ticket-link {\n      color: var(--lh-blue);\n      text-decoration: none;\n      font-weight: 500;\n    }\n    \n    .ticket-link:hover { text-decoration: underline; }\n    \n    .user-cell {\n      color: #17a2b8;\n      font-weight: 500;\n    }\n    \n    .user-cell.no-user {\n      color: #999;\n      font-style: italic;\n    }\n    \n    .footer {\n      text-align: center;\n      padding: 20px;\n      color: #666;\n      font-size: 11px;\n      border-top: 1px solid #eee;\n      margin-top: 30px;\n    }\n    \n    .no-results {\n      text-align: center;\n      padding: 40px;\n      color: #666;\n      font-size: 14px;\n    }\n    \n    .kace-badge {\n      background: #17a2b8;\n      color: white;\n      padding: 2px 6px;\n      border-radius: 4px;\n      font-size: 9px;\n      margin-left: 8px;\n    }\n    \n    @media print {\n      .controls { display: none; }\n      .vuln-details { display: block !important; }\n      .vuln-card { break-inside: avoid; }\n    }\n  </style>\n</head>\n<body>\n  <div class=\"header\">\n    <div>\n      <h1>🛡️ Qualys Open Vulnerabilities</h1>\n      <div class=\"subtitle\">Projekt: ISEC@LSY ZRH | Stand: ${now} | <span class=\"kace-badge\">KACE User Enrichment</span></div>\n    </div>\n    <div class=\"branding\">\n      <div class=\"company\">Lufthansa Systems</div>\n      <div class=\"division\">FlightNav AG</div>\n    </div>\n  </div>\n  \n  <div class=\"stats-bar\">\n    <div class=\"stat-item\">\n      <div class=\"stat-value\">${stats.totalTickets.toLocaleString('de-CH')}</div>\n      <div class=\"stat-label\">Open Tickets</div>\n    </div>\n    <div class=\"stat-item\">\n      <div class=\"stat-value\">${stats.uniqueVulnerabilities.toLocaleString('de-CH')}</div>\n      <div class=\"stat-label\">Vulnerabilities</div>\n    </div>\n    <div class=\"stat-divider\"></div>\n    <div class=\"stat-item\">\n      <div class=\"stat-value critical\">${stats.criticalCount}</div>\n      <div class=\"stat-label\">Critical</div>\n    </div>\n    <div class=\"stat-item\">\n      <div class=\"stat-value high\">${stats.highCount}</div>\n      <div class=\"stat-label\">High</div>\n    </div>\n    <div class=\"stat-item\">\n      <div class=\"stat-value medium\">${stats.mediumCount}</div>\n      <div class=\"stat-label\">Medium</div>\n    </div>\n    <div class=\"stat-item\">\n      <div class=\"stat-value low\">${stats.lowCount}</div>\n      <div class=\"stat-label\">Low</div>\n    </div>\n    <div class=\"stat-divider\"></div>\n    <div class=\"stat-item\">\n      <div class=\"stat-value kace\">${stats.kaceMatchRate}%</div>\n      <div class=\"stat-label\">KACE Match</div>\n    </div>\n  </div>\n  \n  <div class=\"container\">\n    <div class=\"controls\">\n      <div class=\"search-box\">\n        <input type=\"text\" id=\"searchInput\" placeholder=\"🔍 Suche nach Vulnerability, Hostname, IP oder User...\" onkeyup=\"filterCards()\">\n      </div>\n      <div class=\"filter-buttons\">\n        <button class=\"filter-btn active\" onclick=\"filterBySeverity('all', this)\">Alle</button>\n        <button class=\"filter-btn critical\" onclick=\"filterBySeverity('critical', this)\">Critical (${stats.criticalCount})</button>\n        <button class=\"filter-btn high\" onclick=\"filterBySeverity('high', this)\">High (${stats.highCount})</button>\n        <button class=\"filter-btn medium\" onclick=\"filterBySeverity('medium', this)\">Medium (${stats.mediumCount})</button>\n        <button class=\"filter-btn low\" onclick=\"filterBySeverity('low', this)\">Low (${stats.lowCount})</button>\n      </div>\n    </div>\n    \n    <div id=\"vulnerabilityList\">\n`;\n\n// Generiere Cards\nfor (let i = 0; i < consolidated.length; i++) {\n  const vuln = consolidated[i];\n  const sevClass = getSeverityClass(vuln.severity);\n  \n  // Suchstring inkl. User\n  const searchData = [\n    vuln.vulnerability,\n    vuln.severity,\n    ...vuln.affectedHosts.map(h => `${h.hostname} ${h.ip} ${h.os} ${h.user} ${h.userFullname}`)\n  ].join(' ').toLowerCase();\n  \n  html += `\n      <div class=\"vuln-card\" data-search=\"${escapeHtml(searchData)}\" data-severity=\"${sevClass}\">\n        <div class=\"vuln-header ${sevClass}\" onclick=\"toggleDetails(${i})\">\n          <div class=\"vuln-info\">\n            <div class=\"vuln-title\">${escapeHtml(vuln.vulnerability)}</div>\n            <div class=\"vuln-meta\">\n              <span class=\"severity-badge ${sevClass}\">${escapeHtml(vuln.severity)}</span>\n              ${vuln.cveLink ? `<a href=\"${escapeHtml(vuln.cveLink)}\" target=\"_blank\" onclick=\"event.stopPropagation()\" style=\"color: #666;\">CVE Info ↗</a>` : ''}\n            </div>\n          </div>\n          <span class=\"host-count\">${vuln.count} Host${vuln.count !== 1 ? 's' : ''}</span>\n          <span class=\"expand-icon\">▼</span>\n        </div>\n        <div class=\"vuln-details\" id=\"details-${i}\">\n          <table class=\"hosts-table\">\n            <thead>\n              <tr>\n                <th style=\"width: 35px;\">#</th>\n                <th>Hostname</th>\n                <th>IP</th>\n                <th>User (KACE)</th>\n                <th>Betriebssystem</th>\n                <th style=\"width: 100px;\">Jira Ticket</th>\n              </tr>\n            </thead>\n            <tbody>\n`;\n  \n  for (let j = 0; j < vuln.affectedHosts.length; j++) {\n    const host = vuln.affectedHosts[j];\n    const userDisplay = host.userFullname || host.user || '';\n    const hasUser = userDisplay.length > 0;\n    \n    html += `\n              <tr>\n                <td>${j + 1}</td>\n                <td><strong>${escapeHtml(host.hostname)}</strong></td>\n                <td>${escapeHtml(host.ip) || '-'}</td>\n                <td class=\"user-cell ${hasUser ? '' : 'no-user'}\">${hasUser ? escapeHtml(userDisplay) : 'nicht gefunden'}</td>\n                <td>${escapeHtml(host.os) || '-'}</td>\n                <td><a href=\"https://trackspace.lhsystems.com/browse/${host.ticketKey}\" target=\"_blank\" class=\"ticket-link\">${host.ticketKey}</a></td>\n              </tr>\n`;\n  }\n  \n  html += `\n            </tbody>\n          </table>\n        </div>\n      </div>\n`;\n}\n\nhtml += `\n    </div>\n    <div id=\"noResults\" class=\"no-results\" style=\"display: none;\">Keine Vulnerabilities gefunden.</div>\n  </div>\n  \n  <div class=\"footer\">\n    Datenquellen: Qualys (Jira ISLSYZRH) + KACE K1000 | ${stats.totalTickets} Tickets → ${stats.uniqueVulnerabilities} Vulnerabilities | KACE Match Rate: ${stats.kaceMatchRate}%\n  </div>\n  \n  <script>\n    let currentSeverityFilter = 'all';\n    \n    function toggleDetails(index) {\n      const details = document.getElementById('details-' + index);\n      const header = details.previousElementSibling;\n      details.classList.toggle('active');\n      header.classList.toggle('expanded');\n    }\n    \n    function filterCards() {\n      const searchTerm = document.getElementById('searchInput').value.toLowerCase();\n      const cards = document.querySelectorAll('.vuln-card');\n      let visibleCount = 0;\n      \n      cards.forEach(card => {\n        const searchData = card.getAttribute('data-search');\n        const severity = card.getAttribute('data-severity');\n        const matchesSearch = searchData.includes(searchTerm);\n        const matchesSeverity = currentSeverityFilter === 'all' || severity === currentSeverityFilter;\n        \n        if (matchesSearch && matchesSeverity) {\n          card.style.display = 'block';\n          visibleCount++;\n        } else {\n          card.style.display = 'none';\n        }\n      });\n      \n      document.getElementById('noResults').style.display = visibleCount === 0 ? 'block' : 'none';\n    }\n    \n    function filterBySeverity(severity, btn) {\n      currentSeverityFilter = severity;\n      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));\n      btn.classList.add('active');\n      filterCards();\n    }\n  </script>\n</body>\n</html>`;\n\nreturn [{ json: { html: html } }];"
+      },
+      "id": "733d7087-677c-4a6f-8fd4-55bc89d18dfa",
+      "name": "6. Generate HTML Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1888,
+        -176
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "toText",
+        "sourceProperty": "html",
+        "options": {
+          "fileName": "Qualys_Vulnerabilities_with_Users.html"
+        }
+      },
+      "id": "72ba7a73-b6b9-499e-bfb8-d7391d9e0e0c",
+      "name": "7. Create HTML File",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        2112,
+        -176
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://k1000.lidozrh.ch/api/inventory/machines?paging=limit 0",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-kace-api-version",
+              "value": "14.0"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Cookie",
+              "value": "={{ $json.cookieHeader }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "={{ $json.bearerHeader }}"
+            }
+          ]
+        },
+        "options": {
+          "allowUnauthorizedCerts": true
+        }
+      },
+      "name": "Get Machines",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1120,
+        -32
+      ],
+      "id": "178792f6-79de-4af0-8e45-222ea7b951fe"
+    },
+    {
+      "parameters": {
+        "jsCode": "const prev = $input.first().json;\nconst token = prev.token;\nconst kboxid = prev.kboxid;\nif (!token) throw new Error('Token fehlt!');\nif (!kboxid) throw new Error('kboxid fehlt!');\nconst bearerHeader = 'Bearer ' + token;\nconst cookieHeader = 'kboxid=' + kboxid + '; x-kace-auth-jwt=' + token;\nconsole.log('Token + kboxid bereit');\nreturn [{ json: { token, kboxid, bearerHeader, cookieHeader } }];\n"
+      },
+      "id": "c6362ac9-4219-427c-ab41-1031c116e5cc",
+      "name": "💉 Token injizieren1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        944,
+        -32
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// KACE: JWT Token + kboxid Session Cookie extrahieren\nconst response = $input.first().json;\nconst body = response.body || response;\n\nif (body.errorCode || body.errorDescription) {\n  throw new Error('KACE Login fehlgeschlagen: ' + (body.errorDescription || body.errorCode));\n}\n\nconst cookies = response.headers?.['set-cookie'] || [];\nconst cookieList = Array.isArray(cookies) ? cookies : [cookies];\n\nlet token = null;\nlet kboxid = null;\n\nfor (const cookie of cookieList) {\n  const jwtMatch = cookie.match(/x-kace-auth-jwt=([^;]+)/i);\n  if (jwtMatch) token = jwtMatch[1].trim();\n  \n  const kboxMatch = cookie.match(/kboxid=([^;]+)/i);\n  if (kboxMatch) kboxid = kboxMatch[1].trim();\n}\n\nif (!token) throw new Error('x-kace-auth-jwt nicht gefunden!');\nif (!kboxid) throw new Error('kboxid nicht gefunden!');\n\nconsole.log('✅ JWT Token extrahiert:', token.substring(0, 20) + '...');\nconsole.log('✅ kboxid extrahiert:', kboxid.substring(0, 10) + '...');\n\nreturn [{ json: { token, kboxid, bearerHeader: 'Bearer ' + token } }];\n"
+      },
+      "id": "a6a56fd4-286d-4fed-86dd-73e58f878e14",
+      "name": "✅ Login prüfen & Token extrahieren1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        752,
+        -32
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://k1000.lidozrh.ch/ams/shared/api/security/login",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "x-kace-api-version",
+              "value": "14"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"userName\": \"christianstebler\",\n  \"password\": \"Ke1neschanz20262!\",\n  \"organizationName\": \"Default\"\n}",
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "bd16fc29-4ed5-4feb-a82d-665a5a175d2e",
+      "name": "🔐 KACE Login1",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        528,
+        -32
+      ],
+      "notes": "Ab KACE 12.1+: Kein CSRF Token mehr nötig. Session läuft via Cookie automatisch."
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1456,
+        -176
+      ],
+      "id": "3ffb3ed5-b6b1-481c-8901-f0159a3e9dca",
+      "name": "4. Merge Jira + KACE"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "1. Jira - Get Total Count",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "🔐 KACE Login1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "1. Jira - Get Total Count": {
+      "main": [
+        [
+          {
+            "node": "2. Calculate Pagination",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2. Calculate Pagination": {
+      "main": [
+        [
+          {
+            "node": "3. Jira - Fetch All Tickets",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "3. Jira - Fetch All Tickets": {
+      "main": [
+        [
+          {
+            "node": "4. Merge Jira + KACE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "2. Build KACE Lookup": {
+      "main": [
+        [
+          {
+            "node": "4. Merge Jira + KACE",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "5. Consolidate + Enrich with KACE": {
+      "main": [
+        [
+          {
+            "node": "6. Generate HTML Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "6. Generate HTML Report": {
+      "main": [
+        [
+          {
+            "node": "7. Create HTML File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Machines": {
+      "main": [
+        [
+          {
+            "node": "2. Build KACE Lookup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "✅ Login prüfen & Token extrahieren1": {
+      "main": [
+        [
+          {
+            "node": "💉 Token injizieren1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔐 KACE Login1": {
+      "main": [
+        [
+          {
+            "node": "✅ Login prüfen & Token extrahieren1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "💉 Token injizieren1": {
+      "main": [
+        [
+          {
+            "node": "Get Machines",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "4. Merge Jira + KACE": {
+      "main": [
+        [
+          {
+            "node": "5. Consolidate + Enrich with KACE",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "5950d660-18c8-4299-aeee-1f345879844b",
+  "meta": {
+    "instanceId": "c8e3ae150590b056814188bafe4731a5422f62ae7d8da3056e4feb56ae691abb"
+  },
+  "id": "dYfJLGY4DNO1LAHnsfUNZ",
+  "tags": []
+}
