@@ -1,0 +1,182 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" fill="none">
+  <!-- Version 2: Manga / Cross-hatch Style - Fine lines, detailed shading -->
+  <title>BOSSVIEW Octopus - Manga Cross-hatch Style</title>
+
+  <defs>
+    <!-- Cross-hatch pattern for shading -->
+    <pattern id="crosshatch" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="6" stroke="black" stroke-width="0.6"/>
+    </pattern>
+    <pattern id="crosshatch-dense" x="0" y="0" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="4" stroke="black" stroke-width="0.5"/>
+      <line x1="0" y1="0" x2="4" y2="0" stroke="black" stroke-width="0.5"/>
+    </pattern>
+    <pattern id="lines-light" x="0" y="0" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(30)">
+      <line x1="0" y1="0" x2="0" y2="5" stroke="black" stroke-width="0.4"/>
+    </pattern>
+    <clipPath id="head-clip2">
+      <path d="M250 75 C315 75 368 118 378 182 C388 248 355 288 322 305 C300 318 278 322 250 322 C222 322 200 318 178 305 C145 288 112 248 122 182 C132 118 185 75 250 75Z"/>
+    </clipPath>
+  </defs>
+
+  <!-- Head -->
+  <path d="M250 75 C315 75 368 118 378 182 C388 248 355 288 322 305 C300 318 278 322 250 322 C222 322 200 318 178 305 C145 288 112 248 122 182 C132 118 185 75 250 75Z"
+        fill="white" stroke="black" stroke-width="2.5"/>
+
+  <!-- Head shadow (right side) with cross-hatching -->
+  <path d="M310 95 C355 125 378 175 378 200 C378 248 355 288 322 305 C305 315 285 320 268 322 C290 300 320 260 325 200 C328 150 318 115 310 95Z"
+        fill="url(#crosshatch)" clip-path="url(#head-clip2)"/>
+
+  <!-- Head shadow (bottom) -->
+  <path d="M180 285 C190 295 210 310 250 322 C220 322 200 318 178 305 C160 294 150 280 150 275Z"
+        fill="url(#crosshatch-dense)" clip-path="url(#head-clip2)"/>
+
+  <!-- Fine texture lines on head -->
+  <path d="M195 105 C200 98 215 92 225 90" stroke="black" stroke-width="0.8" fill="none" stroke-linecap="round"/>
+  <path d="M190 115 C193 110 200 107 205 106" stroke="black" stroke-width="0.6" fill="none" stroke-linecap="round"/>
+  <path d="M187 128 C189 124 194 121 197 120" stroke="black" stroke-width="0.5" fill="none" stroke-linecap="round"/>
+
+  <!-- Eye - manga style with detailed iris -->
+  <ellipse cx="262" cy="200" rx="42" ry="48" fill="white" stroke="black" stroke-width="2.5"/>
+
+  <!-- Upper eyelid shadow -->
+  <path d="M222 178 C235 168 260 162 295 172 L298 180 C270 168 240 170 225 182Z" fill="black" opacity="0.15"/>
+
+  <!-- Iris -->
+  <circle cx="267" cy="208" r="24" fill="white" stroke="black" stroke-width="2"/>
+
+  <!-- Iris detail - radial lines (manga style) -->
+  <g stroke="black" stroke-width="0.5" opacity="0.6">
+    <line x1="267" y1="186" x2="267" y2="198"/>
+    <line x1="253" y1="190" x2="260" y2="200"/>
+    <line x1="281" y1="190" x2="274" y2="200"/>
+    <line x1="248" y1="200" x2="258" y2="205"/>
+    <line x1="286" y1="200" x2="276" y2="205"/>
+    <line x1="250" y1="215" x2="259" y2="212"/>
+    <line x1="284" y1="215" x2="275" y2="212"/>
+    <line x1="255" y1="225" x2="262" y2="218"/>
+    <line x1="279" y1="225" x2="272" y2="218"/>
+    <line x1="267" y1="230" x2="267" y2="220"/>
+  </g>
+
+  <!-- Pupil -->
+  <circle cx="267" cy="206" r="12" fill="black"/>
+
+  <!-- Pupil highlights (manga sparkle) -->
+  <circle cx="276" cy="196" r="7" fill="white"/>
+  <circle cx="260" cy="215" r="4" fill="white"/>
+  <circle cx="272" cy="214" r="2" fill="white"/>
+
+  <!-- Second eye (partially visible) -->
+  <ellipse cx="192" cy="212" rx="24" ry="28" fill="white" stroke="black" stroke-width="2"/>
+  <circle cx="189" cy="215" r="14" fill="white" stroke="black" stroke-width="1.5"/>
+  <!-- Iris lines -->
+  <g stroke="black" stroke-width="0.4" opacity="0.5">
+    <line x1="189" y1="203" x2="189" y2="210"/>
+    <line x1="180" y1="208" x2="185" y2="212"/>
+    <line x1="198" y1="208" x2="193" y2="212"/>
+    <line x1="181" y1="220" x2="186" y2="217"/>
+    <line x1="197" y1="220" x2="192" y2="217"/>
+  </g>
+  <circle cx="189" cy="214" r="7" fill="black"/>
+  <circle cx="194" cy="209" r="4" fill="white"/>
+  <circle cx="185" cy="219" r="2" fill="white"/>
+
+  <!-- Brow expression line -->
+  <path d="M212 168 C228 156 265 150 305 162" stroke="black" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <path d="M210 164 C215 160 220 158 225 157" stroke="black" stroke-width="1" fill="none" stroke-linecap="round"/>
+
+  <!-- Tentacle 1 - flowing left -->
+  <path d="M195 305 C170 345 125 395 100 435 C88 458 95 475 112 468 C130 460 128 440 122 418 C115 390 140 355 168 330"
+        fill="white" stroke="black" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Tentacle shading -->
+  <path d="M180 325 C170 345 150 380 135 405 C128 418 125 432 128 440"
+        stroke="black" stroke-width="0.5" fill="none" stroke-dasharray="1,3"/>
+  <!-- Suckers (detailed manga style) -->
+  <ellipse cx="170" cy="332" rx="5" ry="4" fill="none" stroke="black" stroke-width="1.5"/>
+  <ellipse cx="170" cy="332" rx="2.5" ry="2" fill="none" stroke="black" stroke-width="0.5"/>
+  <ellipse cx="152" cy="360" rx="5.5" ry="4.5" fill="none" stroke="black" stroke-width="1.5"/>
+  <ellipse cx="152" cy="360" rx="2.8" ry="2.2" fill="none" stroke="black" stroke-width="0.5"/>
+  <ellipse cx="135" cy="390" rx="5" ry="4" fill="none" stroke="black" stroke-width="1.5"/>
+  <ellipse cx="135" cy="390" rx="2.5" ry="2" fill="none" stroke="black" stroke-width="0.5"/>
+  <ellipse cx="118" cy="418" rx="4.5" ry="3.5" fill="none" stroke="black" stroke-width="1.5"/>
+  <ellipse cx="108" cy="445" rx="4" ry="3" fill="none" stroke="black" stroke-width="1.5"/>
+
+  <!-- Tentacle 2 - flowing right -->
+  <path d="M305 305 C335 345 382 380 420 388 C448 393 465 378 455 360 C445 342 425 345 405 355 C380 368 352 348 328 325"
+        fill="white" stroke="black" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M325 325 C345 348 370 368 390 372"
+        stroke="black" stroke-width="0.5" fill="none" stroke-dasharray="1,3"/>
+  <ellipse cx="330" cy="335" rx="5" ry="4" fill="none" stroke="black" stroke-width="1.5"/>
+  <ellipse cx="330" cy="335" rx="2.5" ry="2" fill="none" stroke="black" stroke-width="0.5"/>
+  <ellipse cx="355" cy="358" rx="5.5" ry="4.5" fill="none" stroke="black" stroke-width="1.5"/>
+  <ellipse cx="355" cy="358" rx="2.8" ry="2.2" fill="none" stroke="black" stroke-width="0.5"/>
+  <ellipse cx="383" cy="372" rx="5" ry="4" fill="none" stroke="black" stroke-width="1.5"/>
+  <ellipse cx="383" cy="372" rx="2.5" ry="2" fill="none" stroke="black" stroke-width="0.5"/>
+  <ellipse cx="408" cy="375" rx="4.5" ry="3.5" fill="none" stroke="black" stroke-width="1.5"/>
+  <ellipse cx="435" cy="370" rx="4" ry="3" fill="none" stroke="black" stroke-width="1.5"/>
+
+  <!-- Tentacle 3 - upper left curl -->
+  <path d="M155 280 C120 260 78 252 52 275 C35 290 40 312 58 314 C76 316 85 300 88 280 C92 260 115 255 142 268"
+        fill="white" stroke="black" stroke-width="2.5" stroke-linecap="round"/>
+  <ellipse cx="125" cy="265" rx="4" ry="3.5" fill="none" stroke="black" stroke-width="1.5"/>
+  <ellipse cx="100" cy="260" rx="4" ry="3.5" fill="none" stroke="black" stroke-width="1.5"/>
+  <ellipse cx="78" cy="268" rx="3.5" ry="3" fill="none" stroke="black" stroke-width="1.2"/>
+  <ellipse cx="62" cy="285" rx="3" ry="2.5" fill="none" stroke="black" stroke-width="1.2"/>
+
+  <!-- Tentacle 4 - upper right curl -->
+  <path d="M345 280 C380 258 422 248 448 268 C465 282 462 305 445 308 C428 311 418 295 415 275 C410 255 388 250 358 265"
+        fill="white" stroke="black" stroke-width="2.5" stroke-linecap="round"/>
+  <ellipse cx="375" cy="260" rx="4" ry="3.5" fill="none" stroke="black" stroke-width="1.5"/>
+  <ellipse cx="400" cy="254" rx="4" ry="3.5" fill="none" stroke="black" stroke-width="1.5"/>
+  <ellipse cx="425" cy="262" rx="3.5" ry="3" fill="none" stroke="black" stroke-width="1.2"/>
+  <ellipse cx="442" cy="280" rx="3" ry="2.5" fill="none" stroke="black" stroke-width="1.2"/>
+
+  <!-- Tentacle 5 - center left down -->
+  <path d="M218 318 C195 365 168 425 162 465 C159 482 170 490 182 483 C194 476 192 458 186 435 C178 402 198 368 218 340"
+        fill="white" stroke="black" stroke-width="2.5" stroke-linecap="round"/>
+  <ellipse cx="205" cy="348" rx="5" ry="4" fill="none" stroke="black" stroke-width="1.5"/>
+  <ellipse cx="190" cy="382" rx="5" ry="4" fill="none" stroke="black" stroke-width="1.5"/>
+  <ellipse cx="178" cy="415" rx="4.5" ry="3.5" fill="none" stroke="black" stroke-width="1.5"/>
+  <ellipse cx="175" cy="448" rx="4" ry="3" fill="none" stroke="black" stroke-width="1.2"/>
+
+  <!-- Tentacle 6 - center right down -->
+  <path d="M282 318 C305 365 335 425 342 462 C345 480 335 490 322 484 C309 478 312 458 318 435 C328 402 308 368 288 340"
+        fill="white" stroke="black" stroke-width="2.5" stroke-linecap="round"/>
+  <ellipse cx="298" cy="348" rx="5" ry="4" fill="none" stroke="black" stroke-width="1.5"/>
+  <ellipse cx="315" cy="385" rx="5" ry="4" fill="none" stroke="black" stroke-width="1.5"/>
+  <ellipse cx="328" cy="418" rx="4.5" ry="3.5" fill="none" stroke="black" stroke-width="1.5"/>
+  <ellipse cx="335" cy="450" rx="4" ry="3" fill="none" stroke="black" stroke-width="1.2"/>
+
+  <!-- Tentacle 7 - far left -->
+  <path d="M168 298 C135 325 92 368 70 408 C58 432 68 450 85 444 C102 438 98 418 92 398 C84 372 105 342 135 318"
+        fill="white" stroke="black" stroke-width="2" stroke-linecap="round"/>
+  <ellipse cx="120" cy="335" rx="3.5" ry="3" fill="none" stroke="black" stroke-width="1.2"/>
+  <ellipse cx="100" cy="365" rx="3.5" ry="3" fill="none" stroke="black" stroke-width="1.2"/>
+  <ellipse cx="82" cy="395" rx="3" ry="2.5" fill="none" stroke="black" stroke-width="1"/>
+
+  <!-- Tentacle 8 - far right -->
+  <path d="M332 298 C365 325 408 365 430 402 C442 425 433 445 416 440 C399 435 402 415 408 395 C416 368 398 340 368 318"
+        fill="white" stroke="black" stroke-width="2" stroke-linecap="round"/>
+  <ellipse cx="380" cy="332" rx="3.5" ry="3" fill="none" stroke="black" stroke-width="1.2"/>
+  <ellipse cx="402" cy="362" rx="3.5" ry="3" fill="none" stroke="black" stroke-width="1.2"/>
+  <ellipse cx="420" cy="392" rx="3" ry="2.5" fill="none" stroke="black" stroke-width="1"/>
+
+  <!-- Manga motion lines -->
+  <g stroke="black" stroke-width="0.8" stroke-linecap="round" opacity="0.5">
+    <line x1="42" y1="140" x2="18" y2="135"/>
+    <line x1="40" y1="152" x2="12" y2="152"/>
+    <line x1="42" y1="164" x2="18" y2="169"/>
+    <line x1="458" y1="140" x2="482" y2="135"/>
+    <line x1="460" y1="152" x2="488" y2="152"/>
+    <line x1="458" y1="164" x2="482" y2="169"/>
+  </g>
+
+  <!-- Small ink drops (manga effect) -->
+  <circle cx="55" cy="125" r="1.5" fill="black"/>
+  <circle cx="48" cy="180" r="1" fill="black"/>
+  <circle cx="445" cy="125" r="1.5" fill="black"/>
+  <circle cx="465" cy="178" r="1" fill="black"/>
+  <circle cx="95" cy="470" r="1.5" fill="black"/>
+  <circle cx="405" cy="465" r="1.5" fill="black"/>
+</svg>
