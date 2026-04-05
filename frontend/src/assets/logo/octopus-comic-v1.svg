@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" fill="none">
+  <!-- Version 1: Bold Comic Style - Heavy outlines, halftone shading -->
+  <title>BOSSVIEW Octopus - Bold Comic Style</title>
+
+  <!-- Head -->
+  <path d="M250 80 C310 80 360 120 370 180 C380 240 350 280 320 300 C300 312 280 316 250 316 C220 316 200 312 180 300 C150 280 120 240 130 180 C140 120 190 80 250 80Z"
+        fill="white" stroke="black" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Head shading - halftone dots pattern -->
+  <defs>
+    <pattern id="halftone1" x="0" y="0" width="8" height="8" patternUnits="userSpaceOnUse">
+      <circle cx="4" cy="4" r="1.5" fill="black"/>
+    </pattern>
+    <pattern id="halftone-dense1" x="0" y="0" width="6" height="6" patternUnits="userSpaceOnUse">
+      <circle cx="3" cy="3" r="2" fill="black"/>
+    </pattern>
+    <clipPath id="head-clip1">
+      <path d="M250 80 C310 80 360 120 370 180 C380 240 350 280 320 300 C300 312 280 316 250 316 C220 316 200 312 180 300 C150 280 120 240 130 180 C140 120 190 80 250 80Z"/>
+    </clipPath>
+  </defs>
+
+  <!-- Head shadow area -->
+  <path d="M300 100 C350 130 370 180 370 200 C360 260 340 290 320 300 C300 312 280 316 260 316 C280 290 310 240 310 180 C310 140 300 110 300 100Z"
+        fill="url(#halftone1)" clip-path="url(#head-clip1)"/>
+
+  <!-- Head highlight line -->
+  <path d="M220 110 C230 100 245 95 250 100" stroke="black" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M210 125 C215 118 220 115 222 117" stroke="black" stroke-width="2" fill="none" stroke-linecap="round"/>
+
+  <!-- Eye - large expressive comic eye -->
+  <ellipse cx="260" cy="200" rx="40" ry="45" fill="white" stroke="black" stroke-width="5"/>
+  <!-- Iris -->
+  <circle cx="265" cy="205" r="22" fill="black"/>
+  <!-- Pupil highlight -->
+  <circle cx="272" cy="193" r="8" fill="white"/>
+  <circle cx="260" cy="210" r="4" fill="white"/>
+  <!-- Eye detail lines -->
+  <path d="M222 185 C225 178 235 172 245 170" stroke="black" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+  <!-- Second eye (partially hidden) -->
+  <ellipse cx="195" cy="210" rx="22" ry="26" fill="white" stroke="black" stroke-width="4"/>
+  <circle cx="192" cy="213" r="13" fill="black"/>
+  <circle cx="197" cy="206" r="5" fill="white"/>
+
+  <!-- Brow line -->
+  <path d="M215 170 C230 160 270 155 305 168" stroke="black" stroke-width="4" fill="none" stroke-linecap="round"/>
+
+  <!-- Tentacle 1 - front left, curling down -->
+  <path d="M200 300 C180 340 140 380 120 420 C108 445 115 460 130 455 C145 450 148 435 145 420 C142 400 155 370 170 350"
+        fill="white" stroke="black" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Suckers -->
+  <circle cx="175" cy="330" r="5" fill="none" stroke="black" stroke-width="2.5"/>
+  <circle cx="160" cy="355" r="5.5" fill="none" stroke="black" stroke-width="2.5"/>
+  <circle cx="145" cy="380" r="5" fill="none" stroke="black" stroke-width="2.5"/>
+  <circle cx="132" cy="405" r="4.5" fill="none" stroke="black" stroke-width="2"/>
+  <circle cx="128" cy="430" r="4" fill="none" stroke="black" stroke-width="2"/>
+
+  <!-- Tentacle 2 - front right, sweeping right -->
+  <path d="M300 300 C330 340 370 370 410 380 C440 387 458 375 450 358 C442 341 420 342 400 350 C375 360 350 345 330 325"
+        fill="white" stroke="black" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Suckers -->
+  <circle cx="325" cy="330" r="5" fill="none" stroke="black" stroke-width="2.5"/>
+  <circle cx="350" cy="350" r="5.5" fill="none" stroke="black" stroke-width="2.5"/>
+  <circle cx="378" cy="365" r="5" fill="none" stroke="black" stroke-width="2.5"/>
+  <circle cx="405" cy="372" r="4.5" fill="none" stroke="black" stroke-width="2"/>
+  <circle cx="430" cy="370" r="4" fill="none" stroke="black" stroke-width="2"/>
+
+  <!-- Tentacle 3 - back left, going up and curling -->
+  <path d="M160 280 C130 260 90 250 60 270 C40 282 42 300 58 305 C74 310 85 298 90 280 C95 262 115 258 140 268"
+        fill="white" stroke="black" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="130" cy="268" r="4.5" fill="none" stroke="black" stroke-width="2"/>
+  <circle cx="108" cy="260" r="4.5" fill="none" stroke="black" stroke-width="2"/>
+  <circle cx="85" cy="262" r="4" fill="none" stroke="black" stroke-width="2"/>
+  <circle cx="68" cy="278" r="3.5" fill="none" stroke="black" stroke-width="2"/>
+
+  <!-- Tentacle 4 - back right, going up -->
+  <path d="M340 280 C370 255 410 240 440 250 C460 257 465 275 450 285 C435 295 420 285 415 268 C410 251 388 248 360 262"
+        fill="white" stroke="black" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="370" cy="263" r="4.5" fill="none" stroke="black" stroke-width="2"/>
+  <circle cx="395" cy="253" r="4.5" fill="none" stroke="black" stroke-width="2"/>
+  <circle cx="418" cy="255" r="4" fill="none" stroke="black" stroke-width="2"/>
+  <circle cx="438" cy="265" r="3.5" fill="none" stroke="black" stroke-width="2"/>
+
+  <!-- Tentacle 5 - lower left -->
+  <path d="M220 315 C200 360 170 420 160 460 C155 478 165 488 178 482 C191 476 190 460 185 440 C178 410 195 380 215 345"
+        fill="white" stroke="black" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="205" cy="345" r="5" fill="none" stroke="black" stroke-width="2.5"/>
+  <circle cx="192" cy="375" r="5" fill="none" stroke="black" stroke-width="2.5"/>
+  <circle cx="180" cy="405" r="4.5" fill="none" stroke="black" stroke-width="2"/>
+  <circle cx="172" cy="435" r="4" fill="none" stroke="black" stroke-width="2"/>
+
+  <!-- Tentacle 6 - lower right -->
+  <path d="M280 315 C300 360 330 420 345 455 C352 472 345 485 330 480 C315 475 318 458 325 438 C335 408 315 375 295 345"
+        fill="white" stroke="black" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="295" cy="345" r="5" fill="none" stroke="black" stroke-width="2.5"/>
+  <circle cx="310" cy="378" r="5" fill="none" stroke="black" stroke-width="2.5"/>
+  <circle cx="325" cy="408" r="4.5" fill="none" stroke="black" stroke-width="2"/>
+  <circle cx="338" cy="440" r="4" fill="none" stroke="black" stroke-width="2"/>
+
+  <!-- Tentacle 7 - far left down -->
+  <path d="M170 295 C140 320 100 360 75 400 C60 425 68 445 85 440 C102 435 100 415 95 395 C88 370 108 340 135 315"
+        fill="white" stroke="black" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="125" cy="330" r="4" fill="none" stroke="black" stroke-width="2"/>
+  <circle cx="105" cy="358" r="4" fill="none" stroke="black" stroke-width="2"/>
+  <circle cx="88" cy="385" r="3.5" fill="none" stroke="black" stroke-width="2"/>
+
+  <!-- Tentacle 8 - far right down -->
+  <path d="M330 295 C360 320 400 355 425 390 C440 413 433 435 416 432 C399 429 400 410 405 390 C412 365 393 338 365 315"
+        fill="white" stroke="black" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="375" cy="328" r="4" fill="none" stroke="black" stroke-width="2"/>
+  <circle cx="398" cy="355" r="4" fill="none" stroke="black" stroke-width="2"/>
+  <circle cx="415" cy="385" r="3.5" fill="none" stroke="black" stroke-width="2"/>
+
+  <!-- Speed/action lines (comic effect) -->
+  <line x1="50" y1="150" x2="30" y2="145" stroke="black" stroke-width="2" stroke-linecap="round"/>
+  <line x1="55" y1="170" x2="25" y2="172" stroke="black" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="52" y1="190" x2="32" y2="195" stroke="black" stroke-width="2" stroke-linecap="round"/>
+
+  <line x1="450" y1="150" x2="470" y2="145" stroke="black" stroke-width="2" stroke-linecap="round"/>
+  <line x1="445" y1="170" x2="475" y2="172" stroke="black" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="448" y1="190" x2="468" y2="195" stroke="black" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Ink splatter dots -->
+  <circle cx="60" cy="130" r="3" fill="black"/>
+  <circle cx="45" cy="210" r="2" fill="black"/>
+  <circle cx="440" cy="130" r="2.5" fill="black"/>
+  <circle cx="465" cy="205" r="2" fill="black"/>
+  <circle cx="100" cy="460" r="2" fill="black"/>
+  <circle cx="400" cy="455" r="2.5" fill="black"/>
+</svg>
