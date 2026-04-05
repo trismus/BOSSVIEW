@@ -212,3 +212,101 @@ export interface ConnectorAdapterInfo {
   category: ConnectorCategory
   configSchema: Record<string, unknown>
 }
+
+// ── Infrastructure Map types ──
+
+export type InfraLocationStatus = 'operational' | 'warning' | 'critical' | 'maintenance' | 'offline'
+export type InfraLocationType = 'headquarters' | 'datacenter' | 'office' | 'branch'
+export type InfraDeviceStatus = 'operational' | 'warning' | 'critical' | 'maintenance' | 'offline' | 'decommissioned'
+export type InfraDeviceType = 'firewall' | 'switch-core' | 'switch' | 'router' | 'server' | 'storage' | 'wireless' | 'ups' | 'patch-panel' | 'pdu'
+export type InfraLinkType = 'trunk' | 'access' | 'ha' | 'vpc' | 'storage' | 'management'
+export type WanLinkType = 'primary' | 'secondary' | 'backup'
+
+export interface InfraLocation {
+  id: string
+  code: string
+  name: string
+  city: string
+  country: string
+  latitude: number
+  longitude: number
+  location_type: InfraLocationType
+  status: InfraLocationStatus
+  timezone?: string
+  device_count?: number
+  asset_count?: number
+}
+
+export interface WanLink {
+  id: string
+  from_location: string
+  to_location: string
+  link_type: WanLinkType
+  bandwidth?: string
+  status: string
+  latency_ms?: number
+}
+
+export interface InfraVlan {
+  id: string
+  location_id: string
+  vlan_id: number
+  name: string
+  cidr: string
+  purpose?: string
+  color_hex?: string
+}
+
+export interface InfraDevice {
+  id: string
+  location_id: string
+  vlan_id?: string | null
+  name: string
+  device_type: InfraDeviceType
+  model?: string
+  manufacturer?: string
+  ip_address?: string
+  status: InfraDeviceStatus
+  topo_x?: number
+  topo_y?: number
+  rack_id?: string
+  rack_u_start?: number
+  rack_u_height?: number
+  asset_id?: string
+}
+
+export interface InfraDeviceLink {
+  id: string
+  from_device: string
+  to_device: string
+  from_port?: string
+  to_port?: string
+  link_type: InfraLinkType
+  speed?: string
+  status: string
+}
+
+export interface InfraRackDevice {
+  device_id: string
+  name: string
+  device_type: InfraDeviceType
+  rack_u_start: number
+  rack_u_height: number
+  status: InfraDeviceStatus
+}
+
+export interface InfraRack {
+  id: string
+  location_id: string
+  name: string
+  total_units: number
+  devices?: InfraRackDevice[]
+}
+
+export interface InfraTopology {
+  location: Pick<InfraLocation, 'id' | 'code' | 'name' | 'status'>
+  vlans: InfraVlan[]
+  devices: InfraDevice[]
+  links: InfraDeviceLink[]
+  racks: InfraRack[]
+}

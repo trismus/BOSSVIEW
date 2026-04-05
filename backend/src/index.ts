@@ -3,10 +3,12 @@ import { createServer } from 'http'
 import cors from 'cors'
 import helmet from 'helmet'
 import rateLimit from 'express-rate-limit'
+import swaggerUi from 'swagger-ui-express'
 import { config } from './config'
 import { redis } from './db/redis'
 import { errorHandler } from './middleware/errorHandler'
 import { initWebSocket } from './websocket'
+import { swaggerSpec } from './swagger'
 import healthRouter from './routes/health'
 import authRouter from './routes/auth'
 import assetsRouter from './routes/assets'
@@ -15,6 +17,7 @@ import incidentsRouter from './routes/incidents'
 import changesRouter from './routes/changes'
 import connectorsRouter from './routes/connectors'
 import vulnerabilitiesRouter from './routes/vulnerabilities'
+import infrastructureRouter from './routes/infrastructure'
 
 const app = express()
 const httpServer = createServer(app)
@@ -52,6 +55,15 @@ const authLimiter = rateLimit({
   message: { error: 'Too many auth attempts, please try again later', code: 'RATE_LIMITED' },
 })
 
+// Swagger UI — served without rate limiting
+app.get('/api/docs/json', (_req, res) => {
+  res.json(swaggerSpec)
+})
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customSiteTitle: 'BOSSVIEW API Documentation',
+  customCss: '.swagger-ui .topbar { display: none }',
+}))
+
 // Routes
 app.use('/api/v1', apiLimiter, healthRouter)
 app.use('/api/v1/auth', authLimiter, authRouter)
@@ -61,6 +73,7 @@ app.use('/api/v1/incidents', apiLimiter, incidentsRouter)
 app.use('/api/v1/changes', apiLimiter, changesRouter)
 app.use('/api/v1/connectors', apiLimiter, connectorsRouter)
 app.use('/api/v1/vulnerabilities', apiLimiter, vulnerabilitiesRouter)
+app.use('/api/v1/infrastructure', apiLimiter, infrastructureRouter)
 
 // 404 handler
 app.use((_req, res) => {

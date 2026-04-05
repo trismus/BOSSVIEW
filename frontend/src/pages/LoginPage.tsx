@@ -32,6 +32,14 @@ export function LoginPage() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
+          <img
+            src="/logo.png"
+            alt="BOSSVIEW Logo"
+            className="mx-auto mb-4 max-w-[200px]"
+            style={{
+              filter: 'invert(1) drop-shadow(0 0 20px rgba(6,182,212,0.3)) drop-shadow(0 0 40px rgba(6,182,212,0.15))',
+            }}
+          />
           <h1 className="text-4xl font-bold text-white tracking-tight">
             BOSS<span className="text-blue-500">VIEW</span>
           </h1>

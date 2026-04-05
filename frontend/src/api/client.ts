@@ -268,6 +268,13 @@ export const api = {
     })
   },
 
+  patch<T>(path: string, body?: unknown): Promise<T> {
+    return apiFetch<T>(path, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    })
+  },
+
   delete<T>(path: string): Promise<T> {
     return apiFetch<T>(path, { method: 'DELETE' })
   },

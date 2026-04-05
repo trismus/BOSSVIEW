@@ -12,6 +12,7 @@ const navigation = [
   { name: 'Incidents', path: '/incidents', icon: IncidentsIcon },
   { name: 'Vulnerabilities', path: '/vulnerabilities', icon: VulnerabilitiesIcon },
   { name: 'Changes', path: '/changes', icon: ChangesIcon },
+  { name: 'Infrastructure', path: '/infrastructure', icon: InfrastructureIcon },
   { name: 'Connectors', path: '/connectors', icon: ConnectorsIcon },
 ]
 
@@ -25,7 +26,15 @@ export function Layout({ children }: LayoutProps) {
       {/* Sidebar */}
       <aside className="w-64 bg-slate-800 border-r border-slate-700 flex flex-col">
         {/* Logo */}
-        <div className="h-16 flex items-center px-6 border-b border-slate-700">
+        <div className="h-16 flex items-center gap-3 px-6 border-b border-slate-700">
+          <img
+            src="/logo.png"
+            alt="BOSSVIEW"
+            className="w-8 h-8"
+            style={{
+              filter: 'invert(1) drop-shadow(0 0 8px rgba(6,182,212,0.4))',
+            }}
+          />
           <span className="text-xl font-bold text-white tracking-tight">
             BOSS<span className="text-blue-500">VIEW</span>
           </span>
@@ -137,6 +146,14 @@ function VulnerabilitiesIcon({ className }: { className?: string }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m0-10.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.75c0 5.592 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.57-.598-3.75h-.152c-3.196 0-6.1-1.25-8.25-3.286ZM12 15.75h.007v.008H12v-.008Z" />
+    </svg>
+  )
+}
+
+function InfrastructureIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498 4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 0 0-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0Z" />
     </svg>
   )
 }

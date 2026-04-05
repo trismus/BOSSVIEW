@@ -9,6 +9,7 @@ import { IncidentsPage } from './pages/IncidentsPage'
 import { ChangesPage } from './pages/ChangesPage'
 import { ConnectorsPage } from './pages/ConnectorsPage'
 import { VulnerabilitiesPage } from './pages/VulnerabilitiesPage'
+import { InfrastructurePage } from './pages/InfrastructurePage'
 
 export function App() {
   return (
@@ -72,6 +73,16 @@ export function App() {
               <ProtectedRoute>
                 <Layout>
                   <VulnerabilitiesPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/infrastructure"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <InfrastructurePage />
                 </Layout>
               </ProtectedRoute>
             }
