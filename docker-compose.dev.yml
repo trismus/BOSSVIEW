@@ -1,0 +1,45 @@
+# BOSSVIEW — Development Override
+# Usage: docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+
+services:
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    command: ["sh", "-c", "npx tsx src/seed.ts 2>/dev/null; npx tsx watch src/index.ts"]
+    volumes:
+      - ./backend/src:/app/src
+    environment:
+      - NODE_ENV=development
+      - LOG_LEVEL=debug
+    ports:
+      - "4000:4000"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    command: ["npx", "vite", "--host", "0.0.0.0", "--port", "3000"]
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/index.html:/app/index.html
+    environment:
+      - NODE_ENV=development
+    ports:
+      - "3000:3000"
+
+  connector-engine:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    command: ["npx", "tsx", "watch", "src/connectors/engine.ts"]
+    volumes:
+      - ./backend/src:/app/src
+
+  postgres:
+    ports:
+      - "5432:5432"
+
+  redis:
+    ports:
+      - "6379:6379"
