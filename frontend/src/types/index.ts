@@ -159,6 +159,18 @@ export interface ChangeSummary {
   scheduled_start: string | null
 }
 
+export interface AssetVulnerability {
+  id: string
+  title: string
+  severity: string
+  status: string
+  category: string
+  affected_hosts: number
+  first_seen: string | null
+  last_seen: string | null
+  remediation: string | null
+}
+
 export interface AssetRelation {
   id: string
   source_id: string

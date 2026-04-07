@@ -81,7 +81,29 @@ router.get(
       return
     }
 
-    res.json({ data: asset })
+    // Fetch linked vulnerabilities
+    const vulnResult = await queryDb<{
+      id: string
+      title: string
+      severity: string
+      status: string
+      category: string
+      affected_hosts: number
+      first_seen: string | null
+      last_seen: string | null
+      remediation: string | null
+    }>(
+      `SELECT v.id, v.title, v.severity, v.status, v.category, v.affected_hosts, v.first_seen, v.last_seen, v.remediation
+       FROM vulnerabilities v
+       JOIN asset_vulnerabilities av ON av.vulnerability_id = v.id
+       WHERE av.asset_id = $1
+       ORDER BY
+         CASE v.severity WHEN 'critical' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 WHEN 'low' THEN 4 ELSE 5 END,
+         v.affected_hosts DESC`,
+      [req.params.id]
+    )
+
+    res.json({ data: { ...asset, vulnerabilities: vulnResult.rows } })
   })
 )
 
