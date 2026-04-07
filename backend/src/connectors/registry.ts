@@ -4,6 +4,7 @@
 
 import type { ConnectorAdapter } from './types'
 import { CsvImportAdapter } from './adapters/csv-import'
+import { JamfAdapter } from './adapters/jamf'
 import { JiraAdapter } from './adapters/jira'
 import { QuestKaceAdapter } from './adapters/quest-kace'
 import { TrackspaceQualysAdapter } from './adapters/trackspace-qualys'
@@ -34,6 +35,7 @@ export function getAdapterIds(): string[] {
 // Register all built-in adapters
 export function initializeRegistry(): void {
   registerAdapter(new CsvImportAdapter())
+  registerAdapter(new JamfAdapter())
   registerAdapter(new JiraAdapter())
   registerAdapter(new QuestKaceAdapter())
   registerAdapter(new TrackspaceQualysAdapter())
