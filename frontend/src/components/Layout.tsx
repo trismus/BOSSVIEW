@@ -13,6 +13,7 @@ const navigation = [
   { name: 'Vulnerabilities', path: '/vulnerabilities', icon: VulnerabilitiesIcon },
   { name: 'Changes', path: '/changes', icon: ChangesIcon },
   { name: 'Infrastructure', path: '/infrastructure', icon: InfrastructureIcon },
+  { name: 'Naming Convention', path: '/naming', icon: NamingConventionIcon },
   { name: 'Connectors', path: '/connectors', icon: ConnectorsIcon },
 ]
 
@@ -154,6 +155,15 @@ function InfrastructureIcon({ className }: { className?: string }) {
   return (
     <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
       <path strokeLinecap="round" strokeLinejoin="round" d="M9 6.75V15m6-6v8.25m.503 3.498 4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 0 0-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0Z" />
+    </svg>
+  )
+}
+
+function NamingConventionIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3Z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6 6h.008v.008H6V6Z" />
     </svg>
   )
 }

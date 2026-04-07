@@ -10,6 +10,7 @@ import { ChangesPage } from './pages/ChangesPage'
 import { ConnectorsPage } from './pages/ConnectorsPage'
 import { VulnerabilitiesPage } from './pages/VulnerabilitiesPage'
 import { InfrastructurePage } from './pages/InfrastructurePage'
+import { NamingConventionPage } from './pages/NamingConventionPage'
 
 export function App() {
   return (
@@ -83,6 +84,16 @@ export function App() {
               <ProtectedRoute>
                 <Layout>
                   <InfrastructurePage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/naming"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <NamingConventionPage />
                 </Layout>
               </ProtectedRoute>
             }
