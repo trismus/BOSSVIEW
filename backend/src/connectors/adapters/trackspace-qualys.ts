@@ -66,6 +66,7 @@ interface AffectedHost {
   ip: string | null
   os: string | null
   jiraKey: string
+  jiraStatus: string | null  // Jira ticket status (Open, Closed, Resolved, etc.)
 }
 
 interface GroupedVulnerability {
@@ -102,8 +103,26 @@ function buildJiraAuthHeaders(auth: TrackspaceAuthConfig): Record<string, string
   }
 }
 
-function buildDefaultJql(project: string): string {
+function buildInitialJql(project: string): string {
+  // First sync: all open vulnerabilities
   return `project = ${project} AND type = Vulnerability AND status = Open ORDER BY summary ASC`
+}
+
+function buildIncrementalJql(project: string, since: Date): string {
+  // Follow-up syncs: all vulnerabilities updated since last sync (any status)
+  // This catches status changes (Open→Closed, Resolved, etc.)
+  const sinceStr = since.toISOString().replace('T', ' ').substring(0, 19)
+  return `project = ${project} AND type = Vulnerability AND updated >= "${sinceStr}" ORDER BY summary ASC`
+}
+
+// Map Jira ticket status to BOSSVIEW vulnerability status
+function mapJiraStatus(jiraStatus: string | null): 'open' | 'fixed' | 'ignored' | 'accepted' {
+  if (!jiraStatus) return 'open'
+  const s = jiraStatus.toLowerCase().trim()
+  if (s === 'closed' || s === 'resolved' || s === 'done' || s === 'fixed') return 'fixed'
+  if (s === 'ignored' || s === 'won\'t fix' || s === 'wontfix' || s === 'declined') return 'ignored'
+  if (s === 'accepted' || s === 'risk accepted') return 'accepted'
+  return 'open'
 }
 
 function categorizeVuln(title: string): string {
@@ -224,7 +243,7 @@ export class TrackspaceQualysAdapter implements ConnectorAdapter {
       const user = await response.json() as { displayName?: string; emailAddress?: string }
 
       // Also test the JQL query to get ticket count
-      const jql = parsed.jiraJql ?? buildDefaultJql(parsed.jiraProject)
+      const jql = parsed.jiraJql ?? buildInitialJql(parsed.jiraProject)
       const countResp = await fetch(
         `${parsed.jiraBaseUrl}/rest/api/2/search?jql=${encodeURIComponent(jql)}&maxResults=0`,
         { headers }
@@ -245,12 +264,21 @@ export class TrackspaceQualysAdapter implements ConnectorAdapter {
   }
 
   async sync(context: SyncContext): Promise<SyncResult> {
-    const { config: rawConfig, logger } = context
+    const { config: rawConfig, lastSync, logger } = context
     const config = parseConfig(rawConfig)
     const errors: SyncError[] = []
 
-    // ── Fetch Jira vulnerability tickets ──
-    const jql = config.jiraJql ?? buildDefaultJql(config.jiraProject)
+    // ── Build JQL: initial (open only) vs incremental (all changed since last sync) ──
+    let jql: string
+    if (config.jiraJql) {
+      jql = config.jiraJql
+    } else if (lastSync) {
+      jql = buildIncrementalJql(config.jiraProject, lastSync)
+      logger.info(`Incremental sync since ${lastSync.toISOString()} — fetching ALL status changes`)
+    } else {
+      jql = buildInitialJql(config.jiraProject)
+      logger.info('Initial sync — fetching open vulnerabilities only')
+    }
     const headers = buildJiraAuthHeaders(config.jiraAuth)
     const allIssues: JiraVulnIssue[] = []
 
@@ -312,10 +340,11 @@ export class TrackspaceQualysAdapter implements ConnectorAdapter {
       const os = issue.fields.customfield_34904 ?? null
       const severity = normalizeSeverity(issue.fields.customfield_34800)
       const cveLink = issue.fields.customfield_34803 ?? null
+      const jiraStatus = issue.fields.status?.name ?? null
       const created = new Date(issue.fields.created)
       const updated = new Date(issue.fields.updated)
 
-      const host: AffectedHost = { hostname, ip, os, jiraKey: issue.key }
+      const host: AffectedHost = { hostname, ip, os, jiraKey: issue.key, jiraStatus }
 
       const existing = grouped.get(title)
       if (existing) {
@@ -349,6 +378,18 @@ export class TrackspaceQualysAdapter implements ConnectorAdapter {
       }
       const uniqueHosts = Array.from(uniqueHostMap.values())
 
+      // Derive vulnerability status from Jira ticket statuses:
+      // If ALL tickets are closed/resolved → vulnerability is fixed
+      // If SOME are closed → still open (partially remediated)
+      // If ALL are open → open
+      const ticketStatuses = uniqueHosts.map(h => mapJiraStatus(h.jiraStatus))
+      const allFixed = ticketStatuses.length > 0 && ticketStatuses.every(s => s === 'fixed')
+      const allIgnored = ticketStatuses.length > 0 && ticketStatuses.every(s => s === 'ignored')
+      const vulnStatus = allFixed ? 'fixed' : allIgnored ? 'ignored' : 'open'
+
+      const openCount = uniqueHosts.filter(h => mapJiraStatus(h.jiraStatus) === 'open').length
+      const fixedCount = uniqueHosts.filter(h => mapJiraStatus(h.jiraStatus) === 'fixed').length
+
       return {
         externalId: `qualys-${sanitizeTitle(vuln.title)}`,
         entityType: 'vulnerability' as const,
@@ -357,7 +398,7 @@ export class TrackspaceQualysAdapter implements ConnectorAdapter {
           title: vuln.title,
           severity: vuln.severity,
           affected_hosts: uniqueHosts.length,
-          status: 'open',
+          status: vulnStatus,
           category: vuln.category,
           first_seen: vuln.earliestCreated.toISOString(),
           last_seen: vuln.latestUpdated.toISOString(),
@@ -365,12 +406,22 @@ export class TrackspaceQualysAdapter implements ConnectorAdapter {
           // Host details for asset-vulnerability linking (engine handles this)
           hosts: uniqueHosts,
           jira_ticket_count: vuln.jiraKeys.length,
+          // Statistics for tracking
+          hosts_open: openCount,
+          hosts_fixed: fixedCount,
         },
         timestamp: vuln.latestUpdated,
       }
     })
 
+    // Log statistics
+    const statusCounts = { open: 0, fixed: 0, ignored: 0, accepted: 0 }
+    for (const e of entities) {
+      const s = (e.data as Record<string, unknown>).status as string
+      if (s in statusCounts) statusCounts[s as keyof typeof statusCounts]++
+    }
     logger.info(`Sync complete: ${entities.length} vulnerabilities from ${allIssues.length} tickets`)
+    logger.info(`Status: ${statusCounts.open} open, ${statusCounts.fixed} fixed, ${statusCounts.ignored} ignored`)
 
     return {
       entities,
