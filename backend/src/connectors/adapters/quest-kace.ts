@@ -43,23 +43,23 @@ interface KaceLoginResult {
   kboxid: string
 }
 
-interface KaceMachine {
-  id: number
-  name: string
-  ip: string
-  os_name: string
-  user: string
-  user_fullname: string
-  last_inventory: string
-  manual_entry: boolean
-  cs_manufacturer: string
-  cs_model: string
-  chassis_type: string
-  tz_agent: string
-  virtual: string
-  ram_total: string
-  bios_name: string
+// Raw KACE API uses PascalCase/mixed case — we normalize on access
+interface KaceMachineRaw {
   [key: string]: unknown
+}
+
+/** Case-insensitive field accessor for KACE machine objects */
+function mf(machine: KaceMachineRaw, ...keys: string[]): string {
+  for (const key of keys) {
+    const val = machine[key] ?? machine[key.toLowerCase()] ?? machine[key.charAt(0).toUpperCase() + key.slice(1)]
+    if (val !== undefined && val !== null) return String(val)
+  }
+  return ''
+}
+
+function mfNum(machine: KaceMachineRaw, ...keys: string[]): number {
+  const val = mf(machine, ...keys)
+  return val ? parseInt(val, 10) || 0 : 0
 }
 
 interface KaceAsset {
@@ -212,9 +212,23 @@ function buildAuthHeaders(login: KaceLoginResult, apiVersion: string): Record<st
   }
 }
 
-function mapMachineToEntity(machine: KaceMachine): NormalizedEntity {
-  const hostname = (machine.name ?? '').trim().toLowerCase()
-  const isVirtual = (machine.virtual ?? '').toUpperCase() === 'YES'
+function mapMachineToEntity(machine: KaceMachineRaw): NormalizedEntity {
+  const machineId = mf(machine, 'id', 'Id', 'ID')
+  const hostname = mf(machine, 'Name', 'name', 'SYSTEM_NAME').trim().toLowerCase()
+  const ip = mf(machine, 'Ip', 'ip', 'IP', 'ip_address')
+  const osName = mf(machine, 'Os_Name', 'os_name', 'OS_NAME', 'Os_name')
+  const user = mf(machine, 'User', 'user', 'USER')
+  const userFullname = mf(machine, 'User_Fullname', 'user_fullname', 'USER_FULLNAME', 'User_fullname')
+  const lastInventory = mf(machine, 'Last_Inventory', 'last_inventory', 'LAST_INVENTORY')
+  const manufacturer = mf(machine, 'Cs_Manufacturer', 'cs_manufacturer', 'CS_MANUFACTURER', 'Cs_manufacturer')
+  const model = mf(machine, 'Cs_Model', 'cs_model', 'CS_MODEL', 'Cs_model')
+  const chassis = mf(machine, 'Chassis_Type', 'chassis_type', 'CHASSIS_TYPE', 'Chassis_type')
+  const tz = mf(machine, 'Tz_Agent', 'tz_agent', 'TZ_AGENT', 'Tz_agent')
+  const virtual = mf(machine, 'Virtual', 'virtual', 'VIRTUAL')
+  const ram = mf(machine, 'Ram_Total', 'ram_total', 'RAM_TOTAL', 'Ram_total')
+  const bios = mf(machine, 'Bios_Name', 'bios_name', 'BIOS_NAME', 'Bios_name')
+
+  const isVirtual = virtual.toUpperCase() === 'YES'
 
   // Type: prefer prefix, then chassis/OS heuristic
   let assetType = getAssetTypeFromPrefix(hostname)
@@ -222,13 +236,13 @@ function mapMachineToEntity(machine: KaceMachine): NormalizedEntity {
     if (isVirtual) {
       assetType = 'virtual_server'
     } else {
-      const chassis = (machine.chassis_type ?? '').toLowerCase()
-      const model = (machine.cs_model ?? '').toLowerCase()
-      if (chassis === 'notebook' || chassis === 'laptop' || model.includes('latitude') || model.includes('macbook') || model.includes('thinkpad')) {
+      const chassisLower = chassis.toLowerCase()
+      const modelLower = model.toLowerCase()
+      if (chassisLower === 'notebook' || chassisLower === 'laptop' || modelLower.includes('latitude') || modelLower.includes('macbook') || modelLower.includes('thinkpad')) {
         assetType = 'workstation'
-      } else if (chassis === 'desktop' || chassis === 'workstation') {
+      } else if (chassisLower === 'desktop' || chassisLower === 'workstation') {
         assetType = 'workstation'
-      } else if ((machine.os_name ?? '').toLowerCase().includes('server')) {
+      } else if (osName.toLowerCase().includes('server')) {
         assetType = 'physical_server'
       } else {
         assetType = 'workstation'
@@ -238,36 +252,34 @@ function mapMachineToEntity(machine: KaceMachine): NormalizedEntity {
 
   const fqdn = hostname ? normalizeFQDN(hostname) : null
   const location = getDataCenter(assetType)
-  const manufacturer = machine.cs_manufacturer || null
-  const model = machine.cs_model || null
-  const hwSource = isVirtual ? 'VMware Virtual Platform' : ((manufacturer ?? '') + ' ' + (model ?? '')).trim() || null
+  const hwSource = isVirtual ? 'VMware Virtual Platform' : ((manufacturer + ' ' + model).trim() || null)
 
   const data: Record<string, unknown> = {
-    external_id: String(machine.id),
+    external_id: machineId || null,
     source: 'quest-kace',
     name: hostname || fqdn || '',
     type: assetType,
     status: 'active',
     lifecycle_stage: 'active',
     criticality: 'unclassified',
-    ip_address: assetType === 'workstation' ? null : (machine.ip || null),
-    os: machine.os_name || null,
+    ip_address: assetType === 'workstation' ? null : (ip || null),
+    os: osName || null,
     location,
     hardware_info: {
       source_system: hwSource,
-      manufacturer,
-      model,
+      manufacturer: manufacturer || null,
+      model: model || null,
     },
     tags: {
       fqdn,
-      user: machine.user || null,
-      user_fullname: machine.user_fullname || null,
-      last_inventory: machine.last_inventory || null,
-      timezone: machine.tz_agent || null,
+      user: user || null,
+      user_fullname: userFullname || null,
+      last_inventory: lastInventory || null,
+      timezone: tz || null,
       is_virtual: isVirtual,
-      chassis_type: machine.chassis_type || null,
-      ram_total: machine.ram_total || null,
-      bios: machine.bios_name || null,
+      chassis_type: chassis || null,
+      ram_total: ram || null,
+      bios: bios || null,
     },
     custom_fields: {},
   }
@@ -281,10 +293,11 @@ function mapMachineToEntity(machine: KaceMachine): NormalizedEntity {
   }
 }
 
-function mapAssetToEntity(asset: KaceAsset): NormalizedEntity {
-  const name = (asset.name ?? '').trim().toLowerCase()
-  const rawType = (asset.asset_type_name ?? '').toLowerCase().trim()
-  const rawStatus = (asset.asset_status_name ?? '').toLowerCase().trim()
+function mapAssetToEntity(asset: KaceMachineRaw): NormalizedEntity {
+  const name = mf(asset, 'Name', 'name').trim().toLowerCase()
+  const rawType = mf(asset, 'Asset_Type_Name', 'asset_type_name').toLowerCase().trim()
+  const rawStatus = mf(asset, 'Asset_Status_Name', 'asset_status_name').toLowerCase().trim()
+  const assetId = mf(asset, 'id', 'Id', 'ID')
 
   const assetType = getAssetTypeFromPrefix(name) ?? ASSET_TYPE_MAP[rawType] ?? 'other'
   const fqdn = name ? normalizeFQDN(name) : null
@@ -292,7 +305,7 @@ function mapAssetToEntity(asset: KaceAsset): NormalizedEntity {
   const lifecycle = LIFECYCLE_MAP[rawStatus] ?? 'active'
 
   const data: Record<string, unknown> = {
-    external_id: String(asset.id),
+    external_id: assetId || null,
     source: 'quest-kace',
     name: name || fqdn || '',
     type: assetType,
@@ -309,14 +322,14 @@ function mapAssetToEntity(asset: KaceAsset): NormalizedEntity {
     },
     tags: {
       fqdn,
-      asset_type_raw: asset.asset_type_name || null,
-      asset_status_raw: asset.asset_status_name || null,
+      asset_type_raw: rawType || null,
+      asset_status_raw: rawStatus || null,
     },
     custom_fields: {},
   }
 
   return {
-    externalId: `kace-asset-${asset.id}`,
+    externalId: `kace-asset-${assetId}`,
     entityType: 'asset',
     source: 'quest-kace',
     data,
@@ -464,7 +477,7 @@ export class QuestKaceAdapter implements ConnectorAdapter {
           throw new Error(`Machines API returned ${response.status}: ${body.substring(0, 200)}`)
         }
 
-        const data = await response.json() as { Machines?: KaceMachine[] }
+        const data = await response.json() as { Machines?: KaceMachineRaw[] }
         const machines = data.Machines ?? []
         logger.info(`Fetched ${machines.length} machines from KACE`)
 
@@ -472,9 +485,9 @@ export class QuestKaceAdapter implements ConnectorAdapter {
           try {
             entities.push(mapMachineToEntity(machines[i]))
           } catch (err) {
-            const msg = `Failed to map machine ${machines[i]?.name ?? i}: ${err instanceof Error ? err.message : 'Unknown error'}`
+            const msg = `Failed to map machine ${mf(machines[i], 'Name', 'name') || i}: ${err instanceof Error ? err.message : 'Unknown error'}`
             logger.error(msg)
-            errors.push({ message: msg, entity: String(machines[i]?.id ?? i) })
+            errors.push({ message: msg, entity: mf(machines[i], 'id', 'Id', 'ID') || String(i) })
           }
         }
       } catch (err) {
@@ -498,7 +511,7 @@ export class QuestKaceAdapter implements ConnectorAdapter {
           throw new Error(`Assets API returned ${response.status}: ${body.substring(0, 200)}`)
         }
 
-        const data = await response.json() as { Assets?: KaceAsset[] }
+        const data = await response.json() as { Assets?: KaceMachineRaw[] }
         const assets = data.Assets ?? []
         logger.info(`Fetched ${assets.length} assets from KACE`)
 
@@ -506,9 +519,9 @@ export class QuestKaceAdapter implements ConnectorAdapter {
           try {
             entities.push(mapAssetToEntity(assets[i]))
           } catch (err) {
-            const msg = `Failed to map asset ${assets[i]?.name ?? i}: ${err instanceof Error ? err.message : 'Unknown error'}`
+            const msg = `Failed to map asset ${mf(assets[i], 'Name', 'name') || i}: ${err instanceof Error ? err.message : 'Unknown error'}`
             logger.error(msg)
-            errors.push({ message: msg, entity: String(assets[i]?.id ?? i) })
+            errors.push({ message: msg, entity: mf(assets[i], 'id', 'Id', 'ID') || String(i) })
           }
         }
       } catch (err) {
