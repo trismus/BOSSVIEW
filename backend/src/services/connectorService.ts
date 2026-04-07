@@ -276,6 +276,62 @@ async function runSyncAsync(
                 JSON.stringify(data.custom_fields ?? {}),
               ]
             )
+          } else if (entity.entityType === 'vulnerability') {
+            const data = entity.data as Record<string, unknown>
+            const hosts = (data.hosts ?? []) as Array<{ hostname?: string }>
+
+            const vulnResult = await client.query<{ id: string }>(
+              `INSERT INTO vulnerabilities (
+                external_id, source, title, severity, category,
+                affected_hosts, status, first_seen, last_seen, remediation
+              ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+              ON CONFLICT (source, external_id) WHERE external_id IS NOT NULL
+              DO UPDATE SET
+                title = EXCLUDED.title,
+                severity = EXCLUDED.severity,
+                category = EXCLUDED.category,
+                affected_hosts = EXCLUDED.affected_hosts,
+                status = EXCLUDED.status,
+                first_seen = LEAST(vulnerabilities.first_seen, EXCLUDED.first_seen),
+                last_seen = GREATEST(vulnerabilities.last_seen, EXCLUDED.last_seen),
+                remediation = EXCLUDED.remediation,
+                updated_at = NOW()
+              RETURNING id`,
+              [
+                entity.externalId,
+                entity.source,
+                data.title ?? '',
+                data.severity ?? 'medium',
+                data.category ?? 'Other',
+                data.affected_hosts ?? 0,
+                data.status ?? 'open',
+                data.first_seen ?? new Date().toISOString(),
+                data.last_seen ?? new Date().toISOString(),
+                data.remediation ?? null,
+              ]
+            )
+
+            // Link to assets by hostname
+            if (vulnResult.rows.length > 0 && hosts.length > 0) {
+              const vulnId = vulnResult.rows[0].id
+              for (const host of hosts) {
+                if (!host.hostname) continue
+                const hn = host.hostname.trim().toLowerCase()
+                const shortName = hn.split('.')[0]
+                const assetResult = await client.query<{ id: string }>(
+                  `SELECT id FROM assets WHERE LOWER(name) = $1 OR LOWER(name) = $2 LIMIT 1`,
+                  [hn, shortName]
+                )
+                if (assetResult.rows.length > 0) {
+                  await client.query(
+                    `INSERT INTO asset_vulnerabilities (asset_id, vulnerability_id, status)
+                     VALUES ($1, $2, 'open')
+                     ON CONFLICT (asset_id, vulnerability_id) DO UPDATE SET status = 'open', detected_at = NOW()`,
+                    [assetResult.rows[0].id, vulnId]
+                  )
+                }
+              }
+            }
           }
         }
         await client.query('COMMIT')
