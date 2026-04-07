@@ -52,6 +52,13 @@ interface KaceMachine {
   user_fullname: string
   last_inventory: string
   manual_entry: boolean
+  cs_manufacturer: string
+  cs_model: string
+  chassis_type: string
+  tz_agent: string
+  virtual: string
+  ram_total: string
+  bios_name: string
   [key: string]: unknown
 }
 
@@ -151,8 +158,8 @@ function parseConfig(raw: Record<string, unknown>): KaceConnectorConfig {
     baseUrl: (raw.baseUrl as string).replace(/\/+$/, ''),
     auth: raw.auth as KaceAuthConfig,
     apiVersion: (raw.apiVersion as string) ?? '14',
-    syncAssets: (raw.syncAssets as boolean) ?? true,
     syncMachines: (raw.syncMachines as boolean) ?? true,
+    syncAssets: (raw.syncAssets as boolean) ?? false,
     organizationName: (raw.organizationName as string) ?? 'Default',
   }
 }
@@ -207,9 +214,33 @@ function buildAuthHeaders(login: KaceLoginResult, apiVersion: string): Record<st
 
 function mapMachineToEntity(machine: KaceMachine): NormalizedEntity {
   const hostname = (machine.name ?? '').trim().toLowerCase()
-  const assetType = getAssetTypeFromPrefix(hostname) ?? 'other'
+  const isVirtual = (machine.virtual ?? '').toUpperCase() === 'YES'
+
+  // Type: prefer prefix, then chassis/OS heuristic
+  let assetType = getAssetTypeFromPrefix(hostname)
+  if (!assetType) {
+    if (isVirtual) {
+      assetType = 'virtual_server'
+    } else {
+      const chassis = (machine.chassis_type ?? '').toLowerCase()
+      const model = (machine.cs_model ?? '').toLowerCase()
+      if (chassis === 'notebook' || chassis === 'laptop' || model.includes('latitude') || model.includes('macbook') || model.includes('thinkpad')) {
+        assetType = 'workstation'
+      } else if (chassis === 'desktop' || chassis === 'workstation') {
+        assetType = 'workstation'
+      } else if ((machine.os_name ?? '').toLowerCase().includes('server')) {
+        assetType = 'physical_server'
+      } else {
+        assetType = 'workstation'
+      }
+    }
+  }
+
   const fqdn = hostname ? normalizeFQDN(hostname) : null
   const location = getDataCenter(assetType)
+  const manufacturer = machine.cs_manufacturer || null
+  const model = machine.cs_model || null
+  const hwSource = isVirtual ? 'VMware Virtual Platform' : ((manufacturer ?? '') + ' ' + (model ?? '')).trim() || null
 
   const data: Record<string, unknown> = {
     external_id: String(machine.id),
@@ -219,19 +250,24 @@ function mapMachineToEntity(machine: KaceMachine): NormalizedEntity {
     status: 'active',
     lifecycle_stage: 'active',
     criticality: 'unclassified',
-    ip_address: machine.ip || null,
+    ip_address: assetType === 'workstation' ? null : (machine.ip || null),
     os: machine.os_name || null,
     location,
     hardware_info: {
-      source_system: 'quest-kace',
-      manufacturer: null,
-      model: null,
+      source_system: hwSource,
+      manufacturer,
+      model,
     },
     tags: {
       fqdn,
       user: machine.user || null,
       user_fullname: machine.user_fullname || null,
       last_inventory: machine.last_inventory || null,
+      timezone: machine.tz_agent || null,
+      is_virtual: isVirtual,
+      chassis_type: machine.chassis_type || null,
+      ram_total: machine.ram_total || null,
+      bios: machine.bios_name || null,
     },
     custom_fields: {},
   }
@@ -325,15 +361,15 @@ export class QuestKaceAdapter implements ConnectorAdapter {
           description: 'KACE API version',
           default: '14',
         },
-        syncAssets: {
-          type: 'boolean',
-          description: 'Sync KACE asset inventory',
-          default: true,
-        },
         syncMachines: {
           type: 'boolean',
-          description: 'Sync KACE machine inventory',
+          description: 'Sync computer inventory (/api/inventory/machines)',
           default: true,
+        },
+        syncAssets: {
+          type: 'boolean',
+          description: 'Sync KACE asset inventory (/api/asset/assets) — includes software/licenses, usually not needed',
+          default: false,
         },
         organizationName: {
           type: 'string',
