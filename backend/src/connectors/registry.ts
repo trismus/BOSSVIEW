@@ -5,6 +5,7 @@
 import type { ConnectorAdapter } from './types'
 import { CsvImportAdapter } from './adapters/csv-import'
 import { JiraAdapter } from './adapters/jira'
+import { QuestKaceAdapter } from './adapters/quest-kace'
 
 const adapters = new Map<string, ConnectorAdapter>()
 
@@ -33,5 +34,6 @@ export function getAdapterIds(): string[] {
 export function initializeRegistry(): void {
   registerAdapter(new CsvImportAdapter())
   registerAdapter(new JiraAdapter())
+  registerAdapter(new QuestKaceAdapter())
   console.warn(`Connector registry initialized with ${adapters.size} adapter(s)`)
 }

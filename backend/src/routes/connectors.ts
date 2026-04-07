@@ -9,6 +9,7 @@ import {
   getConnectorById,
   createConnector,
   updateConnector,
+  deleteConnector,
   testConnectorConnection,
   triggerSync,
   listSyncLogs,
@@ -225,6 +226,43 @@ router.put(
     })
 
     res.json({ data: maskedNew })
+  })
+)
+
+// DELETE /api/v1/connectors/:id — delete connector config (admin only)
+router.delete(
+  '/:id',
+  requireRole('admin'),
+  auditLog('connector'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const id = paramId(req)
+    const connector = await getConnectorById(id)
+
+    if (!connector) {
+      res.status(404).json({ error: 'Connector not found', code: 'NOT_FOUND' })
+      return
+    }
+
+    const maskedOld = maskConnectorForResponse(connector)
+    const deleted = await deleteConnector(id)
+
+    if (!deleted) {
+      res.status(500).json({ error: 'Failed to delete connector', code: 'DELETE_FAILED' })
+      return
+    }
+
+    await writeAuditLog({
+      userId: req.user!.sub,
+      action: 'DELETE',
+      entityType: 'connector',
+      entityId: id,
+      oldValue: maskedOld,
+      newValue: null,
+      ipAddress: (req.ip ?? req.socket.remoteAddress ?? null) as string | null,
+      userAgent: req.headers['user-agent'] ?? null,
+    })
+
+    res.json({ data: { id, deleted: true } })
   })
 )
 

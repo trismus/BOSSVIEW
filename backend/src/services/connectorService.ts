@@ -143,6 +143,17 @@ export async function updateConnector(id: string, data: UpdateConnectorData): Pr
   return row ? decryptConnectorConfig(row) : null
 }
 
+export async function deleteConnector(id: string): Promise<boolean> {
+  // Delete sync logs first (foreign key constraint)
+  await query(`DELETE FROM connector_sync_logs WHERE connector_id = $1`, [id])
+
+  const result = await query(
+    `DELETE FROM connector_configs WHERE id = $1 RETURNING id`,
+    [id]
+  )
+  return result.rows.length > 0
+}
+
 // ============================================
 // Connection Test
 // ============================================
