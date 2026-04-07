@@ -246,7 +246,7 @@ async function runSyncAsync(
                 criticality, ip_address, os, location, hardware_info,
                 tags, custom_fields
               ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-              ON CONFLICT (external_id) WHERE external_id IS NOT NULL
+              ON CONFLICT (source, external_id) WHERE external_id IS NOT NULL
               DO UPDATE SET
                 name = EXCLUDED.name,
                 type = EXCLUDED.type,

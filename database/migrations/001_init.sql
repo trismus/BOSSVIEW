@@ -120,3 +120,6 @@ INSERT INTO roles (name, permissions) VALUES
     ('manager', '["assets:read", "incidents:read", "incidents:write", "changes:read", "changes:approve", "dashboard:read", "reports:read", "reports:generate"]'),
     ('auditor', '["assets:read", "incidents:read", "changes:read", "dashboard:read", "audit:read", "reports:read"]'),
     ('readonly', '["assets:read", "incidents:read", "changes:read", "dashboard:read"]');
+
+-- Unique constraint for connector upsert (source + external_id)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_assets_source_external_id ON assets(source, external_id) WHERE external_id IS NOT NULL;
