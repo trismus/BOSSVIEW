@@ -42,18 +42,22 @@ const TIMEZONES: TimezoneConfig[] = [
   { offset: 8, label: 'UTC+8', iana: 'Asia/Hong_Kong' },
 ]
 
-// ─── Mercator projection calibrated to PROTrack viewBox 0 0 960 440 ─
-// Fitted against PROTrack reference points: ZRH(502.8,148.1), NYC(282.7,165.2),
-// PAR(486.3,144.0), SIN(756.9,244.9) — all match within <0.1px
+// ─── Projection calibrated to PROTrack SVG viewBox 0 0 960 440 ──────
+// The PROTrack map uses a Robinson-like projection (not pure Mercator).
+// X is a quadratic polynomial, Y is Mercator with calibrated offset/scale.
+// Fitted against country-shape centroids extracted from PROTrack SVG paths:
+//   Cuba(-80,22)→(243.7,214.7), Brazil(-50,-15)→(306.3,321.8),
+//   UK(-2,54)→(491.7,138.9), Moscow(37,56)→(555,130.9),
+//   India(78,20)→(534.7,235.6), Australia(134,-25)→(665.2,351.2),
+//   US-West(-122,37)→(144.1,141.9)
 function projectLatLon(lat: number, lon: number): [number, number] {
-  // Longitude: linear mapping [-180, 180] → [0, 960]
-  const x = ((lon + 180) / 360) * 960
+  // X: quadratic fit to handle Robinson-like compression at high longitudes
+  const x = -0.0046 * lon * lon + 2.083 * lon + 454
 
-  // Latitude: Mercator projection with PROTrack-calibrated scale/offset
+  // Y: Mercator with calibrated scale/offset
   const latRad = (lat * Math.PI) / 180
   const mercN = Math.log(Math.tan(Math.PI / 4 + latRad / 2))
-  // y = 247.4 - 105.5 * mercN (derived from PROTrack reference points)
-  const y = 247.4 - mercN * 105.5
+  const y = 287 - 131.7 * mercN
 
   return [Math.max(0, Math.min(960, x)), Math.max(0, Math.min(440, y))]
 }
