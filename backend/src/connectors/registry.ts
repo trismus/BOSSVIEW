@@ -6,6 +6,7 @@ import type { ConnectorAdapter } from './types'
 import { CsvImportAdapter } from './adapters/csv-import'
 import { JiraAdapter } from './adapters/jira'
 import { QuestKaceAdapter } from './adapters/quest-kace'
+import { TrackspaceQualysAdapter } from './adapters/trackspace-qualys'
 
 const adapters = new Map<string, ConnectorAdapter>()
 
@@ -35,5 +36,6 @@ export function initializeRegistry(): void {
   registerAdapter(new CsvImportAdapter())
   registerAdapter(new JiraAdapter())
   registerAdapter(new QuestKaceAdapter())
+  registerAdapter(new TrackspaceQualysAdapter())
   console.warn(`Connector registry initialized with ${adapters.size} adapter(s)`)
 }
