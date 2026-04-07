@@ -3,7 +3,9 @@ import { Server as SocketIOServer } from 'socket.io'
 import { createAdapter } from '@socket.io/redis-adapter'
 import Redis from 'ioredis'
 import { Client as PgClient } from 'pg'
+import jwt from 'jsonwebtoken'
 import { query as queryDb } from './db/pool'
+import config from './config'
 
 let io: SocketIOServer | null = null
 let pgListenClient: PgClient | null = null
@@ -55,8 +57,24 @@ export async function initWebSocket(httpServer: HttpServer): Promise<SocketIOSer
     // Falls back to default in-memory adapter — single instance only
   }
 
+  // JWT authentication middleware for WebSocket connections
+  io.use((socket, next) => {
+    const token = socket.handshake.auth?.token as string | undefined
+    if (!token) {
+      return next(new Error('Authentication required'))
+    }
+    try {
+      const payload = jwt.verify(token, config.JWT_SECRET, { algorithms: ['HS256'] }) as { sub: string; email: string; role: string }
+      ;(socket as unknown as Record<string, unknown>).user = payload
+      next()
+    } catch {
+      next(new Error('Invalid or expired token'))
+    }
+  })
+
   io.on('connection', (socket) => {
-    console.warn(`WebSocket client connected: ${socket.id}`)
+    const user = (socket as unknown as Record<string, unknown>).user as { sub: string; email: string; role: string } | undefined
+    console.warn(`WebSocket client connected: ${socket.id} (user: ${user?.email ?? 'unknown'})`)
 
     // Allow clients to subscribe to a specific location for targeted updates
     socket.on('subscribe:location', (locationId: string) => {

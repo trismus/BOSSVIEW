@@ -53,8 +53,8 @@ const deviceListQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   location_id: z.string().uuid().optional(),
-  device_type: z.string().optional(),
-  status: z.string().optional(),
+  device_type: z.enum(DEVICE_TYPES).optional(),
+  status: z.enum(DEVICE_STATUSES).optional(),
   vlan_id: z.string().uuid().optional(),
   search: z.string().optional(),
 })
@@ -505,12 +505,15 @@ router.get(
   '/vlans',
   requireRole('admin', 'engineer', 'manager', 'auditor', 'readonly'),
   asyncHandler(async (req: Request, res: Response) => {
+    const locationIdSchema = z.string().uuid('Invalid location_id format')
     const locationId = req.query.location_id as string | undefined
 
     if (!locationId) {
       res.status(400).json({ error: 'location_id query parameter is required', code: 'MISSING_PARAM' })
       return
     }
+
+    locationIdSchema.parse(locationId)
 
     const result = await queryDb(
       `SELECT v.*,
@@ -537,12 +540,15 @@ router.get(
   '/racks',
   requireRole('admin', 'engineer', 'manager', 'auditor', 'readonly'),
   asyncHandler(async (req: Request, res: Response) => {
+    const rackLocationSchema = z.string().uuid('Invalid location_id format')
     const locationId = req.query.location_id as string | undefined
 
     if (!locationId) {
       res.status(400).json({ error: 'location_id query parameter is required', code: 'MISSING_PARAM' })
       return
     }
+
+    rackLocationSchema.parse(locationId)
 
     const result = await queryDb(
       `SELECT r.*,

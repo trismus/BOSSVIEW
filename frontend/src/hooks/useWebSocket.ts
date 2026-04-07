@@ -37,6 +37,9 @@ export function useWebSocket(): UseWebSocketReturn {
     // Determine WebSocket URL from the page origin (same host, /ws path)
     const wsUrl = window.location.origin
 
+    // Send JWT token for WebSocket authentication
+    const token = localStorage.getItem('accessToken')
+
     const socket = io(wsUrl, {
       path: '/ws',
       transports: ['websocket', 'polling'],
@@ -45,6 +48,7 @@ export function useWebSocket(): UseWebSocketReturn {
       reconnectionDelay: 1000,
       reconnectionDelayMax: 10000,
       timeout: 10000,
+      auth: { token: token ?? '' },
     })
 
     socketRef.current = socket
