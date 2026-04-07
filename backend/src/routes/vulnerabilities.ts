@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express'
 import { z } from 'zod'
 import { authenticate } from '../middleware/auth'
 import { requireRole } from '../middleware/rbac'
+import { auditLog, writeAuditLog } from '../middleware/audit'
 import { asyncHandler } from '../middleware/errorHandler'
 import { query } from '../db/pool'
 
@@ -48,6 +49,13 @@ interface Vulnerability {
 // ============================================
 // Constants
 // ============================================
+
+const updateVulnSchema = z.object({
+  severity: z.enum(SEVERITIES).optional(),
+  status: z.enum(STATUSES).optional(),
+  category: z.string().max(255).optional(),
+  remediation: z.string().max(5000).nullable().optional(),
+})
 
 const ALLOWED_SORT_COLUMNS = ['title', 'severity', 'affected_hosts', 'status', 'category', 'first_seen', 'last_seen', 'created_at']
 
@@ -212,21 +220,95 @@ router.get(
       return
     }
 
-    // Also fetch linked assets
-    const assetsResult = await query<{ asset_id: string; name: string; type: string; detected_at: string }>(
-      `SELECT a.id as asset_id, a.name, a.type, av.detected_at
+    // Fetch linked assets with full details for the affected hosts tab
+    const assetsResult = await query<{
+      id: string
+      name: string
+      type: string
+      ip_address: string | null
+      os: string | null
+      status: string
+    }>(
+      `SELECT a.id, a.name, a.type, a.ip_address, a.os, a.status
        FROM asset_vulnerabilities av
        JOIN assets a ON av.asset_id = a.id
-       WHERE av.vulnerability_id = $1`,
+       WHERE av.vulnerability_id = $1
+       ORDER BY a.name ASC`,
       [req.params.id]
     )
 
     res.json({
       data: {
         ...result.rows[0],
-        assets: assetsResult.rows,
+        affected_assets: assetsResult.rows,
       },
     })
+  })
+)
+
+// PUT /api/v1/vulnerabilities/:id — update vulnerability
+router.put(
+  '/:id',
+  requireRole('admin', 'engineer'),
+  auditLog('vulnerability'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const data = updateVulnSchema.parse(req.body)
+
+    // Get old value for audit trail
+    const oldResult = await query<Vulnerability>(
+      `SELECT * FROM vulnerabilities WHERE id = $1`,
+      [req.params.id]
+    )
+
+    if (oldResult.rows.length === 0) {
+      res.status(404).json({ error: 'Vulnerability not found', code: 'NOT_FOUND' })
+      return
+    }
+
+    const oldVuln = oldResult.rows[0]
+
+    // Build dynamic UPDATE query from provided fields
+    const setClauses: string[] = ['updated_at = NOW()']
+    const values: unknown[] = []
+    let paramIndex = 1
+
+    if (data.severity !== undefined) {
+      setClauses.push(`severity = $${paramIndex++}`)
+      values.push(data.severity)
+    }
+    if (data.status !== undefined) {
+      setClauses.push(`status = $${paramIndex++}`)
+      values.push(data.status)
+    }
+    if (data.category !== undefined) {
+      setClauses.push(`category = $${paramIndex++}`)
+      values.push(data.category)
+    }
+    if (data.remediation !== undefined) {
+      setClauses.push(`remediation = $${paramIndex++}`)
+      values.push(data.remediation)
+    }
+
+    const updateResult = await query<Vulnerability>(
+      `UPDATE vulnerabilities SET ${setClauses.join(', ')} WHERE id = $${paramIndex} RETURNING *`,
+      [...values, req.params.id]
+    )
+
+    const updated = updateResult.rows[0]
+
+    // Write detailed audit log with old/new values
+    await writeAuditLog({
+      userId: req.user!.sub,
+      action: 'UPDATE',
+      entityType: 'vulnerability',
+      entityId: req.params.id,
+      oldValue: oldVuln,
+      newValue: updated,
+      ipAddress: req.ip ?? req.socket.remoteAddress ?? null,
+      userAgent: req.headers['user-agent'] ?? null,
+    })
+
+    res.json({ data: updated })
   })
 )
 

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { apiFetch } from '../api/client'
 import type { Vulnerability, PaginatedResponse, VulnerabilityStats } from '../types'
+import { VulnerabilityDetailDrawer } from '../components/VulnerabilityDetailDrawer'
 
 const SEVERITIES = ['critical', 'high', 'medium', 'low', 'info']
 const CATEGORIES = [
@@ -26,6 +27,7 @@ export function VulnerabilitiesPage() {
   const [search, setSearch] = useState('')
   const [filterSeverity, setFilterSeverity] = useState('')
   const [filterCategory, setFilterCategory] = useState('')
+  const [selectedVulnId, setSelectedVulnId] = useState<string | null>(null)
 
   const fetchVulns = useCallback(async () => {
     setIsLoading(true)
@@ -181,7 +183,8 @@ export function VulnerabilitiesPage() {
                 vulns.map((vuln, i) => (
                   <tr
                     key={vuln.id}
-                    className={`border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors ${i % 2 === 0 ? 'bg-slate-800/40' : ''}`}
+                    onClick={() => setSelectedVulnId(vuln.id)}
+                    className={`border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors cursor-pointer ${i % 2 === 0 ? 'bg-slate-800/40' : ''}`}
                   >
                     <td className="px-3 py-2">{severityBadge(vuln.severity)}</td>
                     <td className="px-3 py-2 font-medium text-slate-200 max-w-[400px] truncate">{vuln.title}</td>
@@ -218,6 +221,18 @@ export function VulnerabilitiesPage() {
           </div>
         )}
       </div>
+
+      {/* Detail Drawer */}
+      {selectedVulnId && (
+        <VulnerabilityDetailDrawer
+          vulnerabilityId={selectedVulnId}
+          onClose={() => setSelectedVulnId(null)}
+          onUpdated={() => {
+            fetchVulns()
+            fetchStats()
+          }}
+        />
+      )}
     </div>
   )
 }

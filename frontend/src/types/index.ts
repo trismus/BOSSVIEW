@@ -81,6 +81,17 @@ export interface Vulnerability {
   updated_at: string
 }
 
+export interface VulnerabilityDetail extends Vulnerability {
+  affected_assets: Array<{
+    id: string
+    name: string
+    type: string
+    ip_address: string | null
+    os: string | null
+    status: string
+  }>
+}
+
 export interface VulnerabilityStats {
   total: number
   by_severity: Record<string, number>
