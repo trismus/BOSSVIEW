@@ -171,6 +171,56 @@ export interface AssetVulnerability {
   remediation: string | null
 }
 
+// Directory Users (imported from external systems)
+export interface DirectoryUser {
+  id: string
+  external_id: string
+  source: string
+  username: string
+  full_name: string
+  email: string
+  domain: string
+  department: string
+  title: string
+  is_active: boolean
+  last_sync_at: string
+  created_at: string
+  updated_at: string
+  asset_count?: number
+}
+
+export interface DirectoryUserDetail extends DirectoryUser {
+  manager: string
+  phone: string
+  locale: string
+  custom_fields: Record<string, unknown>
+  assigned_assets: Array<{
+    id: string
+    name: string
+    type: string
+    status: string
+    ip_address: string | null
+    os: string | null
+    assignment_type: string
+    last_seen_at: string | null
+    assigned_at: string
+  }>
+}
+
+export interface AssetUserAssignment {
+  id: string
+  username: string
+  full_name: string
+  email: string
+  department: string
+  title: string
+  is_active: boolean
+  source: string
+  assignment_type: string
+  last_seen_at: string | null
+  assigned_at: string
+}
+
 export interface AssetRelation {
   id: string
   source_id: string
@@ -258,6 +308,7 @@ export interface InfraLocation {
   timezone?: string
   device_count?: number
   asset_count?: number
+  tz_mismatch_count?: number
 }
 
 export interface WanLink {
@@ -280,6 +331,43 @@ export interface InfraVlan {
   color_hex?: string
 }
 
+export interface ParsedVlan {
+  id: number
+  name: string
+  state: 'active' | 'suspend' | 'unknown'
+}
+
+export interface ParsedInterface {
+  name: string
+  description: string
+  switchportMode: 'trunk' | 'access' | 'routed' | 'unknown'
+  accessVlan: number | null
+  trunkAllowedVlans: number[]
+  trunkNativeVlan: number | null
+  speed: string
+  status: 'up' | 'down' | 'admin-down'
+  channelGroup: number | null
+  channelMode: string | null
+  ipAddress: string | null
+  portType: string
+}
+
+export interface ParsedPortChannel {
+  id: number
+  name: string
+  members: string[]
+  mode: string
+}
+
+export interface ParsedConfig {
+  hostname: string
+  domain: string
+  platform: 'nx-os' | 'ios' | 'ios-xe' | 'unknown'
+  vlans: ParsedVlan[]
+  interfaces: ParsedInterface[]
+  portChannels: ParsedPortChannel[]
+}
+
 export interface InfraDevice {
   id: string
   location_id: string
@@ -296,6 +384,7 @@ export interface InfraDevice {
   rack_u_start?: number
   rack_u_height?: number
   asset_id?: string
+  config_data?: ParsedConfig | null
 }
 
 export interface InfraDeviceLink {
@@ -316,6 +405,7 @@ export interface InfraRackDevice {
   rack_u_start: number
   rack_u_height: number
   status: InfraDeviceStatus
+  model?: string
 }
 
 export interface InfraRack {

@@ -38,7 +38,7 @@ const createAssetSchema = z.object({
   os: z.string().optional().nullable(),
   location: z.record(z.unknown()).optional().default({}),
   hardware_info: z.record(z.unknown()).optional().default({}),
-  tags: z.array(z.unknown()).optional().default([]),
+  tags: z.union([z.array(z.unknown()), z.record(z.unknown())]).optional().default({}),
   custom_fields: z.record(z.unknown()).optional().default({}),
 })
 
@@ -287,6 +287,39 @@ router.post(
       imported: result.imported,
       errors: result.errors,
     })
+  })
+)
+
+// ============================================
+// Asset Users (directory user assignments)
+// ============================================
+
+// GET /api/v1/assets/:id/users
+router.get(
+  '/:id/users',
+  requireRole('admin', 'engineer', 'manager', 'auditor', 'readonly'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const assetId = req.params.id
+
+    const asset = await getAssetById(assetId)
+    if (!asset) {
+      res.status(404).json({ error: 'Asset not found', code: 'NOT_FOUND' })
+      return
+    }
+
+    const result = await queryDb(
+      `SELECT
+        du.id, du.username, du.full_name, du.email, du.department, du.title,
+        du.is_active, du.source,
+        aua.assignment_type, aua.last_seen_at, aua.assigned_at
+      FROM asset_user_assignments aua
+      JOIN directory_users du ON du.id = aua.user_id
+      WHERE aua.asset_id = $1
+      ORDER BY aua.assignment_type, du.username`,
+      [assetId]
+    )
+
+    res.json({ data: result.rows })
   })
 )
 

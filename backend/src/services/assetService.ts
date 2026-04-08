@@ -134,7 +134,14 @@ export async function createAsset(
     ]
   )
 
-  return result.rows[0]
+  const created = result.rows[0]
+
+  // Sync to infra_devices if applicable (Issue #62)
+  if (SYNCABLE_ASSET_TYPES.includes(created.type)) {
+    await syncAssetToInfraDevice(created)
+  }
+
+  return created
 }
 
 export async function updateAsset(
@@ -178,7 +185,14 @@ export async function updateAsset(
     values
   )
 
-  return result.rows[0] ?? null
+  const updated = result.rows[0] ?? null
+
+  // Sync to infra_devices if applicable (Issue #62)
+  if (updated && SYNCABLE_ASSET_TYPES.includes(updated.type)) {
+    await syncAssetToInfraDevice(updated)
+  }
+
+  return updated
 }
 
 export async function deleteAsset(id: string): Promise<boolean> {
@@ -264,6 +278,100 @@ export async function bulkImportAssets(
     throw err
   } finally {
     client.release()
+  }
+}
+
+// ============================================
+// Infra Device Sync (Issue #62)
+// ============================================
+
+const SYNCABLE_ASSET_TYPES = ['virtual_server', 'physical_server', 'network_device', 'storage']
+
+// Grid layout spacing per device_type
+const TOPO_LAYOUT: Record<string, { y: number; spacing: number }> = {
+  firewall: { y: 60, spacing: 100 },
+  switch:   { y: 180, spacing: 80 },
+  router:   { y: 180, spacing: 100 },
+  server:   { y: 350, spacing: 80 },
+  storage:  { y: 480, spacing: 100 },
+}
+
+function resolveDeviceType(assetType: string, assetName: string): string {
+  if (assetType === 'virtual_server' || assetType === 'physical_server') return 'server'
+  if (assetType === 'storage') return 'storage'
+  if (assetType === 'network_device') {
+    const lower = assetName.toLowerCase()
+    if (lower.includes('fw')) return 'firewall'
+    if (lower.includes('sw') || /w\d/.test(lower)) return 'switch'
+    return 'router'
+  }
+  return 'server'
+}
+
+function resolveDeviceStatus(assetStatus: string): string {
+  if (assetStatus === 'active') return 'operational'
+  if (assetStatus === 'maintenance') return 'maintenance'
+  return 'offline'
+}
+
+export async function syncAssetToInfraDevice(asset: Asset): Promise<void> {
+  if (!SYNCABLE_ASSET_TYPES.includes(asset.type)) return
+
+  const locationCode = asset.location?.code as string | undefined
+  if (!locationCode) {
+    console.warn(`syncAssetToInfraDevice: asset "${asset.name}" has no location code, skipping`)
+    return
+  }
+
+  const deviceType = resolveDeviceType(asset.type, asset.name)
+  const deviceStatus = resolveDeviceStatus(asset.status)
+
+  try {
+    // Check if infra_device already linked to this asset
+    const existing = await query<{ id: string }>(
+      `SELECT id FROM infra_devices WHERE asset_id = $1`,
+      [asset.id]
+    )
+
+    if (existing.rows.length > 0) {
+      // UPDATE existing device
+      await query(
+        `UPDATE infra_devices
+         SET name = $1, ip_address = $2, status = $3, device_type = $4, updated_at = NOW()
+         WHERE asset_id = $5`,
+        [asset.name, asset.ip_address, deviceStatus, deviceType, asset.id]
+      )
+      return
+    }
+
+    // Resolve location_id
+    const locResult = await query<{ id: string }>(
+      `SELECT id FROM infra_locations WHERE code = $1`,
+      [locationCode]
+    )
+    if (locResult.rows.length === 0) {
+      console.warn(`syncAssetToInfraDevice: no infra_location found for code "${locationCode}"`)
+      return
+    }
+    const locationId = locResult.rows[0].id
+
+    // Calculate next free topo_x position for this device_type at this location
+    const layout = TOPO_LAYOUT[deviceType] ?? { y: 350, spacing: 80 }
+    const maxXResult = await query<{ max_x: string | null }>(
+      `SELECT MAX(topo_x) AS max_x FROM infra_devices
+       WHERE location_id = $1 AND device_type = $2`,
+      [locationId, deviceType]
+    )
+    const maxX = maxXResult.rows[0]?.max_x ? parseFloat(maxXResult.rows[0].max_x) : 0
+    const nextX = maxX >= 100 ? maxX + layout.spacing : 100
+
+    await query(
+      `INSERT INTO infra_devices (location_id, name, device_type, ip_address, status, asset_id, topo_x, topo_y)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [locationId, asset.name, deviceType, asset.ip_address, deviceStatus, asset.id, nextX, layout.y]
+    )
+  } catch (err) {
+    console.error(`syncAssetToInfraDevice failed for asset "${asset.name}":`, err)
   }
 }
 

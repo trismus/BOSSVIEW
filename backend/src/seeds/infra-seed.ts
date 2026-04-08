@@ -337,6 +337,10 @@ const DEVICES: DeviceSeed[] = [
   { location_code: 'ZRH-STZ', vlan_key: null, rack_key: 'ZRH-STZ:Rack-A1', name: 'ZRH-NG-FW01', device_type: 'firewall', model: 'Fortinet FortiGate 200F', manufacturer: 'Fortinet', ip_address: '10.1.10.5', status: 'operational', topo_x: 250, topo_y: 60, rack_u_start: 5, rack_u_height: 1, asset_name_match: 'ZRH-NG-FW01' },
   { location_code: 'ZRH-STZ', vlan_key: null, rack_key: 'ZRH-STZ:Rack-A1', name: 'ZRH-NG-FW02', device_type: 'firewall', model: 'Fortinet FortiGate 200F', manufacturer: 'Fortinet', ip_address: '10.1.10.6', status: 'operational', topo_x: 550, topo_y: 60, rack_u_start: 6, rack_u_height: 1, asset_name_match: 'ZRH-NG-FW02' },
 
+  // === ZRH-BAS NG Firewalls ===
+  { location_code: 'ZRH-BAS', vlan_key: null, rack_key: 'ZRH-BAS:Rack-B1', name: 'BAS-NG-FW01', device_type: 'firewall', model: 'Fortinet FortiGate 200F', manufacturer: 'Fortinet', ip_address: '10.2.100.5', status: 'operational', topo_x: 300, topo_y: 50, rack_u_start: 5, rack_u_height: 1, asset_name_match: 'BAS-NG-FW01' },
+  { location_code: 'ZRH-BAS', vlan_key: null, rack_key: 'ZRH-BAS:Rack-B1', name: 'BAS-NG-FW02', device_type: 'firewall', model: 'Fortinet FortiGate 200F', manufacturer: 'Fortinet', ip_address: '10.2.100.6', status: 'operational', topo_x: 500, topo_y: 50, rack_u_start: 6, rack_u_height: 1, asset_name_match: 'BAS-NG-FW02' },
+
   // === ZRH-BAS Switches ===
   { location_code: 'ZRH-BAS', vlan_key: null, rack_key: 'ZRH-BAS:Rack-B1', name: 'ZRHBASW01', device_type: 'switch-core', model: 'Cisco N9K-9336C', manufacturer: 'Cisco', ip_address: '10.2.100.10', status: 'operational', topo_x: 300, topo_y: 150, rack_u_start: 1, rack_u_height: 1, asset_name_match: 'ZRHBASW01' },
   { location_code: 'ZRH-BAS', vlan_key: null, rack_key: 'ZRH-BAS:Rack-B1', name: 'ZRHBASW02', device_type: 'switch-core', model: 'Cisco N9K-9336C', manufacturer: 'Cisco', ip_address: '10.2.100.11', status: 'operational', topo_x: 500, topo_y: 150, rack_u_start: 2, rack_u_height: 1, asset_name_match: 'ZRHBASW02' },
@@ -345,11 +349,6 @@ const DEVICES: DeviceSeed[] = [
 ]
 
 const DEVICE_LINKS: DeviceLinkSeed[] = [
-  // FW → Core switches
-  { from_name: 'FW-STZ-01', to_name: 'ZRHSTSW01', link_type: 'trunk', speed: '10G', from_port: 'Eth1/1', to_port: 'Gi0/1' },
-  { from_name: 'FW-STZ-02', to_name: 'ZRHSTSW02', link_type: 'trunk', speed: '10G', from_port: 'Eth1/1', to_port: 'Gi0/1' },
-  // FW HA pair
-  { from_name: 'FW-STZ-01', to_name: 'FW-STZ-02', link_type: 'ha', speed: '10G', from_port: 'HA1', to_port: 'HA1' },
   // Core switch VPC
   { from_name: 'ZRHSTSW01', to_name: 'ZRHSTSW02', link_type: 'vpc', speed: '10G', from_port: 'Gi0/48', to_port: 'Gi0/48' },
   // NG Firewalls → Core
@@ -382,6 +381,10 @@ const DEVICE_LINKS: DeviceLinkSeed[] = [
   { from_name: 'LIDOZRHS02', to_name: 'ZRHSTG25', link_type: 'storage', speed: '25G', from_port: 'NIC3', to_port: 'e0b' },
   { from_name: 'LIDOZRHS03', to_name: 'ZRHSTG25', link_type: 'storage', speed: '25G', from_port: 'NIC3', to_port: 'e0c' },
 
+  // BAS NG Firewalls → Core
+  { from_name: 'BAS-NG-FW01', to_name: 'ZRHBASW01', link_type: 'trunk', speed: '10G', from_port: 'port1', to_port: 'Eth1/2' },
+  { from_name: 'BAS-NG-FW02', to_name: 'ZRHBASW02', link_type: 'trunk', speed: '10G', from_port: 'port1', to_port: 'Eth1/2' },
+  { from_name: 'BAS-NG-FW01', to_name: 'BAS-NG-FW02', link_type: 'ha', speed: '10G', from_port: 'HA1', to_port: 'HA1' },
   // BAS Core switch VPC
   { from_name: 'ZRHBASW01', to_name: 'ZRHBASW02', link_type: 'vpc', speed: '10G', from_port: 'Eth1/48', to_port: 'Eth1/48' },
   // BAS Core → ToR

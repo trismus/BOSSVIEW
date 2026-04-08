@@ -89,15 +89,26 @@ interface LabelConfig {
   showAlways: boolean
 }
 
+// Display offset for clustered locations (e.g. multiple Zurich sites)
+// so overlapping dots are visually separated on the map
+function getDisplayOffset(code: string): { dx: number; dy: number } {
+  switch (code) {
+    case 'ZRH-STZ': return { dx: 0, dy: 0 }       // HQ stays central
+    case 'ZRH-BAS': return { dx: -8, dy: 6 }       // bottom-left
+    case 'ZRH-NUGOLO': return { dx: 8, dy: -6 }    // top-right
+    default: return { dx: 0, dy: 0 }
+  }
+}
+
 function getLabelConfig(code: string): LabelConfig {
   switch (code) {
     // Zurich locations cluster — spread labels to avoid overlap
     case 'ZRH-STZ':
       return { anchor: 'start', dx: 8, dy: 6, showAlways: true }
     case 'ZRH-BAS':
-      return { anchor: 'start', dx: 0, dy: 0, showAlways: false } // hover only
+      return { anchor: 'start', dx: 6, dy: 14, showAlways: true }
     case 'ZRH-NUGOLO':
-      return { anchor: 'start', dx: 0, dy: 0, showAlways: false } // hover only
+      return { anchor: 'start', dx: 6, dy: -10, showAlways: true }
     case 'FRA-DC':
       return { anchor: 'middle', dx: 0, dy: -12, showAlways: true }
     case 'MUC-OFF':
@@ -624,6 +635,22 @@ function KpiSidebar({
           <div style={kpiLabel}>Active WAN Links</div>
           <div style={kpiValue}>{activeWanLinks}</div>
         </div>
+
+        {/* Timezone Mismatches */}
+        {(() => {
+          const totalTzMismatches = locations.reduce((sum, l) => sum + (l.tz_mismatch_count ?? 0), 0)
+          return (
+            <div style={kpiItemStyle}>
+              <div style={kpiLabel}>TZ Mismatches</div>
+              <div style={{
+                ...kpiValue,
+                color: totalTzMismatches > 0 ? COLORS.amber : COLORS.green,
+              }}>
+                {totalTzMismatches}
+              </div>
+            </div>
+          )
+        })()}
       </div>
 
       {/* Location List */}
@@ -867,6 +894,25 @@ function LocationTooltip({
               </span>
             </div>
           )}
+
+          {/* Timezone mismatch warning */}
+          {(location.tz_mismatch_count ?? 0) > 0 && (
+            <div
+              className="mt-1.5 px-2 py-1 rounded"
+              style={{
+                background: `${COLORS.amber}15`,
+                border: `1px solid ${COLORS.amber}30`,
+              }}
+            >
+              <span style={{
+                fontFamily: 'DM Sans, sans-serif',
+                fontSize: 9,
+                color: COLORS.amber,
+              }}>
+                ⚠ {location.tz_mismatch_count} workstation{location.tz_mismatch_count === 1 ? '' : 's'} with timezone mismatch
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
@@ -912,8 +958,9 @@ export function WorldMapView({ locations, wanLinks, onLocationClick }: WorldMapV
   // Project locations to SVG coordinates
   const locPoints = useMemo(() =>
     locations.map(loc => {
-      const [x, y] = projectLatLon(loc.latitude, loc.longitude)
-      return { ...loc, x, y }
+      const [px, py] = projectLatLon(loc.latitude, loc.longitude)
+      const offset = getDisplayOffset(loc.code)
+      return { ...loc, x: px + offset.dx, y: py + offset.dy }
     }),
     [locations]
   )
@@ -987,7 +1034,7 @@ export function WorldMapView({ locations, wanLinks, onLocationClick }: WorldMapV
 
         <svg
           ref={svgRef}
-          viewBox="0 0 960 440"
+          viewBox="150 80 700 300"
           className="w-full h-full"
           preserveAspectRatio="xMidYMid meet"
         >
@@ -1146,6 +1193,32 @@ export function WorldMapView({ locations, wanLinks, onLocationClick }: WorldMapV
                   size={isHQ ? 5 : 3.5}
                 />
 
+                {/* Timezone mismatch badge */}
+                {(loc.tz_mismatch_count ?? 0) > 0 && (
+                  <g>
+                    <circle
+                      cx={loc.x + 6} cy={loc.y - 6}
+                      r={4}
+                      fill={COLORS.amber}
+                      stroke={COLORS.bgCard}
+                      strokeWidth="0.5"
+                      opacity="0.95"
+                    >
+                      <animate attributeName="opacity" values="0.95;0.6;0.95" dur="2s" repeatCount="indefinite" />
+                    </circle>
+                    <text
+                      x={loc.x + 6} y={loc.y - 4.5}
+                      textAnchor="middle"
+                      fill="#fff"
+                      fontSize="5"
+                      fontFamily="JetBrains Mono, monospace"
+                      fontWeight="700"
+                    >
+                      {loc.tz_mismatch_count}
+                    </text>
+                  </g>
+                )}
+
                 {/* Location code label — with smart placement */}
                 {showLabel && (
                   <text
@@ -1168,7 +1241,7 @@ export function WorldMapView({ locations, wanLinks, onLocationClick }: WorldMapV
 
           {/* Title HUD */}
           <text
-            x={16} y={20}
+            x={166} y={100}
             fill={COLORS.cyan} fontSize="10"
             fontFamily="JetBrains Mono, monospace"
             letterSpacing="3" opacity="0.8"
@@ -1176,7 +1249,7 @@ export function WorldMapView({ locations, wanLinks, onLocationClick }: WorldMapV
             BOSSVIEW :: GLOBAL INFRASTRUCTURE
           </text>
           <text
-            x={16} y={34}
+            x={166} y={114}
             fill={COLORS.textMuted} fontSize="8"
             fontFamily="JetBrains Mono, monospace"
           >
@@ -1184,7 +1257,7 @@ export function WorldMapView({ locations, wanLinks, onLocationClick }: WorldMapV
           </text>
 
           {/* Legend */}
-          <g transform="translate(800, 16)">
+          <g transform="translate(750, 96)">
             {[
               { label: 'Primary', color: COLORS.cyan, dashed: false },
               { label: 'Secondary', color: COLORS.blue, dashed: false },

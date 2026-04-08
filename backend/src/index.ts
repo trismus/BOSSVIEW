@@ -18,6 +18,7 @@ import changesRouter from './routes/changes'
 import connectorsRouter from './routes/connectors'
 import vulnerabilitiesRouter from './routes/vulnerabilities'
 import infrastructureRouter from './routes/infrastructure'
+import directoryUsersRouter from './routes/directory-users'
 
 const app = express()
 const httpServer = createServer(app)
@@ -74,6 +75,7 @@ app.use('/api/v1/changes', apiLimiter, changesRouter)
 app.use('/api/v1/connectors', apiLimiter, connectorsRouter)
 app.use('/api/v1/vulnerabilities', apiLimiter, vulnerabilitiesRouter)
 app.use('/api/v1/infrastructure', apiLimiter, infrastructureRouter)
+app.use('/api/v1/directory-users', apiLimiter, directoryUsersRouter)
 
 // 404 handler
 app.use((_req, res) => {

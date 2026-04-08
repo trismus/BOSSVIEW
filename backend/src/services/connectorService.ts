@@ -332,6 +332,40 @@ async function runSyncAsync(
                 }
               }
             }
+          } else if (entity.entityType === 'user') {
+            const data = entity.data as Record<string, unknown>
+            await client.query(
+              `INSERT INTO directory_users (
+                external_id, source, username, full_name, email, domain,
+                department, title, manager, phone, locale, is_active, last_sync_at
+              ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW())
+              ON CONFLICT (source, external_id) DO UPDATE SET
+                username = EXCLUDED.username,
+                full_name = EXCLUDED.full_name,
+                email = EXCLUDED.email,
+                domain = EXCLUDED.domain,
+                department = EXCLUDED.department,
+                title = EXCLUDED.title,
+                manager = EXCLUDED.manager,
+                phone = EXCLUDED.phone,
+                locale = EXCLUDED.locale,
+                is_active = EXCLUDED.is_active,
+                last_sync_at = NOW()`,
+              [
+                entity.externalId,
+                entity.source,
+                data.username ?? '',
+                data.full_name ?? '',
+                data.email ?? '',
+                data.domain ?? '',
+                data.department ?? '',
+                data.title ?? '',
+                data.manager ?? '',
+                data.phone ?? '',
+                data.locale ?? '',
+                data.is_active ?? true,
+              ]
+            )
           }
         }
         await client.query('COMMIT')

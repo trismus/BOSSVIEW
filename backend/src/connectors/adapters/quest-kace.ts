@@ -35,6 +35,7 @@ interface KaceConnectorConfig {
   apiVersion: string
   syncAssets: boolean
   syncMachines: boolean
+  syncUsers: boolean
   organizationName: string
 }
 
@@ -160,6 +161,7 @@ function parseConfig(raw: Record<string, unknown>): KaceConnectorConfig {
     apiVersion: (raw.apiVersion as string) ?? '14',
     syncMachines: (raw.syncMachines as boolean) ?? true,
     syncAssets: (raw.syncAssets as boolean) ?? false,
+    syncUsers: (raw.syncUsers as boolean) ?? true,
     organizationName: (raw.organizationName as string) ?? 'Default',
   }
 }
@@ -338,6 +340,146 @@ function mapAssetToEntity(asset: KaceMachineRaw): NormalizedEntity {
 }
 
 // ============================================
+// User extraction helpers
+// ============================================
+
+interface KaceUserRaw {
+  [key: string]: unknown
+}
+
+function mapKaceUserToEntity(user: KaceUserRaw): NormalizedEntity {
+  const userId = mf(user, 'ID', 'Id', 'id')
+  const username = mf(user, 'USER_NAME', 'UserName', 'user_name', 'userName')
+  const fullName = mf(user, 'FULL_NAME', 'FullName', 'full_name', 'fullName')
+  const email = mf(user, 'EMAIL', 'Email', 'email')
+  const domain = mf(user, 'DOMAIN', 'Domain', 'domain')
+  const department = mf(user, 'BUDGET_CODE', 'Department', 'department')
+  const title = mf(user, 'TITLE', 'Title', 'title')
+  const manager = mf(user, 'MANAGER', 'Manager', 'manager')
+  const phone = mf(user, 'OFFICE_PHONE', 'HOME_PHONE', 'office_phone', 'home_phone')
+  const locale = mf(user, 'LOCALE', 'Locale', 'locale')
+
+  return {
+    externalId: String(userId || username),
+    entityType: 'user',
+    source: 'quest-kace',
+    data: {
+      username: username || '',
+      full_name: fullName || username || '',
+      email: email || '',
+      domain: domain || '',
+      department: department || '',
+      title: title || '',
+      manager: manager || '',
+      phone: phone || '',
+      locale: locale || '',
+      is_active: true,
+    },
+    timestamp: new Date(),
+  }
+}
+
+async function fetchKaceUsers(
+  baseUrl: string,
+  headers: Record<string, string>,
+  logger: { info: (msg: string) => void; warn: (msg: string) => void; error: (msg: string) => void }
+): Promise<NormalizedEntity[]> {
+  // Try multiple KACE API paths — varies by KACE version
+  const apiPaths = [
+    '/api/users',
+    '/api/user',
+    '/api/users/users',
+    '/ams/shared/api/user',
+  ]
+
+  for (const path of apiPaths) {
+    try {
+      const usersUrl = new URL(`${baseUrl}${path}`)
+      usersUrl.searchParams.set('paging', 'limit 1000')
+
+      const response = await kaceFetch(usersUrl.toString(), { headers })
+
+      if (!response.ok) {
+        logger.warn(`KACE ${path} returned ${response.status}`)
+        continue
+      }
+
+      const data = await response.json() as Record<string, unknown>
+      // KACE returns users under various keys
+      const users = (data.Users ?? data.users ?? data.User ?? data.user ?? []) as KaceUserRaw[]
+      if (users.length === 0) {
+        logger.warn(`KACE ${path} returned empty result`)
+        continue
+      }
+
+      logger.info(`Fetched ${users.length} users from KACE ${path}`)
+      return users.map((u) => mapKaceUserToEntity(u))
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Unknown error'
+      logger.warn(`KACE ${path} failed: ${msg}`)
+    }
+  }
+
+  logger.warn('All KACE user API paths failed — falling back to machine-based user extraction')
+  return []
+}
+
+function extractUsersFromMachines(machines: NormalizedEntity[]): NormalizedEntity[] {
+  const userMap = new Map<string, { username: string; full_name: string; devices: string[]; domain: string }>()
+
+  for (const machine of machines) {
+    const tags = machine.data?.tags as Record<string, unknown> | undefined
+    if (!tags) continue
+
+    const username = tags.user as string | null
+    const fullName = tags.user_fullname as string | null
+    if (!username || username === 'empty' || username === 'N/A') continue
+
+    const key = username.toLowerCase()
+    const fqdn = (tags.fqdn as string) || ''
+    // Extract domain from FQDN (e.g. lidozrhl001.lidozrh.ch → lidozrh.ch)
+    const domainMatch = fqdn.match(/\.[^.]+\..+$/)
+    const domain = domainMatch ? domainMatch[0].replace(/^\./, '') : ''
+
+    if (!userMap.has(key)) {
+      userMap.set(key, { username, full_name: fullName || username, devices: [], domain })
+    }
+    userMap.get(key)!.devices.push(machine.data?.name as string || '')
+  }
+
+  return Array.from(userMap.values()).map((u) => {
+    // Generate email from full_name if it looks like a real name
+    const nameParts = u.full_name.replace(/([a-z])([A-Z])/g, '$1 $2').split(/\s+/)
+    const inferredEmail = nameParts.length >= 2 && u.domain
+      ? `${nameParts[0].toLowerCase()}.${nameParts[nameParts.length - 1].toLowerCase()}@${u.domain}`
+      : ''
+    // Determine if this is a service account or real user
+    const isServiceAccount = /^(admin|prtg|cattools|hermes|svc|service|system|backup)/i.test(u.username)
+
+    return {
+      externalId: `machine-user-${u.username.toLowerCase()}`,
+      entityType: 'user' as const,
+      source: 'quest-kace',
+      data: {
+        username: u.username,
+        full_name: u.full_name,
+        email: isServiceAccount ? '' : inferredEmail,
+        domain: u.domain,
+        department: '',
+        title: isServiceAccount ? 'Service Account' : '',
+        manager: '',
+        phone: '',
+        locale: '',
+        is_active: !isServiceAccount,
+        device_count: u.devices.length,
+        devices: u.devices.filter(Boolean).slice(0, 10),
+      },
+      timestamp: new Date(),
+    }
+  })
+}
+
+// ============================================
 // Quest KACE Adapter
 // ============================================
 
@@ -383,6 +525,11 @@ export class QuestKaceAdapter implements ConnectorAdapter {
           type: 'boolean',
           description: 'Sync KACE asset inventory (/api/asset/assets) — includes software/licenses, usually not needed',
           default: false,
+        },
+        syncUsers: {
+          type: 'boolean',
+          description: 'Sync KACE user directory (/api/users). Falls back to extracting users from machine data if API unavailable.',
+          default: true,
         },
         organizationName: {
           type: 'string',
@@ -529,6 +676,24 @@ export class QuestKaceAdapter implements ConnectorAdapter {
         logger.error(msg)
         errors.push({ message: msg })
       }
+    }
+
+    // Step 4: Fetch users (with fallback to machine-based extraction)
+    if (config.syncUsers !== false) {
+      logger.info('Fetching KACE users...')
+      let userEntities = await fetchKaceUsers(config.baseUrl, headers, logger)
+
+      if (userEntities.length === 0 && entities.length > 0) {
+        // Fallback: extract unique users from machine data
+        const machineEntities = entities.filter((e) => e.entityType === 'asset')
+        userEntities = extractUsersFromMachines(machineEntities)
+        if (userEntities.length > 0) {
+          logger.info(`Extracted ${userEntities.length} unique users from machine data (fallback)`)
+        }
+      }
+
+      entities.push(...userEntities)
+      logger.info(`User sync: ${userEntities.length} user entities`)
     }
 
     logger.info(`Sync complete: ${entities.length} entities, ${errors.length} errors`)

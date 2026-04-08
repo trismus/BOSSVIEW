@@ -1,11 +1,18 @@
 import { Router, Request, Response } from 'express'
 import { z } from 'zod'
+import multer from 'multer'
 import { authenticate } from '../middleware/auth'
 import { requireRole } from '../middleware/rbac'
 import { auditLog, writeAuditLog } from '../middleware/audit'
 import { asyncHandler } from '../middleware/errorHandler'
 import { query as queryDb } from '../db/pool'
 import { emitEvent } from '../websocket'
+import { parseConfig } from '../services/configParser'
+
+const configUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max
+})
 
 const router = Router()
 
@@ -75,7 +82,9 @@ router.get(
         COALESCE(dc.device_count, 0)::int AS device_count,
         COALESCE(dc.operational_count, 0)::int AS operational_count,
         COALESCE(dc.warning_count, 0)::int AS warning_count,
-        COALESCE(dc.critical_count, 0)::int AS critical_count
+        COALESCE(dc.critical_count, 0)::int AS critical_count,
+        COALESCE(ac.asset_count, 0)::int AS asset_count,
+        COALESCE(tzm.tz_mismatch_count, 0)::int AS tz_mismatch_count
       FROM infra_locations l
       LEFT JOIN (
         SELECT
@@ -87,6 +96,27 @@ router.get(
         FROM infra_devices
         GROUP BY location_id
       ) dc ON dc.location_id = l.id
+      LEFT JOIN (
+        SELECT
+          location->>'code' AS loc_code,
+          COUNT(*)::int AS asset_count
+        FROM assets
+        WHERE location->>'code' IS NOT NULL
+        GROUP BY location->>'code'
+      ) ac ON ac.loc_code = l.code
+      LEFT JOIN (
+        SELECT
+          a.location->>'code' AS loc_code,
+          COUNT(*)::int AS tz_mismatch_count
+        FROM assets a
+        JOIN infra_locations il ON il.code = a.location->>'code'
+        JOIN pg_timezone_names atz ON atz.name = a.tags->>'timezone'
+        JOIN pg_timezone_names ltz ON ltz.name = il.timezone
+        WHERE a.type = 'workstation'
+          AND a.tags->>'timezone' IS NOT NULL
+          AND atz.utc_offset != ltz.utc_offset
+        GROUP BY a.location->>'code'
+      ) tzm ON tzm.loc_code = l.code
       ORDER BY l.code`
     )
     res.json({ data: result.rows })
@@ -103,13 +133,22 @@ router.get(
     const result = await queryDb(
       `SELECT
         l.*,
-        COALESCE(dc.device_count, 0)::int AS device_count
+        COALESCE(dc.device_count, 0)::int AS device_count,
+        COALESCE(ac.asset_count, 0)::int AS asset_count
       FROM infra_locations l
       LEFT JOIN (
         SELECT location_id, COUNT(*)::int AS device_count
         FROM infra_devices
         GROUP BY location_id
       ) dc ON dc.location_id = l.id
+      LEFT JOIN (
+        SELECT
+          location->>'code' AS loc_code,
+          COUNT(*)::int AS asset_count
+        FROM assets
+        WHERE location->>'code' IS NOT NULL
+        GROUP BY location->>'code'
+      ) ac ON ac.loc_code = l.code
       WHERE l.id = $1`,
       [req.params.id]
     )
@@ -281,6 +320,180 @@ router.get(
       ORDER BY wl.created_at`
     )
     res.json({ data: result.rows })
+  })
+)
+
+// ============================================
+// POST /devices — create device (admin/engineer)
+// ============================================
+router.post(
+  '/devices',
+  requireRole('admin', 'engineer'),
+  auditLog('infra_device'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const createDeviceSchema = z.object({
+      location_id: z.string().uuid(),
+      name: z.string().min(1).max(100),
+      device_type: z.enum(DEVICE_TYPES),
+      model: z.string().max(100).optional().nullable(),
+      manufacturer: z.string().max(100).optional().nullable(),
+      ip_address: z.string().optional().nullable(),
+      vlan_id: z.string().uuid().optional().nullable(),
+      topo_x: z.coerce.number().min(0).max(9999).optional(),
+      topo_y: z.coerce.number().min(0).max(9999).optional(),
+      status: z.enum(DEVICE_STATUSES).default('operational'),
+    })
+
+    const data = createDeviceSchema.parse(req.body)
+
+    const result = await queryDb(
+      `INSERT INTO infra_devices (location_id, name, device_type, model, manufacturer, ip_address, vlan_id, topo_x, topo_y, status)
+       VALUES ($1, $2, $3, $4, $5, $6::inet, $7, $8, $9, $10) RETURNING *`,
+      [data.location_id, data.name, data.device_type, data.model ?? null, data.manufacturer ?? null,
+       data.ip_address ?? null, data.vlan_id ?? null, data.topo_x ?? null, data.topo_y ?? null, data.status]
+    )
+
+    await writeAuditLog({
+      userId: req.user!.sub,
+      action: 'CREATE',
+      entityType: 'infra_device',
+      entityId: (result.rows[0] as Record<string, unknown>).id as string,
+      oldValue: null,
+      newValue: result.rows[0],
+      ipAddress: (req.ip as string | undefined) ?? req.socket.remoteAddress ?? null,
+      userAgent: req.headers['user-agent'] ?? null,
+    })
+
+    emitEvent('asset:updated', { entity: 'infra_devices', data: result.rows[0] })
+    res.status(201).json({ data: result.rows[0] })
+  })
+)
+
+// ============================================
+// DELETE /devices/:id — delete device (admin/engineer)
+// ============================================
+router.delete(
+  '/devices/:id',
+  requireRole('admin', 'engineer'),
+  auditLog('infra_device'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const deviceId = req.params.id as string
+
+    // Delete associated links first
+    await queryDb(
+      'DELETE FROM infra_device_links WHERE from_device = $1 OR to_device = $1',
+      [deviceId]
+    )
+
+    const result = await queryDb(
+      'DELETE FROM infra_devices WHERE id = $1 RETURNING *',
+      [deviceId]
+    )
+
+    if (result.rows.length === 0) {
+      res.status(404).json({ error: 'Device not found', code: 'NOT_FOUND' })
+      return
+    }
+
+    await writeAuditLog({
+      userId: req.user!.sub,
+      action: 'DELETE',
+      entityType: 'infra_device',
+      entityId: deviceId,
+      oldValue: result.rows[0],
+      newValue: null,
+      ipAddress: (req.ip as string | undefined) ?? req.socket.remoteAddress ?? null,
+      userAgent: req.headers['user-agent'] ?? null,
+    })
+
+    emitEvent('asset:updated', { entity: 'infra_devices', data: result.rows[0] })
+    res.json({ data: result.rows[0], message: 'Device deleted' })
+  })
+)
+
+// ============================================
+// POST /device-links — create device link (admin/engineer)
+// ============================================
+router.post(
+  '/device-links',
+  requireRole('admin', 'engineer'),
+  auditLog('infra_device_link'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const LINK_TYPES = ['trunk', 'access', 'ha', 'vpc', 'storage', 'management'] as const
+    const createLinkSchema = z.object({
+      from_device: z.string().uuid(),
+      to_device: z.string().uuid(),
+      from_port: z.string().max(30).optional().nullable(),
+      to_port: z.string().max(30).optional().nullable(),
+      link_type: z.enum(LINK_TYPES).default('trunk'),
+      speed: z.string().max(10).optional().nullable(),
+      status: z.enum(DEVICE_STATUSES).default('operational'),
+    })
+
+    const data = createLinkSchema.parse(req.body)
+
+    // Prevent self-links
+    if (data.from_device === data.to_device) {
+      res.status(400).json({ error: 'Cannot link device to itself', code: 'SELF_LINK' })
+      return
+    }
+
+    const result = await queryDb(
+      `INSERT INTO infra_device_links (from_device, to_device, from_port, to_port, link_type, speed, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [data.from_device, data.to_device, data.from_port ?? null, data.to_port ?? null,
+       data.link_type, data.speed ?? null, data.status]
+    )
+
+    await writeAuditLog({
+      userId: req.user!.sub,
+      action: 'CREATE',
+      entityType: 'infra_device_link',
+      entityId: (result.rows[0] as Record<string, unknown>).id as string,
+      oldValue: null,
+      newValue: result.rows[0],
+      ipAddress: (req.ip as string | undefined) ?? req.socket.remoteAddress ?? null,
+      userAgent: req.headers['user-agent'] ?? null,
+    })
+
+    emitEvent('asset:updated', { entity: 'infra_device_links' })
+    res.status(201).json({ data: result.rows[0] })
+  })
+)
+
+// ============================================
+// DELETE /device-links/:id — delete device link (admin/engineer)
+// ============================================
+router.delete(
+  '/device-links/:id',
+  requireRole('admin', 'engineer'),
+  auditLog('infra_device_link'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const linkId = req.params.id as string
+
+    const result = await queryDb(
+      'DELETE FROM infra_device_links WHERE id = $1 RETURNING *',
+      [linkId]
+    )
+
+    if (result.rows.length === 0) {
+      res.status(404).json({ error: 'Link not found', code: 'NOT_FOUND' })
+      return
+    }
+
+    await writeAuditLog({
+      userId: req.user!.sub,
+      action: 'DELETE',
+      entityType: 'infra_device_link',
+      entityId: linkId,
+      oldValue: result.rows[0],
+      newValue: null,
+      ipAddress: (req.ip as string | undefined) ?? req.socket.remoteAddress ?? null,
+      userAgent: req.headers['user-agent'] ?? null,
+    })
+
+    emitEvent('asset:updated', { entity: 'infra_device_links' })
+    res.json({ data: result.rows[0], message: 'Link deleted' })
   })
 )
 
@@ -499,6 +712,84 @@ router.patch(
 )
 
 // ============================================
+// PATCH /devices/:id/rack — update rack assignment (drag & drop)
+// ============================================
+router.patch(
+  '/devices/:id/rack',
+  requireRole('admin', 'engineer'),
+  auditLog('infra_device'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const rackAssignSchema = z.object({
+      rack_id: z.string().uuid().nullable(),
+      rack_u_start: z.coerce.number().int().min(1).max(50).nullable(),
+      rack_u_height: z.coerce.number().int().min(1).max(10).default(1),
+    })
+
+    const data = rackAssignSchema.parse(req.body)
+    const deviceId = req.params.id as string
+
+    // Get old value
+    const oldResult = await queryDb(
+      'SELECT * FROM infra_devices WHERE id = $1',
+      [deviceId]
+    )
+    if (oldResult.rows.length === 0) {
+      res.status(404).json({ error: 'Device not found', code: 'NOT_FOUND' })
+      return
+    }
+
+    // Collision check: no other device at the same U position in the same rack
+    if (data.rack_id && data.rack_u_start) {
+      const collision = await queryDb(
+        `SELECT id, name FROM infra_devices
+         WHERE rack_id = $1 AND id != $2
+         AND rack_u_start < $3 + $4
+         AND rack_u_start + rack_u_height > $3`,
+        [data.rack_id, deviceId, data.rack_u_start, data.rack_u_height]
+      )
+      if (collision.rows.length > 0) {
+        const collidingDevice = collision.rows[0] as Record<string, unknown>
+        res.status(409).json({
+          error: `Rack position occupied by ${collidingDevice.name}`,
+          code: 'RACK_COLLISION',
+        })
+        return
+      }
+    }
+
+    const updated = await queryDb(
+      `UPDATE infra_devices
+       SET rack_id = $2, rack_u_start = $3, rack_u_height = $4, updated_at = NOW()
+       WHERE id = $1
+       RETURNING *`,
+      [deviceId, data.rack_id, data.rack_u_start, data.rack_u_height]
+    )
+
+    await writeAuditLog({
+      userId: req.user!.sub,
+      action: 'UPDATE',
+      entityType: 'infra_device',
+      entityId: deviceId,
+      oldValue: {
+        rack_id: (oldResult.rows[0] as Record<string, unknown>).rack_id,
+        rack_u_start: (oldResult.rows[0] as Record<string, unknown>).rack_u_start,
+        rack_u_height: (oldResult.rows[0] as Record<string, unknown>).rack_u_height,
+      },
+      newValue: {
+        rack_id: data.rack_id,
+        rack_u_start: data.rack_u_start,
+        rack_u_height: data.rack_u_height,
+      },
+      ipAddress: (req.ip as string | undefined) ?? req.socket.remoteAddress ?? null,
+      userAgent: req.headers['user-agent'] ?? null,
+    })
+
+    emitEvent('asset:updated', { entity: 'infra_devices', data: updated.rows[0] })
+    res.json({ data: updated.rows[0] })
+  })
+)
+
+// ============================================
 // GET /vlans?location_id= — VLANs for a location
 // ============================================
 router.get(
@@ -616,6 +907,107 @@ router.get(
         locations: locationResult.rows[0],
       },
     })
+  })
+)
+
+// ============================================
+// POST /devices/:id/config — upload config file
+// ============================================
+router.post(
+  '/devices/:id/config',
+  requireRole('admin', 'engineer'),
+  configUpload.single('config'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const deviceId = req.params.id as string
+
+    // Verify device exists
+    const device = await queryDb('SELECT * FROM infra_devices WHERE id = $1', [deviceId])
+    if (device.rows.length === 0) {
+      res.status(404).json({ error: 'Device not found', code: 'NOT_FOUND' })
+      return
+    }
+
+    if (!req.file) {
+      res.status(400).json({ error: 'No config file provided', code: 'NO_FILE' })
+      return
+    }
+
+    const rawConfig = req.file.buffer.toString('utf-8')
+    const parsed = parseConfig(rawConfig)
+
+    // Store config in history
+    await queryDb(
+      `INSERT INTO infra_device_configs (device_id, config_type, config_raw, config_parsed, file_name, file_size, uploaded_by)
+       VALUES ($1, 'running-config', $2, $3, $4, $5, $6)`,
+      [deviceId, rawConfig, JSON.stringify(parsed), req.file.originalname, req.file.size, req.user!.sub]
+    )
+
+    // Update device's current config_data
+    await queryDb(
+      'UPDATE infra_devices SET config_data = $2, updated_at = NOW() WHERE id = $1',
+      [deviceId, JSON.stringify(parsed)]
+    )
+
+    // Audit log
+    await writeAuditLog({
+      userId: req.user!.sub,
+      action: 'CREATE',
+      entityType: 'infra_device_config',
+      entityId: deviceId,
+      oldValue: null,
+      newValue: {
+        fileName: req.file.originalname,
+        fileSize: req.file.size,
+        vlans: parsed.vlans.length,
+        interfaces: parsed.interfaces.length,
+      },
+      ipAddress: (req.ip as string | undefined) ?? req.socket.remoteAddress ?? null,
+      userAgent: req.headers['user-agent'] ?? null,
+    })
+
+    emitEvent('asset:updated', { entity: 'infra_device_config', deviceId })
+    res.status(201).json({ data: { parsed, fileName: req.file.originalname } })
+  })
+)
+
+// ============================================
+// GET /devices/:id/configs — config history
+// ============================================
+router.get(
+  '/devices/:id/configs',
+  requireRole('admin', 'engineer', 'manager', 'auditor', 'readonly'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const result = await queryDb(
+      `SELECT id, config_type, file_name, file_size,
+              (config_parsed->>'hostname') as hostname,
+              jsonb_array_length(COALESCE(config_parsed->'vlans', '[]'::jsonb)) as vlan_count,
+              jsonb_array_length(COALESCE(config_parsed->'interfaces', '[]'::jsonb)) as interface_count,
+              uploaded_by, created_at
+       FROM infra_device_configs
+       WHERE device_id = $1
+       ORDER BY created_at DESC`,
+      [req.params.id]
+    )
+    res.json({ data: result.rows })
+  })
+)
+
+// ============================================
+// GET /device-configs/:id — single config detail
+// ============================================
+router.get(
+  '/device-configs/:id',
+  requireRole('admin', 'engineer', 'manager', 'auditor', 'readonly'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const result = await queryDb(
+      'SELECT * FROM infra_device_configs WHERE id = $1',
+      [req.params.id]
+    )
+    if (result.rows.length === 0) {
+      res.status(404).json({ error: 'Config not found', code: 'NOT_FOUND' })
+      return
+    }
+    res.json({ data: result.rows[0] })
   })
 )
 

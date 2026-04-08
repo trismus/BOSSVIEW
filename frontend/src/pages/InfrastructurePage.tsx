@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { PageHelpBanner } from '../components/PageHelpBanner'
 import { useInfraMap } from '../hooks/useInfraMap'
 import { WorldMapView } from '../components/infra/WorldMapView'
 import { NetworkTopologyView } from '../components/infra/NetworkTopologyView'
@@ -150,9 +151,11 @@ export function InfrastructurePage() {
         return (
           <NetworkTopologyView
             siteName={`${topology.location.name} · ${topology.location.code}`}
+            locationId={topology.location.id}
             vlans={topology.vlans}
             devices={topology.devices}
             links={topology.links}
+            onRefresh={() => loadTopology(topology.location.id)}
           />
         )
       case 'rack':
@@ -161,6 +164,9 @@ export function InfrastructurePage() {
           <RackView
             siteName={`${topology.location.name} · ${topology.location.code}`}
             racks={topology.racks}
+            devices={topology.devices}
+            locationId={topology.location.id}
+            onRefresh={() => loadTopology(topology.location.id)}
           />
         )
       default:
@@ -178,6 +184,13 @@ export function InfrastructurePage() {
         height: 'calc(100vh - 64px)',
       }}
     >
+      <PageHelpBanner
+        pageKey="infrastructure"
+        title="Infrastructure Navigation"
+        description="Click a location on the map to view its topology. Right-click to add devices. Press 'L' for link mode."
+        learnMoreSection="infrastructure"
+      />
+
       {/* ── Top Bar ── */}
       <div
         className="flex items-center justify-between px-4 py-2 shrink-0"

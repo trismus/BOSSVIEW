@@ -122,6 +122,7 @@ async function syncConnector(connector: ConnectorConfig): Promise<void> {
     }
 
     const result = await adapter.sync(context)
+    logger.info(`Engine received ${result.entities.length} entities from adapter`)
 
     const hasErrors = result.metadata.errors.length > 0
     const hasEntities = result.entities.length > 0
@@ -129,11 +130,17 @@ async function syncConnector(connector: ConnectorConfig): Promise<void> {
 
     // Persist entities to the database
     if (result.entities.length > 0) {
+      const typeCounts: Record<string, number> = {}
+      for (const e of result.entities) {
+        typeCounts[e.entityType] = (typeCounts[e.entityType] || 0) + 1
+      }
+      logger.info(`Entity types: ${JSON.stringify(typeCounts)}`)
+
       for (const entity of result.entities) {
         try {
           if (entity.entityType === 'asset') {
             const data = entity.data as Record<string, unknown>
-            await query(
+            const assetResult = await query<{ id: string }>(
               `INSERT INTO assets (
                 external_id, source, name, type, status, lifecycle_stage,
                 criticality, ip_address, os, location, hardware_info,
@@ -152,7 +159,8 @@ async function syncConnector(connector: ConnectorConfig): Promise<void> {
                 hardware_info = EXCLUDED.hardware_info,
                 tags = EXCLUDED.tags,
                 custom_fields = EXCLUDED.custom_fields,
-                updated_at = NOW()`,
+                updated_at = NOW()
+              RETURNING id`,
               [
                 data.external_id ?? entity.externalId,
                 entity.source,
@@ -167,6 +175,65 @@ async function syncConnector(connector: ConnectorConfig): Promise<void> {
                 JSON.stringify(data.hardware_info ?? {}),
                 JSON.stringify(data.tags ?? []),
                 JSON.stringify(data.custom_fields ?? {}),
+              ]
+            )
+
+            // Link asset to directory user if tags contain a user reference
+            const tags = data.tags as Record<string, unknown> | undefined
+            if (assetResult.rows.length > 0 && tags && tags.user) {
+              const assetId = assetResult.rows[0].id
+              const username = String(tags.user).toLowerCase()
+              try {
+                const userResult = await query<{ id: string }>(
+                  'SELECT id FROM directory_users WHERE LOWER(username) = $1 AND source = $2',
+                  [username, entity.source]
+                )
+                if (userResult.rows.length > 0) {
+                  await query(
+                    `INSERT INTO asset_user_assignments (asset_id, user_id, assignment_type, last_seen_at, source)
+                     VALUES ($1, $2, 'primary_user', NOW(), $3)
+                     ON CONFLICT (asset_id, user_id, assignment_type) DO UPDATE SET last_seen_at = NOW()`,
+                    [assetId, userResult.rows[0].id, entity.source]
+                  )
+                }
+              } catch (linkErr) {
+                const linkMsg = linkErr instanceof Error ? linkErr.message : 'Unknown link error'
+                logger.warn(`Failed to link user '${username}' to asset: ${linkMsg}`)
+              }
+            }
+          } else if (entity.entityType === 'user') {
+            const data = entity.data as Record<string, unknown>
+            logger.info(`Persisting user: ${data.username} (extId: ${entity.externalId})`)
+            await query(
+              `INSERT INTO directory_users (
+                external_id, source, username, full_name, email, domain,
+                department, title, manager, phone, locale, is_active, last_sync_at
+              ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW())
+              ON CONFLICT (source, external_id) DO UPDATE SET
+                username = EXCLUDED.username,
+                full_name = EXCLUDED.full_name,
+                email = EXCLUDED.email,
+                domain = EXCLUDED.domain,
+                department = EXCLUDED.department,
+                title = EXCLUDED.title,
+                manager = EXCLUDED.manager,
+                phone = EXCLUDED.phone,
+                locale = EXCLUDED.locale,
+                is_active = EXCLUDED.is_active,
+                last_sync_at = NOW()`,
+              [
+                entity.externalId,
+                entity.source,
+                data.username ?? '',
+                data.full_name ?? '',
+                data.email ?? '',
+                data.domain ?? '',
+                data.department ?? '',
+                data.title ?? '',
+                data.manager ?? '',
+                data.phone ?? '',
+                data.locale ?? '',
+                data.is_active ?? true,
               ]
             )
           } else if (entity.entityType === 'vulnerability') {

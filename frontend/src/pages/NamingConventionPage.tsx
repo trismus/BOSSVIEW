@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from 'react'
+import { PageHelpBanner } from '../components/PageHelpBanner'
 
 // ─── Dark Trace Color Palette ────────────────────────────────
 const COLORS = {
@@ -413,6 +414,13 @@ export function NamingConventionPage() {
 
   return (
     <div className="space-y-8">
+      <PageHelpBanner
+        pageKey="naming-convention"
+        title="Naming Convention Tool"
+        description="Enter a device name to parse it, or use the generator to create standardized names."
+        learnMoreSection="naming-convention"
+      />
+
       {/* Page header */}
       <div>
         <h1 className="text-2xl font-bold text-slate-100">Naming Convention</h1>

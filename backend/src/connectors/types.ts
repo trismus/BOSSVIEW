@@ -3,7 +3,7 @@
  */
 
 export type ConnectorCategory = 'itsm' | 'monitoring' | 'cmdb' | 'security' | 'import' | 'workflow'
-export type EntityType = 'asset' | 'incident' | 'change' | 'vulnerability' | 'metric'
+export type EntityType = 'asset' | 'incident' | 'change' | 'vulnerability' | 'metric' | 'user'
 
 export interface ConnectorAdapter {
   readonly id: string

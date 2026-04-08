@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, type FormEvent } from 'react'
+import { PageHelpBanner } from '../components/PageHelpBanner'
 import { apiFetch } from '../api/client'
-import type { Asset, AssetVulnerability, PaginatedResponse } from '../types'
+import type { Asset, AssetVulnerability, AssetUserAssignment, PaginatedResponse } from '../types'
 
 type AssetFormData = {
   name: string
@@ -133,9 +134,11 @@ export function AssetsPage() {
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null)
   const [form, setForm] = useState<AssetFormData>(INITIAL_FORM)
   const [isSaving, setIsSaving] = useState(false)
-  const [activeTab, setActiveTab] = useState<'general' | 'location' | 'tags' | 'application' | 'vulnerabilities'>('general')
+  const [activeTab, setActiveTab] = useState<'general' | 'location' | 'tags' | 'application' | 'vulnerabilities' | 'users'>('general')
   const [assetVulns, setAssetVulns] = useState<AssetVulnerability[]>([])
   const [isLoadingVulns, setIsLoadingVulns] = useState(false)
+  const [assetUsers, setAssetUsers] = useState<AssetUserAssignment[]>([])
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false)
 
   const fetchAssets = useCallback(async () => {
     setIsLoading(true)
@@ -158,7 +161,7 @@ export function AssetsPage() {
 
   useEffect(() => { fetchAssets() }, [fetchAssets])
 
-  const openCreateDialog = () => { setEditingAsset(null); setForm(INITIAL_FORM); setActiveTab('general'); setAssetVulns([]); setShowDialog(true) }
+  const openCreateDialog = () => { setEditingAsset(null); setForm(INITIAL_FORM); setActiveTab('general'); setAssetVulns([]); setAssetUsers([]); setShowDialog(true) }
   const openEditDialog = async (asset: Asset) => {
     setEditingAsset(asset)
     setForm(assetToForm(asset))
@@ -174,6 +177,17 @@ export function AssetsPage() {
       setAssetVulns([])
     } finally {
       setIsLoadingVulns(false)
+    }
+    // Fetch assigned users for this asset
+    setIsLoadingUsers(true)
+    try {
+      const usersData = await apiFetch<{ data: AssetUserAssignment[] }>(`/assets/${asset.id}/users`)
+      setAssetUsers(usersData.data ?? [])
+    } catch (err) {
+      console.warn('Failed to load asset users:', err)
+      setAssetUsers([])
+    } finally {
+      setIsLoadingUsers(false)
     }
   }
 
@@ -248,6 +262,13 @@ export function AssetsPage() {
 
   return (
     <div className="space-y-6">
+      <PageHelpBanner
+        pageKey="assets"
+        title="Asset Management"
+        description="Import assets via CSV or sync from KACE/JAMF connectors. Click any asset for details."
+        learnMoreSection="assets"
+      />
+
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div className="flex flex-wrap gap-3">
@@ -356,10 +377,10 @@ export function AssetsPage() {
 
               {/* Tabs */}
               <div className="flex gap-1 mb-6 border-b border-slate-700 overflow-x-auto">
-                {(['general', 'location', 'tags', 'application', ...(editingAsset ? ['vulnerabilities' as const] : [])] as const).map((tab) => (
+                {(['general', 'location', 'tags', 'application', ...(editingAsset ? ['vulnerabilities' as const, 'users' as const] : [])] as const).map((tab) => (
                   <button key={tab} onClick={() => setActiveTab(tab)}
                     className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === tab ? 'border-blue-500 text-blue-400' : 'border-transparent text-slate-400 hover:text-slate-200'}`}>
-                    {tab === 'general' ? 'General' : tab === 'location' ? 'Location & Hardware' : tab === 'tags' ? 'Tags & Support' : tab === 'application' ? 'Application' : `Vulnerabilities (${assetVulns.length})`}
+                    {tab === 'general' ? 'General' : tab === 'location' ? 'Location & Hardware' : tab === 'tags' ? 'Tags & Support' : tab === 'application' ? 'Application' : tab === 'vulnerabilities' ? `Vulnerabilities (${assetVulns.length})` : `Users (${assetUsers.length})`}
                   </button>
                 ))}
               </div>
@@ -546,6 +567,61 @@ export function AssetsPage() {
                           </table>
                         </div>
                       </>
+                    )}
+                  </>
+                )}
+
+                {/* Users Tab (read-only, only in edit mode) */}
+                {activeTab === 'users' && editingAsset && (
+                  <>
+                    {isLoadingUsers ? (
+                      <div className="flex items-center justify-center py-8">
+                        <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                        <span className="ml-2 text-sm text-slate-400">Loading users...</span>
+                      </div>
+                    ) : assetUsers.length === 0 ? (
+                      <div className="text-center py-8 text-slate-500 text-sm">No users assigned to this asset</div>
+                    ) : (
+                      <div className="border border-slate-700 rounded-lg overflow-hidden">
+                        <table className="w-full text-xs">
+                          <thead>
+                            <tr className="border-b border-slate-700 text-slate-400 bg-slate-800/50">
+                              <th className="text-left px-3 py-2 font-medium">Username</th>
+                              <th className="text-left px-3 py-2 font-medium">Full Name</th>
+                              <th className="text-left px-3 py-2 font-medium">Email</th>
+                              <th className="text-left px-3 py-2 font-medium">Department</th>
+                              <th className="text-left px-3 py-2 font-medium">Role</th>
+                              <th className="text-left px-3 py-2 font-medium">Last Seen</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {assetUsers.map((u, i) => {
+                              const roleColors: Record<string, string> = {
+                                primary_user: 'bg-blue-500/20 text-blue-400',
+                                last_user: 'bg-slate-500/20 text-slate-400',
+                                owner: 'bg-purple-500/20 text-purple-400',
+                                admin: 'bg-amber-500/20 text-amber-400',
+                              }
+                              return (
+                                <tr key={`${u.username}-${u.assignment_type}`} className={`border-b border-slate-700/50 ${i % 2 === 0 ? 'bg-slate-800/40' : ''}`}>
+                                  <td className="px-3 py-2 font-medium text-slate-200">{u.username}</td>
+                                  <td className="px-3 py-2 text-slate-300">{u.full_name || '-'}</td>
+                                  <td className="px-3 py-2 text-slate-400">{u.email || '-'}</td>
+                                  <td className="px-3 py-2 text-slate-400">{u.department || '-'}</td>
+                                  <td className="px-3 py-2">
+                                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${roleColors[u.assignment_type] ?? 'bg-slate-500/20 text-slate-400'}`}>
+                                      {u.assignment_type.replace(/_/g, ' ')}
+                                    </span>
+                                  </td>
+                                  <td className="px-3 py-2 text-slate-500">
+                                    {u.last_seen_at ? new Date(u.last_seen_at).toLocaleString('de-CH', { dateStyle: 'medium', timeStyle: 'short' }) : '-'}
+                                  </td>
+                                </tr>
+                              )
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
                     )}
                   </>
                 )}

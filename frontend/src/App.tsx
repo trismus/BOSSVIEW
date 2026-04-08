@@ -11,6 +11,8 @@ import { ConnectorsPage } from './pages/ConnectorsPage'
 import { VulnerabilitiesPage } from './pages/VulnerabilitiesPage'
 import { InfrastructurePage } from './pages/InfrastructurePage'
 import { NamingConventionPage } from './pages/NamingConventionPage'
+import { DirectoryUsersPage } from './pages/DirectoryUsersPage'
+import { HelpPage } from './pages/HelpPage'
 
 export function App() {
   return (
@@ -89,11 +91,31 @@ export function App() {
             }
           />
           <Route
+            path="/directory"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <DirectoryUsersPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/naming"
             element={
               <ProtectedRoute>
                 <Layout>
                   <NamingConventionPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/help"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <HelpPage />
                 </Layout>
               </ProtectedRoute>
             }
