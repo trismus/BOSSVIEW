@@ -24,7 +24,7 @@ export interface Asset {
   os: string | null
   location: Record<string, unknown>
   hardware_info: Record<string, unknown>
-  tags: unknown[]
+  tags: Record<string, unknown>
   custom_fields: Record<string, unknown>
   created_by: string | null
   created_at: string

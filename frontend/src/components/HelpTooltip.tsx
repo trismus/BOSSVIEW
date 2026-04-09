@@ -20,6 +20,14 @@ export function HelpTooltip({ topic, children, placement = 'top' }: HelpTooltipP
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const navigate = useNavigate()
 
+  // Cleanup pending timeout on unmount — declared before any conditional return
+  // to keep hook call order stable (Rules of Hooks).
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
+    }
+  }, [])
+
   const entry = helpTexts[topic]
   if (!entry) {
     console.warn(`HelpTooltip: unknown topic "${topic}"`)
@@ -43,12 +51,6 @@ export function HelpTooltip({ topic, children, placement = 'top' }: HelpTooltipP
       navigate(`/help?section=${entry.helpSection}`)
     }
   }
-
-  useEffect(() => {
-    return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current)
-    }
-  }, [])
 
   return (
     <span className="inline-flex items-center gap-1.5 relative">

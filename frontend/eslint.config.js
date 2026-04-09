@@ -27,6 +27,16 @@ export default tseslint.config(
     },
     rules: {
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+      // Convention: `_foo` means "intentionally unused" (function arg, destructured, caught error).
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+          destructuredArrayIgnorePattern: '^_',
+        },
+      ],
     },
   },
   prettier,

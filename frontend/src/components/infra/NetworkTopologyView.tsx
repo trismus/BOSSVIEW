@@ -1294,11 +1294,16 @@ export function NetworkTopologyView({
     link: InfraDeviceLink; x: number; y: number
   } | null>(null)
 
-  // Build a device map for link lookups
-  const deviceMap = new Map<string, InfraDevice>()
-  for (const d of devices) {
-    deviceMap.set(d.id, d)
-  }
+  // Build a device map for link lookups. Memoized so the identity is stable
+  // across renders — otherwise every useCallback below that depends on it
+  // would be rebuilt on each render (react-hooks/exhaustive-deps).
+  const deviceMap = useMemo(() => {
+    const map = new Map<string, InfraDevice>()
+    for (const d of devices) {
+      map.set(d.id, d)
+    }
+    return map
+  }, [devices])
 
   // Get effective position (override from drag or original)
   const getPos = useCallback((device: InfraDevice) => {
