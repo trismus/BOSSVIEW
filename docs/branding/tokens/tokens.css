@@ -1,0 +1,309 @@
+/**
+ * SKYNEX — Design Tokens
+ * Aesthetic: Tactical Command / Mission Control
+ * Version: 1.0.0
+ *
+ * Import in your root stylesheet:
+ *   @import './tokens.css';
+ *
+ * All tokens are exposed as CSS custom properties on :root
+ * and can be used anywhere in your stylesheet.
+ */
+
+:root {
+  /* ============================================================
+     COLOR — SURFACE HIERARCHY (Nesting Depth Principle)
+     ============================================================ */
+  --skx-surface: #0b0e14;
+  --skx-surface-container-lowest: #000000;
+  --skx-surface-container-low: #10131a;
+  --skx-surface-container: #161a21;
+  --skx-surface-container-high: #1c2028;
+
+  /* ============================================================
+     COLOR — PRIMARY / NEON ACCENT
+     ============================================================ */
+  --skx-primary: #99f7ff;
+  --skx-primary-container: #00f1fe;
+  --skx-on-primary: #001f22;
+
+  /* ============================================================
+     COLOR — STATUS
+     ============================================================ */
+  --skx-error: #ff716c;
+  --skx-warning: #ffd16f;
+  --skx-success: #7cffa8;
+  --skx-info: #99f7ff;
+
+  /* ============================================================
+     COLOR — TEXT
+     ============================================================ */
+  --skx-on-surface: #e4e6eb;
+  --skx-on-surface-variant: #9ca3af;
+  --skx-on-surface-dim: #6b7280;
+
+  /* ============================================================
+     COLOR — OUTLINE (ghost borders — use at 15% opacity)
+     ============================================================ */
+  --skx-outline-variant: #45484f;
+  --skx-outline-variant-ghost: rgba(69, 72, 79, 0.15);
+
+  /* ============================================================
+     GRADIENT — SIGNATURE GLOW
+     ============================================================ */
+  --skx-gradient-primary: linear-gradient(135deg, #99f7ff 0%, #00f1fe 100%);
+
+  /* ============================================================
+     TYPOGRAPHY — FONT FAMILIES
+     ============================================================ */
+  --skx-font-display: "Space Grotesk", sans-serif;
+  --skx-font-body: "Inter", -apple-system, "Helvetica Neue", sans-serif;
+  --skx-font-mono: "JetBrains Mono", "SF Mono", Consolas, monospace;
+
+  /* ============================================================
+     TYPOGRAPHY — FONT WEIGHTS
+     ============================================================ */
+  --skx-font-weight-regular: 400;
+  --skx-font-weight-medium: 500;
+  --skx-font-weight-semibold: 600;
+  --skx-font-weight-bold: 700;
+
+  /* ============================================================
+     TYPOGRAPHY — TYPE SCALE
+     ============================================================ */
+  --skx-text-display-lg-size: 57px;
+  --skx-text-display-lg-line: 64px;
+  --skx-text-display-md-size: 45px;
+  --skx-text-display-md-line: 52px;
+  --skx-text-display-sm-size: 36px;
+  --skx-text-display-sm-line: 44px;
+
+  --skx-text-headline-lg-size: 32px;
+  --skx-text-headline-lg-line: 40px;
+  --skx-text-headline-md-size: 28px;
+  --skx-text-headline-md-line: 36px;
+  --skx-text-headline-sm-size: 24px;
+  --skx-text-headline-sm-line: 32px;
+
+  --skx-text-title-lg-size: 22px;
+  --skx-text-title-lg-line: 28px;
+  --skx-text-title-md-size: 16px;
+  --skx-text-title-md-line: 24px;
+  --skx-text-title-sm-size: 14px;
+  --skx-text-title-sm-line: 20px;
+
+  --skx-text-body-lg-size: 16px;
+  --skx-text-body-lg-line: 24px;
+  --skx-text-body-md-size: 14px;
+  --skx-text-body-md-line: 20px;
+  --skx-text-body-sm-size: 12px;
+  --skx-text-body-sm-line: 16px;
+
+  --skx-text-label-md-size: 12px;
+  --skx-text-label-md-line: 16px;
+
+  /* ============================================================
+     SPACING (base 4px)
+     ============================================================ */
+  --skx-space-0: 0;
+  --skx-space-1: 4px;
+  --skx-space-2: 8px;
+  --skx-space-3: 12px;
+  --skx-space-4: 16px;
+  --skx-space-5: 20px;
+  --skx-space-6: 24px;
+  --skx-space-8: 32px;
+  --skx-space-10: 40px;
+  --skx-space-12: 48px;
+  --skx-space-16: 64px;
+
+  /* ============================================================
+     RADIUS — never exceed xl (12px)
+     ============================================================ */
+  --skx-radius-none: 0;
+  --skx-radius-xs: 2px;
+  --skx-radius-sm: 2px;
+  --skx-radius-md: 6px;
+  --skx-radius-lg: 10px;
+  --skx-radius-xl: 12px;
+
+  /* ============================================================
+     ELEVATION — ambient shadows
+     Shadows are darkened tints of the background, never neutral grey.
+     ============================================================ */
+  --skx-elevation-sm: 0px 2px 8px rgba(0, 0, 0, 0.3);
+  --skx-elevation-md: 0px 6px 16px rgba(0, 0, 0, 0.35);
+  --skx-elevation-lg: 0px 12px 32px rgba(0, 0, 0, 0.4);
+  --skx-elevation-xl: 0px 24px 48px rgba(0, 0, 0, 0.45);
+
+  /* ============================================================
+     GLOW — status indicator luminescence
+     ============================================================ */
+  --skx-glow-primary: 0 0 16px rgba(0, 241, 254, 0.4);
+  --skx-glow-error: 0 0 12px rgba(255, 113, 108, 0.3);
+  --skx-glow-warning: 0 0 12px rgba(255, 209, 111, 0.3);
+  --skx-glow-success: 0 0 12px rgba(124, 255, 168, 0.3);
+
+  /* ============================================================
+     GLASS — backdrop blur for floating elements
+     ============================================================ */
+  --skx-blur-glass: 20px;
+  --skx-opacity-glass-surface: 0.6;
+}
+
+/* ============================================================
+   BASE — apply the Deep Space foundation
+   ============================================================ */
+html,
+body {
+  background: var(--skx-surface);
+  color: var(--skx-on-surface);
+  font-family: var(--skx-font-body);
+  font-size: var(--skx-text-body-md-size);
+  line-height: var(--skx-text-body-md-line);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ============================================================
+   UTILITY — data / technical labels always monospaced
+   ============================================================ */
+.skx-data,
+.skx-ip,
+.skx-timestamp,
+.skx-id {
+  font-family: var(--skx-font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+   COMPONENT HELPERS
+   ============================================================ */
+
+/* Glassmorphism surface */
+.skx-glass {
+  background: rgba(22, 26, 33, var(--skx-opacity-glass-surface));
+  backdrop-filter: blur(var(--skx-blur-glass));
+  -webkit-backdrop-filter: blur(var(--skx-blur-glass));
+  border-radius: var(--skx-radius-md);
+}
+
+/* Status badge base */
+.skx-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--skx-space-1) var(--skx-space-3);
+  border-radius: var(--skx-radius-xs);
+  font-family: var(--skx-font-mono);
+  font-size: var(--skx-text-label-md-size);
+  font-weight: var(--skx-font-weight-medium);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  border-width: 0.5px;
+  border-style: solid;
+}
+
+.skx-badge--critical {
+  background: rgba(255, 113, 108, 0.12);
+  color: var(--skx-error);
+  border-color: rgba(255, 113, 108, 0.4);
+  box-shadow: var(--skx-glow-error);
+}
+
+.skx-badge--warning {
+  background: rgba(255, 209, 111, 0.12);
+  color: var(--skx-warning);
+  border-color: rgba(255, 209, 111, 0.4);
+  box-shadow: var(--skx-glow-warning);
+}
+
+.skx-badge--success {
+  background: rgba(124, 255, 168, 0.12);
+  color: var(--skx-success);
+  border-color: rgba(124, 255, 168, 0.4);
+  box-shadow: var(--skx-glow-success);
+}
+
+.skx-badge--info {
+  background: rgba(153, 247, 255, 0.12);
+  color: var(--skx-info);
+  border-color: rgba(153, 247, 255, 0.4);
+  box-shadow: var(--skx-glow-primary);
+}
+
+/* Primary CTA */
+.skx-btn-primary {
+  background: var(--skx-gradient-primary);
+  color: var(--skx-on-primary);
+  font-family: var(--skx-font-body);
+  font-weight: var(--skx-font-weight-semibold);
+  padding: var(--skx-space-3) var(--skx-space-5);
+  border: none;
+  border-radius: var(--skx-radius-md);
+  box-shadow: var(--skx-glow-primary);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.skx-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 24px rgba(0, 241, 254, 0.6);
+}
+
+/* Secondary ghost button */
+.skx-btn-secondary {
+  background: transparent;
+  color: var(--skx-primary);
+  font-family: var(--skx-font-body);
+  font-weight: var(--skx-font-weight-semibold);
+  padding: var(--skx-space-3) var(--skx-space-5);
+  border: 1px solid var(--skx-outline-variant-ghost);
+  border-radius: var(--skx-radius-md);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.skx-btn-secondary:hover {
+  background: rgba(153, 247, 255, 0.08);
+  border-color: rgba(153, 247, 255, 0.3);
+}
+
+/* Recessed input */
+.skx-input {
+  background: var(--skx-surface-container-lowest);
+  color: var(--skx-on-surface);
+  font-family: var(--skx-font-mono);
+  font-size: var(--skx-text-body-md-size);
+  padding: var(--skx-space-3) var(--skx-space-4);
+  border: 1px solid var(--skx-outline-variant-ghost);
+  border-radius: var(--skx-radius-sm);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.skx-input:focus {
+  border-color: rgba(153, 247, 255, 0.5);
+  box-shadow: inset 0 0 12px rgba(0, 241, 254, 0.15);
+}
+
+/* Card container */
+.skx-card {
+  background: var(--skx-surface-container);
+  border-radius: var(--skx-radius-md);
+  padding: var(--skx-space-6);
+}
+
+.skx-card--recessed {
+  background: var(--skx-surface-container-lowest);
+}
+
+/* KPI number */
+.skx-kpi {
+  font-family: var(--skx-font-mono);
+  font-size: var(--skx-text-display-md-size);
+  line-height: var(--skx-text-display-md-line);
+  font-weight: var(--skx-font-weight-medium);
+  color: var(--skx-on-surface);
+  letter-spacing: -0.5px;
+  font-variant-numeric: tabular-nums;
+}

@@ -1,0 +1,225 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 820" font-family="'Space Grotesk', 'Inter', 'Helvetica Neue', Arial, sans-serif">
+  <defs>
+    <!-- Neon accent gradient -->
+    <linearGradient id="neonGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#99f7ff"/>
+      <stop offset="100%" stop-color="#00f1fe"/>
+    </linearGradient>
+    <!-- Radial glow for nodes -->
+    <radialGradient id="nodeGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#00f1fe" stop-opacity="1"/>
+      <stop offset="40%" stop-color="#00f1fe" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#00f1fe" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Outer ambient glow -->
+    <filter id="ambientGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Deep Space background -->
+  <rect width="1200" height="820" fill="#0b0e14"/>
+
+  <!-- Title -->
+  <text x="600" y="50" text-anchor="middle" font-size="18" fill="#6b7280" letter-spacing="4" font-weight="500">SKYNEX — LOGO CONCEPT · TACTICAL COMMAND</text>
+  <line x1="150" y1="70" x2="1050" y2="70" stroke="#45484f" stroke-width="1" opacity="0.3"/>
+
+  <!-- === VARIANT 1: Horizontal Lockup === -->
+  <g transform="translate(150, 130)">
+    <text x="0" y="-10" font-family="'JetBrains Mono', monospace" font-size="11" fill="#6b7280" letter-spacing="2" font-weight="500">PRIMARY / HORIZONTAL</text>
+
+    <!-- Recessed plate -->
+    <rect x="-20" y="0" width="820" height="160" rx="6" fill="#10131a"/>
+
+    <!-- Icon -->
+    <g transform="translate(90, 80)">
+      <!-- Outer ambient halo -->
+      <circle cx="0" cy="0" r="70" fill="none" stroke="#00f1fe" stroke-width="0.5" opacity="0.15"/>
+      <!-- Radar rings -->
+      <circle cx="0" cy="0" r="58" fill="none" stroke="#99f7ff" stroke-width="1.5" opacity="0.9"/>
+      <circle cx="0" cy="0" r="40" fill="none" stroke="#99f7ff" stroke-width="1" opacity="0.4"/>
+      <circle cx="0" cy="0" r="22" fill="none" stroke="#99f7ff" stroke-width="0.75" opacity="0.25"/>
+      <!-- Crosshair -->
+      <line x1="-66" y1="0" x2="-48" y2="0" stroke="#99f7ff" stroke-width="1.5" stroke-linecap="square"/>
+      <line x1="48" y1="0" x2="66" y2="0" stroke="#99f7ff" stroke-width="1.5" stroke-linecap="square"/>
+      <line x1="0" y1="-66" x2="0" y2="-48" stroke="#99f7ff" stroke-width="1.5" stroke-linecap="square"/>
+      <line x1="0" y1="48" x2="0" y2="66" stroke="#99f7ff" stroke-width="1.5" stroke-linecap="square"/>
+      <!-- Flight path arc with glow -->
+      <path d="M -52 32 Q 0 -62 58 -12" fill="none" stroke="url(#neonGrad)" stroke-width="2.5" stroke-linecap="round" filter="url(#softGlow)"/>
+      <!-- Network nodes along the path with glow halos -->
+      <circle cx="-52" cy="32" r="10" fill="url(#nodeGlow)"/>
+      <circle cx="-52" cy="32" r="3" fill="#00f1fe"/>
+      <circle cx="-22" cy="-8" r="8" fill="url(#nodeGlow)"/>
+      <circle cx="-22" cy="-8" r="2.5" fill="#00f1fe"/>
+      <circle cx="16" cy="-28" r="8" fill="url(#nodeGlow)"/>
+      <circle cx="16" cy="-28" r="2.5" fill="#00f1fe"/>
+      <circle cx="58" cy="-12" r="12" fill="url(#nodeGlow)"/>
+      <circle cx="58" cy="-12" r="4" fill="#00f1fe"/>
+      <!-- Center node (CMDB anchor) -->
+      <circle cx="0" cy="0" r="10" fill="url(#nodeGlow)"/>
+      <circle cx="0" cy="0" r="4" fill="#99f7ff"/>
+    </g>
+
+    <!-- Wordmark -->
+    <text x="180" y="98" font-size="66" font-weight="700" fill="#e4e6eb" letter-spacing="3">SKY<tspan fill="url(#neonGrad)" filter="url(#softGlow)">NEX</tspan></text>
+    <text x="182" y="128" font-family="'JetBrains Mono', monospace" font-size="11" fill="#9ca3af" letter-spacing="5" font-weight="500">MISSION CONTROL FOR IT</text>
+  </g>
+
+  <!-- === VARIANT 2: Stacked === -->
+  <g transform="translate(150, 340)">
+    <text x="0" y="-10" font-family="'JetBrains Mono', monospace" font-size="11" fill="#6b7280" letter-spacing="2" font-weight="500">STACKED</text>
+
+    <rect x="0" y="0" width="200" height="240" rx="6" fill="#10131a"/>
+
+    <g transform="translate(100, 85)">
+      <circle cx="0" cy="0" r="52" fill="none" stroke="#99f7ff" stroke-width="1.5" opacity="0.9"/>
+      <circle cx="0" cy="0" r="36" fill="none" stroke="#99f7ff" stroke-width="1" opacity="0.4"/>
+      <line x1="-58" y1="0" x2="-44" y2="0" stroke="#99f7ff" stroke-width="1.5"/>
+      <line x1="44" y1="0" x2="58" y2="0" stroke="#99f7ff" stroke-width="1.5"/>
+      <line x1="0" y1="-58" x2="0" y2="-44" stroke="#99f7ff" stroke-width="1.5"/>
+      <line x1="0" y1="44" x2="0" y2="58" stroke="#99f7ff" stroke-width="1.5"/>
+      <path d="M -46 28 Q 0 -56 52 -10" fill="none" stroke="url(#neonGrad)" stroke-width="2.5" stroke-linecap="round" filter="url(#softGlow)"/>
+      <circle cx="-46" cy="28" r="8" fill="url(#nodeGlow)"/>
+      <circle cx="-46" cy="28" r="2.5" fill="#00f1fe"/>
+      <circle cx="-18" cy="-8" r="6" fill="url(#nodeGlow)"/>
+      <circle cx="-18" cy="-8" r="2" fill="#00f1fe"/>
+      <circle cx="14" cy="-24" r="6" fill="url(#nodeGlow)"/>
+      <circle cx="14" cy="-24" r="2" fill="#00f1fe"/>
+      <circle cx="52" cy="-10" r="10" fill="url(#nodeGlow)"/>
+      <circle cx="52" cy="-10" r="3.5" fill="#00f1fe"/>
+      <circle cx="0" cy="0" r="9" fill="url(#nodeGlow)"/>
+      <circle cx="0" cy="0" r="3.5" fill="#99f7ff"/>
+    </g>
+
+    <text x="100" y="210" text-anchor="middle" font-size="38" font-weight="700" fill="#e4e6eb" letter-spacing="3">SKY<tspan fill="url(#neonGrad)">NEX</tspan></text>
+  </g>
+
+  <!-- === VARIANT 3: App Icon (tactical) === -->
+  <g transform="translate(400, 340)">
+    <text x="0" y="-10" font-family="'JetBrains Mono', monospace" font-size="11" fill="#6b7280" letter-spacing="2" font-weight="500">APP ICON</text>
+
+    <!-- Recessed frame -->
+    <rect x="0" y="0" width="160" height="160" rx="12" fill="#000000"/>
+    <rect x="0.5" y="0.5" width="159" height="159" rx="12" fill="none" stroke="#45484f" stroke-width="1" opacity="0.25"/>
+
+    <g transform="translate(80, 80)">
+      <circle cx="0" cy="0" r="58" fill="none" stroke="#00f1fe" stroke-width="0.5" opacity="0.15"/>
+      <circle cx="0" cy="0" r="52" fill="none" stroke="#99f7ff" stroke-width="1.5" opacity="0.95"/>
+      <circle cx="0" cy="0" r="36" fill="none" stroke="#99f7ff" stroke-width="1" opacity="0.5"/>
+      <circle cx="0" cy="0" r="20" fill="none" stroke="#99f7ff" stroke-width="0.75" opacity="0.3"/>
+      <line x1="-58" y1="0" x2="-44" y2="0" stroke="#99f7ff" stroke-width="1.5"/>
+      <line x1="44" y1="0" x2="58" y2="0" stroke="#99f7ff" stroke-width="1.5"/>
+      <line x1="0" y1="-58" x2="0" y2="-44" stroke="#99f7ff" stroke-width="1.5"/>
+      <line x1="0" y1="44" x2="0" y2="58" stroke="#99f7ff" stroke-width="1.5"/>
+      <path d="M -46 28 Q 0 -56 52 -10" fill="none" stroke="url(#neonGrad)" stroke-width="3" stroke-linecap="round" filter="url(#softGlow)"/>
+      <circle cx="-46" cy="28" r="9" fill="url(#nodeGlow)"/>
+      <circle cx="-46" cy="28" r="3" fill="#00f1fe"/>
+      <circle cx="-18" cy="-8" r="7" fill="url(#nodeGlow)"/>
+      <circle cx="-18" cy="-8" r="2.5" fill="#00f1fe"/>
+      <circle cx="14" cy="-24" r="7" fill="url(#nodeGlow)"/>
+      <circle cx="14" cy="-24" r="2.5" fill="#00f1fe"/>
+      <circle cx="52" cy="-10" r="11" fill="url(#nodeGlow)"/>
+      <circle cx="52" cy="-10" r="4" fill="#00f1fe"/>
+      <circle cx="0" cy="0" r="10" fill="url(#nodeGlow)"/>
+      <circle cx="0" cy="0" r="4" fill="#99f7ff"/>
+    </g>
+  </g>
+
+  <!-- === VARIANT 4: Monochrome (on light) === -->
+  <g transform="translate(620, 340)">
+    <text x="0" y="-10" font-family="'JetBrains Mono', monospace" font-size="11" fill="#6b7280" letter-spacing="2" font-weight="500">MONOCHROME INVERSE</text>
+
+    <rect x="0" y="0" width="160" height="160" rx="12" fill="#e4e6eb"/>
+    <g transform="translate(80, 80)">
+      <circle cx="0" cy="0" r="52" fill="none" stroke="#0b0e14" stroke-width="2"/>
+      <circle cx="0" cy="0" r="36" fill="none" stroke="#0b0e14" stroke-width="1.25" opacity="0.5"/>
+      <line x1="-58" y1="0" x2="-44" y2="0" stroke="#0b0e14" stroke-width="2"/>
+      <line x1="44" y1="0" x2="58" y2="0" stroke="#0b0e14" stroke-width="2"/>
+      <line x1="0" y1="-58" x2="0" y2="-44" stroke="#0b0e14" stroke-width="2"/>
+      <line x1="0" y1="44" x2="0" y2="58" stroke="#0b0e14" stroke-width="2"/>
+      <path d="M -46 28 Q 0 -56 52 -10" fill="none" stroke="#0b0e14" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="-46" cy="28" r="3.5" fill="#0b0e14"/>
+      <circle cx="-18" cy="-8" r="2.5" fill="#0b0e14"/>
+      <circle cx="14" cy="-24" r="2.5" fill="#0b0e14"/>
+      <circle cx="52" cy="-10" r="4.5" fill="#0b0e14"/>
+      <circle cx="0" cy="0" r="4.5" fill="#0b0e14"/>
+    </g>
+  </g>
+
+  <!-- === VARIANT 5: Favicon === -->
+  <g transform="translate(840, 340)">
+    <text x="0" y="-10" font-family="'JetBrains Mono', monospace" font-size="11" fill="#6b7280" letter-spacing="2" font-weight="500">FAVICON 32</text>
+
+    <rect x="0" y="0" width="64" height="64" rx="8" fill="#000000"/>
+    <rect x="0.5" y="0.5" width="63" height="63" rx="8" fill="none" stroke="#45484f" stroke-width="1" opacity="0.25"/>
+    <g transform="translate(32, 32)">
+      <circle cx="0" cy="0" r="22" fill="none" stroke="#99f7ff" stroke-width="1.5"/>
+      <path d="M -18 11 Q 0 -22 22 -4" fill="none" stroke="url(#neonGrad)" stroke-width="2" stroke-linecap="round" filter="url(#softGlow)"/>
+      <circle cx="22" cy="-4" r="5" fill="url(#nodeGlow)"/>
+      <circle cx="22" cy="-4" r="2" fill="#00f1fe"/>
+      <circle cx="0" cy="0" r="4" fill="url(#nodeGlow)"/>
+      <circle cx="0" cy="0" r="2" fill="#99f7ff"/>
+    </g>
+  </g>
+
+  <!-- === Color palette === -->
+  <g transform="translate(150, 610)">
+    <text x="0" y="0" font-family="'JetBrains Mono', monospace" font-size="11" fill="#6b7280" letter-spacing="2" font-weight="500">DEEP SPACE PALETTE</text>
+
+    <g transform="translate(0, 20)">
+      <rect x="0" y="0" width="90" height="90" fill="#0b0e14" rx="2" stroke="#45484f" stroke-width="0.5" opacity="1"/>
+      <rect x="0" y="0" width="90" height="90" fill="#0b0e14" rx="2"/>
+      <text x="45" y="112" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="10" fill="#e4e6eb" font-weight="600">SURFACE</text>
+      <text x="45" y="126" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="9" fill="#6b7280">#0b0e14</text>
+    </g>
+    <g transform="translate(110, 20)">
+      <rect x="0" y="0" width="90" height="90" fill="#161a21" rx="2"/>
+      <text x="45" y="112" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="10" fill="#e4e6eb" font-weight="600">CONTAINER</text>
+      <text x="45" y="126" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="9" fill="#6b7280">#161a21</text>
+    </g>
+    <g transform="translate(220, 20)">
+      <rect x="0" y="0" width="90" height="90" fill="#99f7ff" rx="2"/>
+      <text x="45" y="112" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="10" fill="#e4e6eb" font-weight="600">PRIMARY</text>
+      <text x="45" y="126" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="9" fill="#6b7280">#99f7ff</text>
+    </g>
+    <g transform="translate(330, 20)">
+      <rect x="0" y="0" width="90" height="90" fill="#00f1fe" rx="2"/>
+      <text x="45" y="112" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="10" fill="#e4e6eb" font-weight="600">ACCENT</text>
+      <text x="45" y="126" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="9" fill="#6b7280">#00f1fe</text>
+    </g>
+    <g transform="translate(440, 20)">
+      <rect x="0" y="0" width="90" height="90" fill="#ff716c" rx="2"/>
+      <text x="45" y="112" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="10" fill="#e4e6eb" font-weight="600">ERROR</text>
+      <text x="45" y="126" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="9" fill="#6b7280">#ff716c</text>
+    </g>
+    <g transform="translate(550, 20)">
+      <rect x="0" y="0" width="90" height="90" fill="#ffd16f" rx="2"/>
+      <text x="45" y="112" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="10" fill="#e4e6eb" font-weight="600">WARNING</text>
+      <text x="45" y="126" text-anchor="middle" font-family="'JetBrains Mono', monospace" font-size="9" fill="#6b7280">#ffd16f</text>
+    </g>
+  </g>
+
+  <!-- === Concept notes === -->
+  <g transform="translate(800, 610)">
+    <text x="0" y="0" font-family="'JetBrains Mono', monospace" font-size="11" fill="#6b7280" letter-spacing="2" font-weight="500">CONCEPT</text>
+    <text x="0" y="28" font-family="'Space Grotesk', sans-serif" font-size="13" fill="#e4e6eb" font-weight="600">Radar + Flight Path + Network Nodes</text>
+    <text x="0" y="52" font-size="11" fill="#9ca3af">
+      <tspan x="0" dy="0">// Radar ring — horizon scan</tspan>
+      <tspan x="0" dy="16">// Crosshair — tactical precision</tspan>
+      <tspan x="0" dy="16">// Vector — flight path as network link</tspan>
+      <tspan x="0" dy="16">// Nodes — glowing CMDB endpoints</tspan>
+      <tspan x="0" dy="16">// Center — single source of truth</tspan>
+    </text>
+  </g>
+</svg>
