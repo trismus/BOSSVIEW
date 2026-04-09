@@ -13,6 +13,7 @@ import { InfrastructurePage } from './pages/InfrastructurePage';
 import { NamingConventionPage } from './pages/NamingConventionPage';
 import { DirectoryUsersPage } from './pages/DirectoryUsersPage';
 import { HelpPage } from './pages/HelpPage';
+import { DesignCheckPage } from './pages/DesignCheckPage';
 
 export function App() {
   return (
@@ -116,6 +117,16 @@ export function App() {
               <ProtectedRoute>
                 <Layout>
                   <HelpPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/design-check"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <DesignCheckPage />
                 </Layout>
               </ProtectedRoute>
             }
