@@ -1,10 +1,13 @@
 import { createRequire } from 'module';
 
-// Load the canonical SKYNEX theme extension from the design-system source
-// of truth. Kept as CJS under docs/branding/tokens/ so the upstream format
-// isn't forced into an ESM rewrite.
+// Load the SKYNEX theme extension. Source of truth lives at
+// docs/branding/tokens/tailwind.config.js, but that path is outside the
+// frontend Docker dev container (which only mounts frontend/). We keep
+// a synced copy at src/styles/skynex-tailwind.config.cjs so both the
+// host and the container can resolve it. The .cjs extension is required
+// because the frontend package.json sets "type": "module".
 const require = createRequire(import.meta.url);
-const skynexTheme = require('../docs/branding/tokens/tailwind.config.js');
+const skynexTheme = require('./src/styles/skynex-tailwind.config.cjs');
 
 /** @type {import('tailwindcss').Config} */
 export default {
