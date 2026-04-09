@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { helpTexts } from '../data/helpTexts'
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { helpTexts } from '../data/helpTexts';
 
 interface QuickHelpModalProps {
-  isOpen: boolean
-  onClose: () => void
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 const shortcuts = [
@@ -12,53 +12,52 @@ const shortcuts = [
   { keys: ['L'], description: 'Toggle Link Mode (Topology)' },
   { keys: ['ESC'], description: 'Cancel / Close modal' },
   { keys: ['Right-click'], description: 'Context menu (Topology)' },
-]
+];
 
 export function QuickHelpModal({ isOpen, onClose }: QuickHelpModalProps) {
-  const [search, setSearch] = useState('')
-  const searchRef = useRef<HTMLInputElement>(null)
-  const navigate = useNavigate()
+  const [search, setSearch] = useState('');
+  const searchRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (isOpen) {
-      setSearch('')
-      setTimeout(() => searchRef.current?.focus(), 50)
+      setSearch('');
+      setTimeout(() => searchRef.current?.focus(), 50);
     }
-  }, [isOpen])
+  }, [isOpen]);
 
   useEffect(() => {
-    if (!isOpen) return
+    if (!isOpen) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onClose()
+        onClose();
       }
-    }
+    };
 
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [isOpen, onClose])
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   const filteredTopics = useMemo(() => {
-    if (!search.trim()) return []
-    const query = search.toLowerCase()
+    if (!search.trim()) return [];
+    const query = search.toLowerCase();
     return Object.entries(helpTexts)
       .filter(
         ([_key, entry]) =>
-          entry.title.toLowerCase().includes(query) ||
-          entry.content.toLowerCase().includes(query)
+          entry.title.toLowerCase().includes(query) || entry.content.toLowerCase().includes(query),
       )
-      .slice(0, 8)
-  }, [search])
+      .slice(0, 8);
+  }, [search]);
 
   const handleTopicClick = (helpSection?: string) => {
     if (helpSection) {
-      navigate(`/help?section=${helpSection}`)
-      onClose()
+      navigate(`/help?section=${helpSection}`);
+      onClose();
     }
-  }
+  };
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh]">
@@ -76,7 +75,13 @@ export function QuickHelpModal({ isOpen, onClose }: QuickHelpModalProps) {
               onClick={onClose}
               className="text-slate-500 hover:text-slate-300 transition-colors"
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
               </svg>
             </button>
@@ -91,7 +96,11 @@ export function QuickHelpModal({ isOpen, onClose }: QuickHelpModalProps) {
               strokeWidth={1.5}
               stroke="currentColor"
             >
-              <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
+              />
             </svg>
             <input
               ref={searchRef}
@@ -130,7 +139,9 @@ export function QuickHelpModal({ isOpen, onClose }: QuickHelpModalProps) {
 
         {/* Keyboard Shortcuts */}
         <div className="px-5 py-3 border-t border-slate-700">
-          <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-2">Keyboard Shortcuts</p>
+          <p className="text-[10px] text-slate-500 uppercase tracking-wider mb-2">
+            Keyboard Shortcuts
+          </p>
           <div className="space-y-1.5">
             {shortcuts.map((s) => (
               <div key={s.description} className="flex items-center justify-between">
@@ -155,18 +166,22 @@ export function QuickHelpModal({ isOpen, onClose }: QuickHelpModalProps) {
           <button
             type="button"
             onClick={() => {
-              navigate('/help')
-              onClose()
+              navigate('/help');
+              onClose();
             }}
             className="text-sm text-cyan-500 hover:text-cyan-400 transition-colors"
           >
             Open full documentation &rarr;
           </button>
           <span className="text-xs text-slate-600">
-            Press <kbd className="bg-slate-700 rounded px-1 py-0.5 font-mono text-[10px] border border-slate-600">ESC</kbd> to close
+            Press{' '}
+            <kbd className="bg-slate-700 rounded px-1 py-0.5 font-mono text-[10px] border border-slate-600">
+              ESC
+            </kbd>{' '}
+            to close
           </span>
         </div>
       </div>
     </div>
-  )
+  );
 }

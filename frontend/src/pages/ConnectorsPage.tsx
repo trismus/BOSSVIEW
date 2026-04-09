@@ -1,11 +1,11 @@
-import { useState, useEffect, useCallback } from 'react'
-import { api } from '../api/client'
+import { useState, useEffect, useCallback } from 'react';
+import { api } from '../api/client';
 import type {
   ConnectorConfig,
   ConnectorSyncLog,
   ConnectorAdapterInfo,
   PaginatedResponse,
-} from '../types'
+} from '../types';
 
 // ============================================
 // Schedule options
@@ -17,10 +17,10 @@ const SCHEDULE_OPTIONS = [
   { value: '*/15 * * * *', label: 'Every 15 min' },
   { value: '0 * * * *', label: 'Every hour' },
   { value: '0 0 * * *', label: 'Every 24h' },
-] as const
+] as const;
 
 // Sensitive field patterns for password inputs
-const SENSITIVE_PATTERNS = /password|secret|token|key|apitoken|api_token/i
+const SENSITIVE_PATTERNS = /password|secret|token|key|apitoken|api_token/i;
 
 // ============================================
 // Status badge component
@@ -32,21 +32,23 @@ function StatusBadge({ status }: { status: string | null }) {
     failed: 'bg-red-500/20 text-red-400 border-red-500/30',
     running: 'bg-blue-500/20 text-blue-400 border-blue-500/30',
     partial: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-  }
+  };
 
   if (!status) {
     return (
       <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-700 text-slate-400 border border-slate-600">
         Never synced
       </span>
-    )
+    );
   }
 
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${colorMap[status] ?? 'bg-slate-700 text-slate-400 border-slate-600'}`}>
+    <span
+      className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${colorMap[status] ?? 'bg-slate-700 text-slate-400 border-slate-600'}`}
+    >
       {status}
     </span>
-  )
+  );
 }
 
 // ============================================
@@ -61,13 +63,15 @@ function CategoryBadge({ category }: { category: string }) {
     security: 'bg-red-500/20 text-red-400',
     import: 'bg-emerald-500/20 text-emerald-400',
     workflow: 'bg-orange-500/20 text-orange-400',
-  }
+  };
 
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${colorMap[category] ?? 'bg-slate-700 text-slate-400'}`}>
+    <span
+      className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${colorMap[category] ?? 'bg-slate-700 text-slate-400'}`}
+    >
       {category}
     </span>
-  )
+  );
 }
 
 // ============================================
@@ -75,23 +79,24 @@ function CategoryBadge({ category }: { category: string }) {
 // ============================================
 
 function SyncLogsPanel({ connectorId }: { connectorId: string }) {
-  const [logs, setLogs] = useState<ConnectorSyncLog[]>([])
-  const [loading, setLoading] = useState(true)
+  const [logs, setLogs] = useState<ConnectorSyncLog[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setLoading(true)
-    api.get<PaginatedResponse<ConnectorSyncLog>>(`/connectors/${connectorId}/logs`, { limit: 10 })
+    setLoading(true);
+    api
+      .get<PaginatedResponse<ConnectorSyncLog>>(`/connectors/${connectorId}/logs`, { limit: 10 })
       .then((res) => setLogs(res.data))
       .catch((err) => console.error('Failed to load sync logs:', err))
-      .finally(() => setLoading(false))
-  }, [connectorId])
+      .finally(() => setLoading(false));
+  }, [connectorId]);
 
   if (loading) {
-    return <div className="text-sm text-slate-500 py-2">Loading logs...</div>
+    return <div className="text-sm text-slate-500 py-2">Loading logs...</div>;
   }
 
   if (logs.length === 0) {
-    return <div className="text-sm text-slate-500 py-2">No sync logs yet.</div>
+    return <div className="text-sm text-slate-500 py-2">No sync logs yet.</div>;
   }
 
   return (
@@ -99,7 +104,10 @@ function SyncLogsPanel({ connectorId }: { connectorId: string }) {
       <h4 className="text-xs font-semibold text-slate-400 uppercase mb-2">Recent Sync Logs</h4>
       <div className="space-y-2">
         {logs.map((log) => (
-          <div key={log.id} className="flex items-center gap-3 text-xs bg-slate-800/50 rounded px-3 py-2">
+          <div
+            key={log.id}
+            className="flex items-center gap-3 text-xs bg-slate-800/50 rounded px-3 py-2"
+          >
             <StatusBadge status={log.status} />
             <span className="text-slate-400">
               {new Date(log.started_at).toLocaleString('de-CH')}
@@ -108,9 +116,7 @@ function SyncLogsPanel({ connectorId }: { connectorId: string }) {
               Fetched: {log.total_fetched} | Created: {log.created} | Updated: {log.updated}
             </span>
             {log.errors && log.errors.length > 0 && (
-              <span className="text-red-400">
-                {log.errors.length} error(s)
-              </span>
+              <span className="text-red-400">{log.errors.length} error(s)</span>
             )}
             {log.message && (
               <span className="text-slate-500 truncate max-w-xs" title={log.message}>
@@ -121,7 +127,7 @@ function SyncLogsPanel({ connectorId }: { connectorId: string }) {
         ))}
       </div>
     </div>
-  )
+  );
 }
 
 // ============================================
@@ -129,68 +135,74 @@ function SyncLogsPanel({ connectorId }: { connectorId: string }) {
 // ============================================
 
 interface SchemaProperty {
-  type?: string
-  description?: string
-  default?: unknown
-  enum?: string[]
-  properties?: Record<string, SchemaProperty>
-  required?: string[]
-  items?: { type?: string }
-  additionalProperties?: { type?: string }
+  type?: string;
+  description?: string;
+  default?: unknown;
+  enum?: string[];
+  properties?: Record<string, SchemaProperty>;
+  required?: string[];
+  items?: { type?: string };
+  additionalProperties?: { type?: string };
 }
 
 interface ConfigFormProps {
-  schema: Record<string, unknown>
-  values: Record<string, unknown>
-  onChange: (values: Record<string, unknown>) => void
-  prefix?: string
+  schema: Record<string, unknown>;
+  values: Record<string, unknown>;
+  onChange: (values: Record<string, unknown>) => void;
+  prefix?: string;
 }
 
 function getNestedValue(obj: Record<string, unknown>, path: string): unknown {
-  const parts = path.split('.')
-  let current: unknown = obj
+  const parts = path.split('.');
+  let current: unknown = obj;
   for (const part of parts) {
-    if (current == null || typeof current !== 'object') return undefined
-    current = (current as Record<string, unknown>)[part]
+    if (current == null || typeof current !== 'object') return undefined;
+    current = (current as Record<string, unknown>)[part];
   }
-  return current
+  return current;
 }
 
-function setNestedValue(obj: Record<string, unknown>, path: string, value: unknown): Record<string, unknown> {
-  const clone = JSON.parse(JSON.stringify(obj)) as Record<string, unknown>
-  const parts = path.split('.')
-  let current: Record<string, unknown> = clone
+function setNestedValue(
+  obj: Record<string, unknown>,
+  path: string,
+  value: unknown,
+): Record<string, unknown> {
+  const clone = JSON.parse(JSON.stringify(obj)) as Record<string, unknown>;
+  const parts = path.split('.');
+  let current: Record<string, unknown> = clone;
   for (let i = 0; i < parts.length - 1; i++) {
     if (current[parts[i]] == null || typeof current[parts[i]] !== 'object') {
-      current[parts[i]] = {}
+      current[parts[i]] = {};
     }
-    current = current[parts[i]] as Record<string, unknown>
+    current = current[parts[i]] as Record<string, unknown>;
   }
-  current[parts[parts.length - 1]] = value
-  return clone
+  current[parts[parts.length - 1]] = value;
+  return clone;
 }
 
 function DynamicConfigForm({ schema, values, onChange, prefix = '' }: ConfigFormProps) {
-  const properties = (schema.properties ?? {}) as Record<string, SchemaProperty>
-  const requiredFields = (schema.required ?? []) as string[]
+  const properties = (schema.properties ?? {}) as Record<string, SchemaProperty>;
+  const requiredFields = (schema.required ?? []) as string[];
 
-  const inputClass = 'w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors'
-  const labelClass = 'block text-xs font-medium text-slate-400 mb-1'
+  const inputClass =
+    'w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:border-blue-500 transition-colors';
+  const labelClass = 'block text-xs font-medium text-slate-400 mb-1';
 
   return (
     <div className="space-y-4">
       {Object.entries(properties).map(([key, prop]) => {
-        const fullPath = prefix ? `${prefix}.${key}` : key
-        const isRequired = requiredFields.includes(key)
-        const isSensitive = SENSITIVE_PATTERNS.test(key)
-        const currentValue = getNestedValue(values, fullPath)
+        const fullPath = prefix ? `${prefix}.${key}` : key;
+        const isRequired = requiredFields.includes(key);
+        const isSensitive = SENSITIVE_PATTERNS.test(key);
+        const currentValue = getNestedValue(values, fullPath);
 
         // Nested object — render sub-fields
         if (prop.type === 'object' && prop.properties) {
           return (
             <div key={fullPath} className="border border-slate-700 rounded-lg p-4">
               <h4 className="text-sm font-medium text-slate-300 mb-3">
-                {key}{isRequired ? ' *' : ''}
+                {key}
+                {isRequired ? ' *' : ''}
               </h4>
               {prop.description && (
                 <p className="text-xs text-slate-500 mb-3">{prop.description}</p>
@@ -202,12 +214,13 @@ function DynamicConfigForm({ schema, values, onChange, prefix = '' }: ConfigForm
                 prefix={fullPath}
               />
             </div>
-          )
+          );
         }
 
         // Boolean — checkbox
         if (prop.type === 'boolean') {
-          const checked = currentValue != null ? Boolean(currentValue) : Boolean(prop.default ?? false)
+          const checked =
+            currentValue != null ? Boolean(currentValue) : Boolean(prop.default ?? false);
           return (
             <div key={fullPath} className="flex items-center gap-3">
               <input
@@ -218,13 +231,14 @@ function DynamicConfigForm({ schema, values, onChange, prefix = '' }: ConfigForm
                 className="w-4 h-4 rounded border-slate-600 bg-slate-900 text-blue-500 focus:ring-blue-500"
               />
               <label htmlFor={fullPath} className="text-sm text-slate-300">
-                {key}{isRequired ? ' *' : ''}
+                {key}
+                {isRequired ? ' *' : ''}
               </label>
               {prop.description && (
                 <span className="text-xs text-slate-500">— {prop.description}</span>
               )}
             </div>
-          )
+          );
         }
 
         // Enum — select dropdown
@@ -232,7 +246,8 @@ function DynamicConfigForm({ schema, values, onChange, prefix = '' }: ConfigForm
           return (
             <div key={fullPath}>
               <label htmlFor={fullPath} className={labelClass}>
-                {key}{isRequired ? ' *' : ''}
+                {key}
+                {isRequired ? ' *' : ''}
               </label>
               <select
                 id={fullPath}
@@ -242,23 +257,26 @@ function DynamicConfigForm({ schema, values, onChange, prefix = '' }: ConfigForm
               >
                 <option value="">— Select —</option>
                 {prop.enum.map((opt) => (
-                  <option key={opt} value={opt}>{opt}</option>
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
                 ))}
               </select>
               {prop.description && (
                 <p className="text-xs text-slate-500 mt-1">{prop.description}</p>
               )}
             </div>
-          )
+          );
         }
 
         // Array — comma-separated text input
         if (prop.type === 'array') {
-          const arrValue = Array.isArray(currentValue) ? (currentValue as string[]).join(', ') : ''
+          const arrValue = Array.isArray(currentValue) ? (currentValue as string[]).join(', ') : '';
           return (
             <div key={fullPath}>
               <label htmlFor={fullPath} className={labelClass}>
-                {key}{isRequired ? ' *' : ''}
+                {key}
+                {isRequired ? ' *' : ''}
               </label>
               <input
                 id={fullPath}
@@ -268,8 +286,8 @@ function DynamicConfigForm({ schema, values, onChange, prefix = '' }: ConfigForm
                   const parsed = e.target.value
                     .split(',')
                     .map((s) => s.trim())
-                    .filter(Boolean)
-                  onChange(setNestedValue(values, fullPath, parsed))
+                    .filter(Boolean);
+                  onChange(setNestedValue(values, fullPath, parsed));
                 }}
                 placeholder={prop.description ?? 'Comma-separated values'}
                 className={inputClass}
@@ -278,14 +296,15 @@ function DynamicConfigForm({ schema, values, onChange, prefix = '' }: ConfigForm
                 <p className="text-xs text-slate-500 mt-1">{prop.description}</p>
               )}
             </div>
-          )
+          );
         }
 
         // Default: string — text/password input
         return (
           <div key={fullPath}>
             <label htmlFor={fullPath} className={labelClass}>
-              {key}{isRequired ? ' *' : ''}
+              {key}
+              {isRequired ? ' *' : ''}
             </label>
             <input
               id={fullPath}
@@ -299,81 +318,82 @@ function DynamicConfigForm({ schema, values, onChange, prefix = '' }: ConfigForm
               <p className="text-xs text-slate-500 mt-1">{prop.description}</p>
             )}
           </div>
-        )
+        );
       })}
     </div>
-  )
+  );
 }
 
 // ============================================
 // Connector Wizard Dialog
 // ============================================
 
-type WizardStep = 'select-adapter' | 'configure'
+type WizardStep = 'select-adapter' | 'configure';
 
 interface ConnectorDialogProps {
-  editingConnector: ConnectorConfig | null
-  onClose: () => void
-  onSaved: () => void
+  editingConnector: ConnectorConfig | null;
+  onClose: () => void;
+  onSaved: () => void;
 }
 
 function ConnectorDialog({ editingConnector, onClose, onSaved }: ConnectorDialogProps) {
-  const isEditing = editingConnector !== null
-  const [step, setStep] = useState<WizardStep>(isEditing ? 'configure' : 'select-adapter')
-  const [adapters, setAdapters] = useState<ConnectorAdapterInfo[]>([])
-  const [loadingAdapters, setLoadingAdapters] = useState(true)
-  const [selectedAdapter, setSelectedAdapter] = useState<ConnectorAdapterInfo | null>(null)
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const isEditing = editingConnector !== null;
+  const [step, setStep] = useState<WizardStep>(isEditing ? 'configure' : 'select-adapter');
+  const [adapters, setAdapters] = useState<ConnectorAdapterInfo[]>([]);
+  const [loadingAdapters, setLoadingAdapters] = useState(true);
+  const [selectedAdapter, setSelectedAdapter] = useState<ConnectorAdapterInfo | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Form state
-  const [name, setName] = useState(editingConnector?.name ?? '')
-  const [schedule, setSchedule] = useState(editingConnector?.schedule ?? '')
-  const [enabled, setEnabled] = useState(editingConnector?.enabled ?? false)
+  const [name, setName] = useState(editingConnector?.name ?? '');
+  const [schedule, setSchedule] = useState(editingConnector?.schedule ?? '');
+  const [enabled, setEnabled] = useState(editingConnector?.enabled ?? false);
   const [configValues, setConfigValues] = useState<Record<string, unknown>>(
     // For editing, config is redacted by the API — start with empty config
     // so users only fill in what they want to change
-    {}
-  )
+    {},
+  );
 
   // Fetch adapters
   useEffect(() => {
-    setLoadingAdapters(true)
-    api.get<{ data: ConnectorAdapterInfo[] }>('/connectors/adapters')
+    setLoadingAdapters(true);
+    api
+      .get<{ data: ConnectorAdapterInfo[] }>('/connectors/adapters')
       .then((res) => {
-        setAdapters(res.data)
+        setAdapters(res.data);
         // If editing, pre-select the adapter
         if (isEditing) {
-          const match = res.data.find((a) => a.id === editingConnector.adapter_type)
-          if (match) setSelectedAdapter(match)
+          const match = res.data.find((a) => a.id === editingConnector.adapter_type);
+          if (match) setSelectedAdapter(match);
         }
       })
       .catch((err) => {
-        console.error('Failed to load adapters:', err)
-        setError('Failed to load adapter list')
+        console.error('Failed to load adapters:', err);
+        setError('Failed to load adapter list');
       })
-      .finally(() => setLoadingAdapters(false))
-  }, [isEditing, editingConnector?.adapter_type])
+      .finally(() => setLoadingAdapters(false));
+  }, [isEditing, editingConnector?.adapter_type]);
 
   const handleAdapterSelect = (adapter: ConnectorAdapterInfo) => {
-    setSelectedAdapter(adapter)
-    setStep('configure')
-  }
+    setSelectedAdapter(adapter);
+    setStep('configure');
+  };
 
   const handleSubmit = async () => {
-    if (!selectedAdapter) return
+    if (!selectedAdapter) return;
 
-    setError(null)
-    setSaving(true)
+    setError(null);
+    setSaving(true);
 
     try {
       if (isEditing) {
-        const payload: Record<string, unknown> = { name, schedule: schedule || null, enabled }
+        const payload: Record<string, unknown> = { name, schedule: schedule || null, enabled };
         // Only send config if user has entered values
         if (Object.keys(configValues).length > 0) {
-          payload.config = configValues
+          payload.config = configValues;
         }
-        await api.put(`/connectors/${editingConnector.id}`, payload)
+        await api.put(`/connectors/${editingConnector.id}`, payload);
       } else {
         await api.post('/connectors', {
           name,
@@ -382,18 +402,18 @@ function ConnectorDialog({ editingConnector, onClose, onSaved }: ConnectorDialog
           config: configValues,
           schedule: schedule || null,
           enabled,
-        })
+        });
       }
 
-      onSaved()
+      onSaved();
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to save connector'
-      setError(message)
-      console.error('Failed to save connector:', err)
+      const message = err instanceof Error ? err.message : 'Failed to save connector';
+      setError(message);
+      console.error('Failed to save connector:', err);
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
-  }
+  };
 
   return (
     <div
@@ -411,7 +431,13 @@ function ConnectorDialog({ editingConnector, onClose, onSaved }: ConnectorDialog
               onClick={onClose}
               className="text-slate-400 hover:text-slate-200 transition-colors"
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
               </svg>
             </button>
@@ -420,9 +446,19 @@ function ConnectorDialog({ editingConnector, onClose, onSaved }: ConnectorDialog
           {/* Step indicator */}
           {!isEditing && (
             <div className="flex items-center gap-3 mb-6">
-              <StepIndicator step={1} label="Select Adapter" active={step === 'select-adapter'} completed={step === 'configure'} />
+              <StepIndicator
+                step={1}
+                label="Select Adapter"
+                active={step === 'select-adapter'}
+                completed={step === 'configure'}
+              />
               <div className="h-px flex-1 bg-slate-700" />
-              <StepIndicator step={2} label="Configure" active={step === 'configure'} completed={false} />
+              <StepIndicator
+                step={2}
+                label="Configure"
+                active={step === 'configure'}
+                completed={false}
+              />
             </div>
           )}
 
@@ -459,8 +495,18 @@ function ConnectorDialog({ editingConnector, onClose, onSaved }: ConnectorDialog
                           </div>
                           <p className="text-xs text-slate-500">{adapter.id}</p>
                         </div>
-                        <svg className="w-5 h-5 text-slate-600 group-hover:text-blue-400 transition-colors" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                        <svg
+                          className="w-5 h-5 text-slate-600 group-hover:text-blue-400 transition-colors"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth={1.5}
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="m8.25 4.5 7.5 7.5-7.5 7.5"
+                          />
                         </svg>
                       </div>
                     </button>
@@ -483,7 +529,10 @@ function ConnectorDialog({ editingConnector, onClose, onSaved }: ConnectorDialog
               {/* Basic fields */}
               <div className="space-y-4">
                 <div>
-                  <label htmlFor="connector-name" className="block text-xs font-medium text-slate-400 mb-1">
+                  <label
+                    htmlFor="connector-name"
+                    className="block text-xs font-medium text-slate-400 mb-1"
+                  >
                     Name *
                   </label>
                   <input
@@ -499,7 +548,10 @@ function ConnectorDialog({ editingConnector, onClose, onSaved }: ConnectorDialog
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label htmlFor="connector-schedule" className="block text-xs font-medium text-slate-400 mb-1">
+                    <label
+                      htmlFor="connector-schedule"
+                      className="block text-xs font-medium text-slate-400 mb-1"
+                    >
                       Schedule
                     </label>
                     <select
@@ -509,7 +561,9 @@ function ConnectorDialog({ editingConnector, onClose, onSaved }: ConnectorDialog
                       className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500 transition-colors"
                     >
                       {SCHEDULE_OPTIONS.map((opt) => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
                       ))}
                     </select>
                   </div>
@@ -550,7 +604,10 @@ function ConnectorDialog({ editingConnector, onClose, onSaved }: ConnectorDialog
                   {!isEditing && (
                     <button
                       type="button"
-                      onClick={() => { setStep('select-adapter'); setSelectedAdapter(null) }}
+                      onClick={() => {
+                        setStep('select-adapter');
+                        setSelectedAdapter(null);
+                      }}
                       className="px-4 py-2 text-sm text-slate-400 hover:text-slate-200 transition-colors"
                     >
                       Back
@@ -579,10 +636,20 @@ function ConnectorDialog({ editingConnector, onClose, onSaved }: ConnectorDialog
         </div>
       </div>
     </div>
-  )
+  );
 }
 
-function StepIndicator({ step, label, active, completed }: { step: number; label: string; active: boolean; completed: boolean }) {
+function StepIndicator({
+  step,
+  label,
+  active,
+  completed,
+}: {
+  step: number;
+  label: string;
+  active: boolean;
+  completed: boolean;
+}) {
   return (
     <div className="flex items-center gap-2">
       <span
@@ -595,7 +662,13 @@ function StepIndicator({ step, label, active, completed }: { step: number; label
         }`}
       >
         {completed ? (
-          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+          <svg
+            className="w-3.5 h-3.5"
+            fill="none"
+            viewBox="0 0 24 24"
+            strokeWidth={2}
+            stroke="currentColor"
+          >
             <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
           </svg>
         ) : (
@@ -606,7 +679,7 @@ function StepIndicator({ step, label, active, completed }: { step: number; label
         {label}
       </span>
     </div>
-  )
+  );
 }
 
 // ============================================
@@ -619,10 +692,10 @@ function DeleteConfirmDialog({
   onCancel,
   deleting,
 }: {
-  connectorName: string
-  onConfirm: () => void
-  onCancel: () => void
-  deleting: boolean
+  connectorName: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+  deleting: boolean;
 }) {
   return (
     <div
@@ -632,8 +705,9 @@ function DeleteConfirmDialog({
       <div className="bg-slate-800 border border-slate-700 rounded-xl w-full max-w-md p-6">
         <h3 className="text-lg font-semibold text-slate-200 mb-2">Delete Connector</h3>
         <p className="text-sm text-slate-400 mb-6">
-          Are you sure you want to delete <span className="text-slate-200 font-medium">{connectorName}</span>?
-          This will also remove all sync logs. This action cannot be undone.
+          Are you sure you want to delete{' '}
+          <span className="text-slate-200 font-medium">{connectorName}</span>? This will also remove
+          all sync logs. This action cannot be undone.
         </p>
         <div className="flex justify-end gap-3">
           <button
@@ -652,7 +726,7 @@ function DeleteConfirmDialog({
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 // ============================================
@@ -660,129 +734,135 @@ function DeleteConfirmDialog({
 // ============================================
 
 export function ConnectorsPage() {
-  const [connectors, setConnectors] = useState<ConnectorConfig[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [expandedLogs, setExpandedLogs] = useState<Set<string>>(new Set())
-  const [testResults, setTestResults] = useState<Record<string, { success: boolean; message: string } | null>>({})
-  const [syncingIds, setSyncingIds] = useState<Set<string>>(new Set())
+  const [connectors, setConnectors] = useState<ConnectorConfig[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [expandedLogs, setExpandedLogs] = useState<Set<string>>(new Set());
+  const [testResults, setTestResults] = useState<
+    Record<string, { success: boolean; message: string } | null>
+  >({});
+  const [syncingIds, setSyncingIds] = useState<Set<string>>(new Set());
 
   // Dialog state
-  const [showDialog, setShowDialog] = useState(false)
-  const [editingConnector, setEditingConnector] = useState<ConnectorConfig | null>(null)
-  const [deleteTarget, setDeleteTarget] = useState<ConnectorConfig | null>(null)
-  const [deleting, setDeleting] = useState(false)
+  const [showDialog, setShowDialog] = useState(false);
+  const [editingConnector, setEditingConnector] = useState<ConnectorConfig | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ConnectorConfig | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const loadConnectors = useCallback(async () => {
     try {
-      setLoading(true)
-      setError(null)
-      const result = await api.get<PaginatedResponse<ConnectorConfig>>('/connectors', { limit: 50 })
-      setConnectors(result.data)
+      setLoading(true);
+      setError(null);
+      const result = await api.get<PaginatedResponse<ConnectorConfig>>('/connectors', {
+        limit: 50,
+      });
+      setConnectors(result.data);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load connectors'
-      setError(message)
-      console.error('Failed to load connectors:', err)
+      const message = err instanceof Error ? err.message : 'Failed to load connectors';
+      setError(message);
+      console.error('Failed to load connectors:', err);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [])
+  }, []);
 
   useEffect(() => {
-    loadConnectors()
-  }, [loadConnectors])
+    loadConnectors();
+  }, [loadConnectors]);
 
   const handleTestConnection = async (id: string) => {
-    setTestResults((prev) => ({ ...prev, [id]: null }))
+    setTestResults((prev) => ({ ...prev, [id]: null }));
     try {
-      const result = await api.post<{ success: boolean; message: string }>(`/connectors/${id}/test`)
-      setTestResults((prev) => ({ ...prev, [id]: result }))
+      const result = await api.post<{ success: boolean; message: string }>(
+        `/connectors/${id}/test`,
+      );
+      setTestResults((prev) => ({ ...prev, [id]: result }));
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Test failed'
-      setTestResults((prev) => ({ ...prev, [id]: { success: false, message } }))
+      const message = err instanceof Error ? err.message : 'Test failed';
+      setTestResults((prev) => ({ ...prev, [id]: { success: false, message } }));
     }
-  }
+  };
 
   const handleSync = async (id: string) => {
-    setSyncingIds((prev) => new Set(prev).add(id))
+    setSyncingIds((prev) => new Set(prev).add(id));
     try {
-      await api.post(`/connectors/${id}/sync`)
+      await api.post(`/connectors/${id}/sync`);
       // Reload connectors after a short delay to show updated status
       setTimeout(() => {
-        loadConnectors()
+        loadConnectors();
         setSyncingIds((prev) => {
-          const next = new Set(prev)
-          next.delete(id)
-          return next
-        })
-      }, 2000)
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+      }, 2000);
     } catch (err) {
-      console.error('Sync trigger failed:', err)
+      console.error('Sync trigger failed:', err);
       setSyncingIds((prev) => {
-        const next = new Set(prev)
-        next.delete(id)
-        return next
-      })
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
     }
-  }
+  };
 
   const toggleLogs = (id: string) => {
     setExpandedLogs((prev) => {
-      const next = new Set(prev)
+      const next = new Set(prev);
       if (next.has(id)) {
-        next.delete(id)
+        next.delete(id);
       } else {
-        next.add(id)
+        next.add(id);
       }
-      return next
-    })
-  }
+      return next;
+    });
+  };
 
   const handleToggleEnabled = async (connector: ConnectorConfig) => {
     try {
-      await api.put(`/connectors/${connector.id}`, { enabled: !connector.enabled })
-      await loadConnectors()
+      await api.put(`/connectors/${connector.id}`, { enabled: !connector.enabled });
+      await loadConnectors();
     } catch (err) {
-      console.error('Failed to toggle connector:', err)
+      console.error('Failed to toggle connector:', err);
     }
-  }
+  };
 
   const openCreateDialog = () => {
-    setEditingConnector(null)
-    setShowDialog(true)
-  }
+    setEditingConnector(null);
+    setShowDialog(true);
+  };
 
   const openEditDialog = (connector: ConnectorConfig) => {
-    setEditingConnector(connector)
-    setShowDialog(true)
-  }
+    setEditingConnector(connector);
+    setShowDialog(true);
+  };
 
   const handleDialogSaved = () => {
-    setShowDialog(false)
-    setEditingConnector(null)
-    loadConnectors()
-  }
+    setShowDialog(false);
+    setEditingConnector(null);
+    loadConnectors();
+  };
 
   const handleDelete = async () => {
-    if (!deleteTarget) return
-    setDeleting(true)
+    if (!deleteTarget) return;
+    setDeleting(true);
     try {
-      await api.delete(`/connectors/${deleteTarget.id}`)
-      setDeleteTarget(null)
-      loadConnectors()
+      await api.delete(`/connectors/${deleteTarget.id}`);
+      setDeleteTarget(null);
+      loadConnectors();
     } catch (err) {
-      console.error('Failed to delete connector:', err)
+      console.error('Failed to delete connector:', err);
     } finally {
-      setDeleting(false)
+      setDeleting(false);
     }
-  }
+  };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-slate-400">Loading connectors...</div>
       </div>
-    )
+    );
   }
 
   if (error) {
@@ -796,7 +876,7 @@ export function ConnectorsPage() {
           Retry
         </button>
       </div>
-    )
+    );
   }
 
   return (
@@ -845,10 +925,7 @@ export function ConnectorsPage() {
       {/* Connector cards */}
       <div className="space-y-4">
         {connectors.map((connector) => (
-          <div
-            key={connector.id}
-            className="bg-slate-800 border border-slate-700 rounded-lg p-4"
-          >
+          <div key={connector.id} className="bg-slate-800 border border-slate-700 rounded-lg p-4">
             {/* Header row */}
             <div className="flex items-start justify-between">
               <div className="flex-1 min-w-0">
@@ -869,9 +946,13 @@ export function ConnectorsPage() {
                   </span>
                 </div>
                 <div className="flex items-center gap-4 mt-1.5 text-xs text-slate-500">
-                  <span>Adapter: <span className="text-slate-400">{connector.adapter_type}</span></span>
+                  <span>
+                    Adapter: <span className="text-slate-400">{connector.adapter_type}</span>
+                  </span>
                   {connector.schedule && (
-                    <span>Schedule: <span className="text-slate-400">{connector.schedule}</span></span>
+                    <span>
+                      Schedule: <span className="text-slate-400">{connector.schedule}</span>
+                    </span>
                   )}
                   {connector.last_sync_at && (
                     <span>
@@ -947,9 +1028,7 @@ export function ConnectorsPage() {
             )}
 
             {/* Sync logs */}
-            {expandedLogs.has(connector.id) && (
-              <SyncLogsPanel connectorId={connector.id} />
-            )}
+            {expandedLogs.has(connector.id) && <SyncLogsPanel connectorId={connector.id} />}
           </div>
         ))}
       </div>
@@ -958,7 +1037,10 @@ export function ConnectorsPage() {
       {showDialog && (
         <ConnectorDialog
           editingConnector={editingConnector}
-          onClose={() => { setShowDialog(false); setEditingConnector(null) }}
+          onClose={() => {
+            setShowDialog(false);
+            setEditingConnector(null);
+          }}
           onSaved={handleDialogSaved}
         />
       )}
@@ -973,14 +1055,24 @@ export function ConnectorsPage() {
         />
       )}
     </div>
-  )
+  );
 }
 
 // Simple connector icon
 function ConnectorIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
+    <svg
+      className={className}
+      fill="none"
+      viewBox="0 0 24 24"
+      strokeWidth={1.5}
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244"
+      />
     </svg>
-  )
+  );
 }

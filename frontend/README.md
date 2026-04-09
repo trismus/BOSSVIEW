@@ -37,14 +37,14 @@ Der Vite-Dev-Server laeuft auf `http://localhost:3000`.
 
 ## Scripts
 
-| Script | Beschreibung |
-|--------|--------------|
-| `npm run dev` | Startet den Vite-Dev-Server auf Port 3000 (Hot Module Reload). |
-| `npm run build` | TypeScript-Kompilierung + Vite-Production-Build nach `dist/`. |
-| `npm run lint` | ESLint ueber `src/**/*.{ts,tsx}`. |
-| `npm run format` | Prettier-Autoformatierung fuer das gesamte Projekt. |
-| `npm run format:check` | Prueft Formatierung ohne Aenderungen (CI-geeignet). |
-| `npm run typecheck` | `tsc --noEmit` — Typ-Validierung ohne Build-Output. |
+| Script                 | Beschreibung                                                   |
+| ---------------------- | -------------------------------------------------------------- |
+| `npm run dev`          | Startet den Vite-Dev-Server auf Port 3000 (Hot Module Reload). |
+| `npm run build`        | TypeScript-Kompilierung + Vite-Production-Build nach `dist/`.  |
+| `npm run lint`         | ESLint ueber `src/**/*.{ts,tsx}`.                              |
+| `npm run format`       | Prettier-Autoformatierung fuer das gesamte Projekt.            |
+| `npm run format:check` | Prueft Formatierung ohne Aenderungen (CI-geeignet).            |
+| `npm run typecheck`    | `tsc --noEmit` — Typ-Validierung ohne Build-Output.            |
 
 ## Design-System
 

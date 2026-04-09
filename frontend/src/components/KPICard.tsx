@@ -1,8 +1,8 @@
 interface KPICardProps {
-  title: string
-  value: string | number
-  subtitle?: string
-  color?: 'blue' | 'green' | 'yellow' | 'red' | 'purple'
+  title: string;
+  value: string | number;
+  subtitle?: string;
+  color?: 'blue' | 'green' | 'yellow' | 'red' | 'purple';
 }
 
 const colorMap = {
@@ -11,7 +11,7 @@ const colorMap = {
   yellow: 'bg-amber-500/10 border-amber-500/30 text-amber-400',
   red: 'bg-red-500/10 border-red-500/30 text-red-400',
   purple: 'bg-purple-500/10 border-purple-500/30 text-purple-400',
-}
+};
 
 export function KPICard({ title, value, subtitle, color = 'blue' }: KPICardProps) {
   return (
@@ -20,5 +20,5 @@ export function KPICard({ title, value, subtitle, color = 'blue' }: KPICardProps
       <p className="text-3xl font-bold">{value}</p>
       {subtitle && <p className="text-xs text-slate-500 mt-1">{subtitle}</p>}
     </div>
-  )
+  );
 }

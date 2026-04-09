@@ -1,8 +1,8 @@
-import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
-import { api } from '../../api/client'
-import { DeviceConfigPanel } from './DeviceConfigPanel'
-import { PortGrid } from './PortGrid'
-import { VlanConsistencyPanel } from './VlanConsistencyPanel'
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { api } from '../../api/client';
+import { DeviceConfigPanel } from './DeviceConfigPanel';
+import { PortGrid } from './PortGrid';
+import { VlanConsistencyPanel } from './VlanConsistencyPanel';
 import type {
   InfraDevice,
   InfraDeviceLink,
@@ -11,7 +11,7 @@ import type {
   InfraDeviceStatus,
   InfraLinkType,
   ParsedConfig,
-} from '../../types'
+} from '../../types';
 
 // ─── Dark Trace Color Palette ────────────────────────────────
 const COLORS = {
@@ -30,34 +30,53 @@ const COLORS = {
   textDim: '#94a3b8',
   textMuted: '#64748b',
   grid: 'rgba(6, 182, 212, 0.04)',
-}
+};
 
 const DEVICE_TYPES: InfraDeviceType[] = [
-  'firewall', 'switch-core', 'switch', 'router', 'server',
-  'storage', 'wireless', 'ups', 'patch-panel', 'pdu',
-]
+  'firewall',
+  'switch-core',
+  'switch',
+  'router',
+  'server',
+  'storage',
+  'wireless',
+  'ups',
+  'patch-panel',
+  'pdu',
+];
 
 const DEVICE_STATUSES: InfraDeviceStatus[] = [
-  'operational', 'warning', 'critical', 'maintenance', 'offline', 'decommissioned',
-]
+  'operational',
+  'warning',
+  'critical',
+  'maintenance',
+  'offline',
+  'decommissioned',
+];
 
-const LINK_TYPES: InfraLinkType[] = [
-  'trunk', 'access', 'ha', 'vpc', 'storage', 'management',
-]
+const LINK_TYPES: InfraLinkType[] = ['trunk', 'access', 'ha', 'vpc', 'storage', 'management'];
 
 interface NetworkTopologyViewProps {
-  siteName: string
-  locationId: string
-  vlans: InfraVlan[]
-  devices: InfraDevice[]
-  links: InfraDeviceLink[]
-  onDevicePositionUpdate?: (deviceId: string, x: number, y: number) => void
-  onRefresh?: () => void
+  siteName: string;
+  locationId: string;
+  vlans: InfraVlan[];
+  devices: InfraDevice[];
+  links: InfraDeviceLink[];
+  onDevicePositionUpdate?: (deviceId: string, x: number, y: number) => void;
+  onRefresh?: () => void;
 }
 
 // ─── Device Icons ────────────────────────────────────────────
-function DeviceIcon({ type, size = 20, color = COLORS.cyan }: { type: InfraDeviceType; size?: number; color?: string }) {
-  const s = size
+function DeviceIcon({
+  type,
+  size = 20,
+  color = COLORS.cyan,
+}: {
+  type: InfraDeviceType;
+  size?: number;
+  color?: string;
+}) {
+  const s = size;
   const icons: Record<string, React.ReactNode> = {
     firewall: (
       <svg width={s} height={s} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="1.5">
@@ -136,29 +155,48 @@ function DeviceIcon({ type, size = 20, color = COLORS.cyan }: { type: InfraDevic
         <circle cx="12" cy="13" r="2" fill={color} opacity="0.3" />
       </svg>
     ),
-  }
-  return <>{icons[type] ?? icons.server}</>
+  };
+  return <>{icons[type] ?? icons.server}</>;
 }
 
 // ─── Animated Data Flow Line ─────────────────────────────────
 function DataFlowLine({
-  x1, y1, x2, y2, color, speed = '2s', onClick,
+  x1,
+  y1,
+  x2,
+  y2,
+  color,
+  speed = '2s',
+  onClick,
 }: {
-  x1: number; y1: number; x2: number; y2: number
-  color: string; speed?: string; onClick?: (e: React.MouseEvent) => void
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  color: string;
+  speed?: string;
+  onClick?: (e: React.MouseEvent) => void;
 }) {
   return (
     <g>
+      <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={color} strokeWidth="1" opacity="0.2" />
       <line
-        x1={x1} y1={y1} x2={x2} y2={y2}
-        stroke={color} strokeWidth="1" opacity="0.2"
-      />
-      <line
-        x1={x1} y1={y1} x2={x2} y2={y2}
-        stroke={color} strokeWidth="1.5" opacity="0.6"
-        strokeDasharray="4 12" strokeDashoffset="0"
+        x1={x1}
+        y1={y1}
+        x2={x2}
+        y2={y2}
+        stroke={color}
+        strokeWidth="1.5"
+        opacity="0.6"
+        strokeDasharray="4 12"
+        strokeDashoffset="0"
       >
-        <animate attributeName="stroke-dashoffset" values="0;-16" dur={speed} repeatCount="indefinite" />
+        <animate
+          attributeName="stroke-dashoffset"
+          values="0;-16"
+          dur={speed}
+          repeatCount="indefinite"
+        />
       </line>
       <circle r="2" fill={color} opacity="0.9">
         <animateMotion dur={speed} repeatCount="indefinite" path={`M${x1},${y1} L${x2},${y2}`} />
@@ -166,76 +204,97 @@ function DataFlowLine({
       {/* Invisible wider line for easier click target */}
       {onClick && (
         <line
-          x1={x1} y1={y1} x2={x2} y2={y2}
-          stroke="transparent" strokeWidth="10"
+          x1={x1}
+          y1={y1}
+          x2={x2}
+          y2={y2}
+          stroke="transparent"
+          strokeWidth="10"
           className="cursor-pointer"
           onClick={onClick}
           onContextMenu={onClick}
         />
       )}
     </g>
-  )
+  );
 }
 
 function getStatusColor(status: string): string {
   switch (status) {
-    case 'operational': return COLORS.green
-    case 'warning': return COLORS.amber
-    case 'critical': return COLORS.red
-    case 'maintenance': return COLORS.blue
-    default: return COLORS.textMuted
+    case 'operational':
+      return COLORS.green;
+    case 'warning':
+      return COLORS.amber;
+    case 'critical':
+      return COLORS.red;
+    case 'maintenance':
+      return COLORS.blue;
+    default:
+      return COLORS.textMuted;
   }
 }
 
 function getLinkColor(linkType: string): string {
   switch (linkType) {
-    case 'ha': return COLORS.red
-    case 'vpc': return COLORS.purple
-    case 'storage': return COLORS.amber
-    case 'management': return COLORS.blue
-    default: return COLORS.cyan
+    case 'ha':
+      return COLORS.red;
+    case 'vpc':
+      return COLORS.purple;
+    case 'storage':
+      return COLORS.amber;
+    case 'management':
+      return COLORS.blue;
+    default:
+      return COLORS.cyan;
   }
 }
 
 function getLinkSpeed(speed?: string): string {
-  if (!speed) return '3.5s'
-  if (speed.includes('100')) return '1.5s'
-  if (speed.includes('40')) return '2s'
-  if (speed.includes('25') || speed.includes('10G')) return '2.5s'
-  return '3.5s'
+  if (!speed) return '3.5s';
+  if (speed.includes('100')) return '1.5s';
+  if (speed.includes('40')) return '2s';
+  if (speed.includes('25') || speed.includes('10G')) return '2.5s';
+  return '3.5s';
 }
 
 // ─── Context Menu ────────────────────────────────────────────
 interface ContextMenuItem {
-  label: string
-  icon: string
-  onClick: () => void
-  danger?: boolean
+  label: string;
+  icon: string;
+  onClick: () => void;
+  danger?: boolean;
 }
 
 function ContextMenu({
-  x, y, items, onClose,
+  x,
+  y,
+  items,
+  onClose,
 }: {
-  x: number; y: number; items: ContextMenuItem[]; onClose: () => void
+  x: number;
+  y: number;
+  items: ContextMenuItem[];
+  onClose: () => void;
 }) {
-  const menuRef = useRef<HTMLDivElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        onClose()
+        onClose();
       }
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [onClose])
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [onClose]);
 
   return (
     <div
       ref={menuRef}
       className="fixed z-50 py-1 rounded-md shadow-xl min-w-[160px]"
       style={{
-        left: x, top: y,
+        left: x,
+        top: y,
         background: COLORS.bgCard,
         border: `1px solid ${COLORS.border}`,
         fontFamily: 'JetBrains Mono, monospace',
@@ -248,37 +307,47 @@ function ContextMenu({
           style={{
             fontSize: 11,
             color: item.danger ? COLORS.red : COLORS.text,
-            background: 'none', border: 'none',
+            background: 'none',
+            border: 'none',
           }}
-          onClick={() => { item.onClick(); onClose() }}
+          onClick={() => {
+            item.onClick();
+            onClose();
+          }}
         >
           <span style={{ fontSize: 13 }}>{item.icon}</span>
           {item.label}
         </button>
       ))}
     </div>
-  )
+  );
 }
 
 // ─── Modal Dialog Wrapper ────────────────────────────────────
 function ModalDialog({
-  title, onClose, children,
+  title,
+  onClose,
+  children,
 }: {
-  title: string; onClose: () => void; children: React.ReactNode
+  title: string;
+  onClose: () => void;
+  children: React.ReactNode;
 }) {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    document.addEventListener('keydown', handler)
-    return () => document.removeEventListener('keydown', handler)
-  }, [onClose])
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [onClose]);
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
       style={{ background: 'rgba(0,0,0,0.6)' }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       <div
         className="rounded-lg p-5 w-full max-w-md shadow-2xl"
@@ -302,7 +371,7 @@ function ModalDialog({
         {children}
       </div>
     </div>
-  )
+  );
 }
 
 // ─── Form Input Components ───────────────────────────────────
@@ -315,7 +384,7 @@ const inputStyle: React.CSSProperties = {
   fontSize: 12,
   fontFamily: 'JetBrains Mono, monospace',
   width: '100%',
-}
+};
 
 const labelStyle: React.CSSProperties = {
   fontSize: 10,
@@ -325,7 +394,7 @@ const labelStyle: React.CSSProperties = {
   letterSpacing: '0.5px',
   marginBottom: 4,
   display: 'block',
-}
+};
 
 const btnPrimary: React.CSSProperties = {
   background: '#0891b2',
@@ -337,7 +406,7 @@ const btnPrimary: React.CSSProperties = {
   fontFamily: 'JetBrains Mono, monospace',
   cursor: 'pointer',
   fontWeight: 600,
-}
+};
 
 const btnDanger: React.CSSProperties = {
   background: '#dc2626',
@@ -349,7 +418,7 @@ const btnDanger: React.CSSProperties = {
   fontFamily: 'JetBrains Mono, monospace',
   cursor: 'pointer',
   fontWeight: 600,
-}
+};
 
 const btnCancel: React.CSSProperties = {
   background: 'transparent',
@@ -360,18 +429,23 @@ const btnCancel: React.CSSProperties = {
   fontSize: 11,
   fontFamily: 'JetBrains Mono, monospace',
   cursor: 'pointer',
-}
+};
 
 // ─── Add Device Dialog ───────────────────────────────────────
 function AddDeviceDialog({
-  locationId, vlans, initialX, initialY, onClose, onSuccess,
+  locationId,
+  vlans,
+  initialX,
+  initialY,
+  onClose,
+  onSuccess,
 }: {
-  locationId: string
-  vlans: InfraVlan[]
-  initialX: number
-  initialY: number
-  onClose: () => void
-  onSuccess: () => void
+  locationId: string;
+  vlans: InfraVlan[];
+  initialX: number;
+  initialY: number;
+  onClose: () => void;
+  onSuccess: () => void;
 }) {
   const [form, setForm] = useState({
     name: '',
@@ -380,15 +454,18 @@ function AddDeviceDialog({
     model: '',
     manufacturer: '',
     vlan_id: '',
-  })
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!form.name.trim()) { setError('Name is required'); return }
-    setSaving(true)
-    setError('')
+    e.preventDefault();
+    if (!form.name.trim()) {
+      setError('Name is required');
+      return;
+    }
+    setSaving(true);
+    setError('');
     try {
       await api.post('/infrastructure/devices', {
         location_id: locationId,
@@ -401,16 +478,16 @@ function AddDeviceDialog({
         topo_x: Math.round(initialX),
         topo_y: Math.round(initialY),
         status: 'operational',
-      })
-      onSuccess()
-      onClose()
+      });
+      onSuccess();
+      onClose();
     } catch (err) {
-      console.error('Failed to create device:', err)
-      setError(err instanceof Error ? err.message : 'Failed to create device')
+      console.error('Failed to create device:', err);
+      setError(err instanceof Error ? err.message : 'Failed to create device');
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
-  }
+  };
 
   return (
     <ModalDialog title="ADD DEVICE" onClose={onClose}>
@@ -421,7 +498,7 @@ function AddDeviceDialog({
             <input
               style={inputStyle}
               value={form.name}
-              onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))}
+              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
               placeholder="e.g. SW-CORE-01"
               autoFocus
             />
@@ -432,10 +509,14 @@ function AddDeviceDialog({
               <select
                 style={inputStyle}
                 value={form.device_type}
-                onChange={(e) => setForm(f => ({ ...f, device_type: e.target.value as InfraDeviceType }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, device_type: e.target.value as InfraDeviceType }))
+                }
               >
-                {DEVICE_TYPES.map(t => (
-                  <option key={t} value={t}>{t.toUpperCase()}</option>
+                {DEVICE_TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {t.toUpperCase()}
+                  </option>
                 ))}
               </select>
             </div>
@@ -444,7 +525,7 @@ function AddDeviceDialog({
               <input
                 style={inputStyle}
                 value={form.ip_address}
-                onChange={(e) => setForm(f => ({ ...f, ip_address: e.target.value }))}
+                onChange={(e) => setForm((f) => ({ ...f, ip_address: e.target.value }))}
                 placeholder="10.0.1.1"
               />
             </div>
@@ -455,7 +536,7 @@ function AddDeviceDialog({
               <input
                 style={inputStyle}
                 value={form.model}
-                onChange={(e) => setForm(f => ({ ...f, model: e.target.value }))}
+                onChange={(e) => setForm((f) => ({ ...f, model: e.target.value }))}
                 placeholder="e.g. Catalyst 9300"
               />
             </div>
@@ -464,7 +545,7 @@ function AddDeviceDialog({
               <input
                 style={inputStyle}
                 value={form.manufacturer}
-                onChange={(e) => setForm(f => ({ ...f, manufacturer: e.target.value }))}
+                onChange={(e) => setForm((f) => ({ ...f, manufacturer: e.target.value }))}
                 placeholder="e.g. Cisco"
               />
             </div>
@@ -474,39 +555,52 @@ function AddDeviceDialog({
             <select
               style={inputStyle}
               value={form.vlan_id}
-              onChange={(e) => setForm(f => ({ ...f, vlan_id: e.target.value }))}
+              onChange={(e) => setForm((f) => ({ ...f, vlan_id: e.target.value }))}
             >
               <option value="">-- No VLAN --</option>
-              {vlans.map(v => (
-                <option key={v.id} value={v.id}>VLAN {v.vlan_id} - {v.name}</option>
+              {vlans.map((v) => (
+                <option key={v.id} value={v.id}>
+                  VLAN {v.vlan_id} - {v.name}
+                </option>
               ))}
             </select>
           </div>
         </div>
 
         {error && (
-          <div className="mt-3 text-xs" style={{ color: COLORS.red }}>{error}</div>
+          <div className="mt-3 text-xs" style={{ color: COLORS.red }}>
+            {error}
+          </div>
         )}
 
         <div className="flex justify-end gap-2 mt-5">
-          <button type="button" style={btnCancel} onClick={onClose}>Cancel</button>
-          <button type="submit" style={{ ...btnPrimary, opacity: saving ? 0.6 : 1 }} disabled={saving}>
+          <button type="button" style={btnCancel} onClick={onClose}>
+            Cancel
+          </button>
+          <button
+            type="submit"
+            style={{ ...btnPrimary, opacity: saving ? 0.6 : 1 }}
+            disabled={saving}
+          >
             {saving ? 'Creating...' : 'Create Device'}
           </button>
         </div>
       </form>
     </ModalDialog>
-  )
+  );
 }
 
 // ─── Edit Device Dialog ──────────────────────────────────────
 function EditDeviceDialog({
-  device, vlans, onClose, onSuccess,
+  device,
+  vlans,
+  onClose,
+  onSuccess,
 }: {
-  device: InfraDevice
-  vlans: InfraVlan[]
-  onClose: () => void
-  onSuccess: () => void
+  device: InfraDevice;
+  vlans: InfraVlan[];
+  onClose: () => void;
+  onSuccess: () => void;
 }) {
   const [form, setForm] = useState({
     name: device.name,
@@ -516,17 +610,20 @@ function EditDeviceDialog({
     manufacturer: device.manufacturer ?? '',
     vlan_id: device.vlan_id ?? '',
     status: device.status,
-  })
-  const [saving, setSaving] = useState(false)
-  const [deleting, setDeleting] = useState(false)
-  const [confirmDelete, setConfirmDelete] = useState(false)
-  const [error, setError] = useState('')
+  });
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!form.name.trim()) { setError('Name is required'); return }
-    setSaving(true)
-    setError('')
+    e.preventDefault();
+    if (!form.name.trim()) {
+      setError('Name is required');
+      return;
+    }
+    setSaving(true);
+    setError('');
     try {
       await api.put(`/infrastructure/devices/${device.id}`, {
         name: form.name.trim(),
@@ -536,31 +633,31 @@ function EditDeviceDialog({
         manufacturer: form.manufacturer.trim() || null,
         vlan_id: form.vlan_id || null,
         status: form.status,
-      })
-      onSuccess()
-      onClose()
+      });
+      onSuccess();
+      onClose();
     } catch (err) {
-      console.error('Failed to update device:', err)
-      setError(err instanceof Error ? err.message : 'Failed to update device')
+      console.error('Failed to update device:', err);
+      setError(err instanceof Error ? err.message : 'Failed to update device');
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
-  }
+  };
 
   const handleDelete = async () => {
-    setDeleting(true)
-    setError('')
+    setDeleting(true);
+    setError('');
     try {
-      await api.delete(`/infrastructure/devices/${device.id}`)
-      onSuccess()
-      onClose()
+      await api.delete(`/infrastructure/devices/${device.id}`);
+      onSuccess();
+      onClose();
     } catch (err) {
-      console.error('Failed to delete device:', err)
-      setError(err instanceof Error ? err.message : 'Failed to delete device')
+      console.error('Failed to delete device:', err);
+      setError(err instanceof Error ? err.message : 'Failed to delete device');
     } finally {
-      setDeleting(false)
+      setDeleting(false);
     }
-  }
+  };
 
   return (
     <ModalDialog title="EDIT DEVICE" onClose={onClose}>
@@ -571,7 +668,7 @@ function EditDeviceDialog({
             <input
               style={inputStyle}
               value={form.name}
-              onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))}
+              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
               autoFocus
             />
           </div>
@@ -581,10 +678,14 @@ function EditDeviceDialog({
               <select
                 style={inputStyle}
                 value={form.device_type}
-                onChange={(e) => setForm(f => ({ ...f, device_type: e.target.value as InfraDeviceType }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, device_type: e.target.value as InfraDeviceType }))
+                }
               >
-                {DEVICE_TYPES.map(t => (
-                  <option key={t} value={t}>{t.toUpperCase()}</option>
+                {DEVICE_TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {t.toUpperCase()}
+                  </option>
                 ))}
               </select>
             </div>
@@ -593,10 +694,14 @@ function EditDeviceDialog({
               <select
                 style={inputStyle}
                 value={form.status}
-                onChange={(e) => setForm(f => ({ ...f, status: e.target.value as InfraDeviceStatus }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, status: e.target.value as InfraDeviceStatus }))
+                }
               >
-                {DEVICE_STATUSES.map(s => (
-                  <option key={s} value={s}>{s.toUpperCase()}</option>
+                {DEVICE_STATUSES.map((s) => (
+                  <option key={s} value={s}>
+                    {s.toUpperCase()}
+                  </option>
                 ))}
               </select>
             </div>
@@ -606,7 +711,7 @@ function EditDeviceDialog({
             <input
               style={inputStyle}
               value={form.ip_address}
-              onChange={(e) => setForm(f => ({ ...f, ip_address: e.target.value }))}
+              onChange={(e) => setForm((f) => ({ ...f, ip_address: e.target.value }))}
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -615,7 +720,7 @@ function EditDeviceDialog({
               <input
                 style={inputStyle}
                 value={form.model}
-                onChange={(e) => setForm(f => ({ ...f, model: e.target.value }))}
+                onChange={(e) => setForm((f) => ({ ...f, model: e.target.value }))}
               />
             </div>
             <div>
@@ -623,7 +728,7 @@ function EditDeviceDialog({
               <input
                 style={inputStyle}
                 value={form.manufacturer}
-                onChange={(e) => setForm(f => ({ ...f, manufacturer: e.target.value }))}
+                onChange={(e) => setForm((f) => ({ ...f, manufacturer: e.target.value }))}
               />
             </div>
           </div>
@@ -632,28 +737,28 @@ function EditDeviceDialog({
             <select
               style={inputStyle}
               value={form.vlan_id}
-              onChange={(e) => setForm(f => ({ ...f, vlan_id: e.target.value }))}
+              onChange={(e) => setForm((f) => ({ ...f, vlan_id: e.target.value }))}
             >
               <option value="">-- No VLAN --</option>
-              {vlans.map(v => (
-                <option key={v.id} value={v.id}>VLAN {v.vlan_id} - {v.name}</option>
+              {vlans.map((v) => (
+                <option key={v.id} value={v.id}>
+                  VLAN {v.vlan_id} - {v.name}
+                </option>
               ))}
             </select>
           </div>
         </div>
 
         {error && (
-          <div className="mt-3 text-xs" style={{ color: COLORS.red }}>{error}</div>
+          <div className="mt-3 text-xs" style={{ color: COLORS.red }}>
+            {error}
+          </div>
         )}
 
         <div className="flex justify-between mt-5">
           <div>
             {!confirmDelete ? (
-              <button
-                type="button"
-                style={btnDanger}
-                onClick={() => setConfirmDelete(true)}
-              >
+              <button type="button" style={btnDanger} onClick={() => setConfirmDelete(true)}>
                 Delete
               </button>
             ) : (
@@ -667,54 +772,53 @@ function EditDeviceDialog({
                 >
                   {deleting ? '...' : 'Confirm'}
                 </button>
-                <button
-                  type="button"
-                  style={btnCancel}
-                  onClick={() => setConfirmDelete(false)}
-                >
+                <button type="button" style={btnCancel} onClick={() => setConfirmDelete(false)}>
                   No
                 </button>
               </div>
             )}
           </div>
           <div className="flex gap-2">
-            <button type="button" style={btnCancel} onClick={onClose}>Cancel</button>
-            <button type="submit" style={{ ...btnPrimary, opacity: saving ? 0.6 : 1 }} disabled={saving}>
+            <button type="button" style={btnCancel} onClick={onClose}>
+              Cancel
+            </button>
+            <button
+              type="submit"
+              style={{ ...btnPrimary, opacity: saving ? 0.6 : 1 }}
+              disabled={saving}
+            >
               {saving ? 'Saving...' : 'Save'}
             </button>
           </div>
         </div>
       </form>
     </ModalDialog>
-  )
+  );
 }
 
 // ─── Device Detail Dialog (Tabs: Ports, VLANs, Config) ──────
-type DeviceDetailTab = 'ports' | 'vlans' | 'config'
+type DeviceDetailTab = 'ports' | 'vlans' | 'config';
 
-function DeviceDetailDialog({
-  device, onClose,
-}: {
-  device: InfraDevice
-  onClose: () => void
-}) {
-  const [tab, setTab] = useState<DeviceDetailTab>('ports')
-  const config = device.config_data as ParsedConfig | null | undefined
+function DeviceDetailDialog({ device, onClose }: { device: InfraDevice; onClose: () => void }) {
+  const [tab, setTab] = useState<DeviceDetailTab>('ports');
+  const config = device.config_data as ParsedConfig | null | undefined;
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    document.addEventListener('keydown', handler)
-    return () => document.removeEventListener('keydown', handler)
-  }, [onClose])
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [onClose]);
 
   if (!config) {
     return (
       <div
         className="fixed inset-0 z-50 flex items-center justify-center"
         style={{ background: 'rgba(0,0,0,0.6)' }}
-        onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+        onClick={(e) => {
+          if (e.target === e.currentTarget) onClose();
+        }}
       >
         <div
           className="rounded-lg p-5 w-full max-w-md shadow-2xl"
@@ -740,20 +844,22 @@ function DeviceDetailDialog({
           </div>
         </div>
       </div>
-    )
+    );
   }
 
   const tabs: { key: DeviceDetailTab; label: string }[] = [
     { key: 'ports', label: `Ports (${config.interfaces.length})` },
     { key: 'vlans', label: `VLANs (${config.vlans.length})` },
     { key: 'config', label: 'Config' },
-  ]
+  ];
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
       style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       <div
         className="rounded-lg w-full shadow-2xl flex flex-col"
@@ -767,15 +873,25 @@ function DeviceDetailDialog({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '14px 20px', borderBottom: `1px solid ${COLORS.border}`,
-        }}>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '14px 20px',
+            borderBottom: `1px solid ${COLORS.border}`,
+          }}
+        >
           <div>
-            <h3 style={{
-              margin: 0, fontSize: 14, color: COLORS.cyan,
-              fontFamily: 'JetBrains Mono, monospace', fontWeight: 700,
-            }}>
+            <h3
+              style={{
+                margin: 0,
+                fontSize: 14,
+                color: COLORS.cyan,
+                fontFamily: 'JetBrains Mono, monospace',
+                fontWeight: 700,
+              }}
+            >
               {device.name}
             </h3>
             <span style={{ fontSize: 11, color: COLORS.textDim }}>
@@ -785,24 +901,38 @@ function DeviceDetailDialog({
           </div>
           <button
             onClick={onClose}
-            style={{ background: 'none', border: 'none', color: COLORS.textMuted, fontSize: 18, cursor: 'pointer' }}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: COLORS.textMuted,
+              fontSize: 18,
+              cursor: 'pointer',
+            }}
           >
             &#10005;
           </button>
         </div>
 
         {/* Tabs */}
-        <div style={{
-          display: 'flex', gap: 0, borderBottom: `1px solid ${COLORS.border}`,
-          padding: '0 20px',
-        }}>
-          {tabs.map(t => (
+        <div
+          style={{
+            display: 'flex',
+            gap: 0,
+            borderBottom: `1px solid ${COLORS.border}`,
+            padding: '0 20px',
+          }}
+        >
+          {tabs.map((t) => (
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
               style={{
-                padding: '10px 16px', fontSize: 12, fontWeight: 500,
-                background: 'none', border: 'none', cursor: 'pointer',
+                padding: '10px 16px',
+                fontSize: 12,
+                fontWeight: 500,
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
                 color: tab === t.key ? COLORS.cyan : COLORS.textDim,
                 borderBottom: tab === t.key ? `2px solid ${COLORS.cyan}` : '2px solid transparent',
                 fontFamily: 'JetBrains Mono, monospace',
@@ -815,22 +945,13 @@ function DeviceDetailDialog({
 
         {/* Content */}
         <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
-          {tab === 'ports' && (
-            <PortGrid
-              interfaces={config.interfaces}
-              deviceName={device.name}
-            />
-          )}
-          {tab === 'vlans' && (
-            <DeviceVlanTable vlans={config.vlans} />
-          )}
-          {tab === 'config' && (
-            <RawConfigPreview config={config} />
-          )}
+          {tab === 'ports' && <PortGrid interfaces={config.interfaces} deviceName={device.name} />}
+          {tab === 'vlans' && <DeviceVlanTable vlans={config.vlans} />}
+          {tab === 'config' && <RawConfigPreview config={config} />}
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 function DeviceVlanTable({ vlans }: { vlans: { id: number; name: string; state: string }[] }) {
@@ -839,38 +960,54 @@ function DeviceVlanTable({ vlans }: { vlans: { id: number; name: string; state: 
       <div style={{ color: COLORS.textMuted, textAlign: 'center', padding: 32, fontSize: 13 }}>
         No VLANs found in config
       </div>
-    )
+    );
   }
   return (
     <div style={{ overflowX: 'auto' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
         <thead>
           <tr>
-            {['ID', 'Name', 'State'].map(h => (
-              <th key={h} style={{
-                padding: '8px 12px', textAlign: 'left', fontSize: 10, fontWeight: 600,
-                color: COLORS.textMuted, borderBottom: `1px solid ${COLORS.border}`,
-                textTransform: 'uppercase', letterSpacing: '0.5px',
-                fontFamily: 'JetBrains Mono, monospace',
-              }}>
+            {['ID', 'Name', 'State'].map((h) => (
+              <th
+                key={h}
+                style={{
+                  padding: '8px 12px',
+                  textAlign: 'left',
+                  fontSize: 10,
+                  fontWeight: 600,
+                  color: COLORS.textMuted,
+                  borderBottom: `1px solid ${COLORS.border}`,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                  fontFamily: 'JetBrains Mono, monospace',
+                }}
+              >
                 {h}
               </th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {vlans.map(v => (
+          {vlans.map((v) => (
             <tr key={v.id} style={{ borderBottom: `1px solid ${COLORS.border}` }}>
-              <td style={{ padding: '8px 12px', color: COLORS.cyan, fontFamily: 'monospace' }}>{v.id}</td>
+              <td style={{ padding: '8px 12px', color: COLORS.cyan, fontFamily: 'monospace' }}>
+                {v.id}
+              </td>
               <td style={{ padding: '8px 12px', color: COLORS.text }}>{v.name}</td>
               <td style={{ padding: '8px 12px' }}>
-                <span style={{
-                  display: 'inline-block', padding: '2px 8px', borderRadius: 9999,
-                  fontSize: 10, fontWeight: 500,
-                  background: v.state === 'active' ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.15)',
-                  color: v.state === 'active' ? '#10b981' : '#f59e0b',
-                  border: `1px solid ${v.state === 'active' ? 'rgba(16,185,129,0.4)' : 'rgba(245,158,11,0.4)'}`,
-                }}>
+                <span
+                  style={{
+                    display: 'inline-block',
+                    padding: '2px 8px',
+                    borderRadius: 9999,
+                    fontSize: 10,
+                    fontWeight: 500,
+                    background:
+                      v.state === 'active' ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.15)',
+                    color: v.state === 'active' ? '#10b981' : '#f59e0b',
+                    border: `1px solid ${v.state === 'active' ? 'rgba(16,185,129,0.4)' : 'rgba(245,158,11,0.4)'}`,
+                  }}
+                >
                   {v.state}
                 </span>
               </td>
@@ -879,87 +1016,94 @@ function DeviceVlanTable({ vlans }: { vlans: { id: number; name: string; state: 
         </tbody>
       </table>
     </div>
-  )
+  );
 }
 
 function RawConfigPreview({ config }: { config: ParsedConfig }) {
   // Build a readable summary of the parsed config sections
-  const lines: string[] = []
-  lines.push(`! Hostname: ${config.hostname || '—'}`)
-  lines.push(`! Platform: ${config.platform}`)
-  lines.push(`! Domain: ${config.domain || '—'}`)
-  lines.push(`! VLANs: ${config.vlans.length}`)
-  lines.push(`! Interfaces: ${config.interfaces.length}`)
-  lines.push(`! Port-Channels: ${config.portChannels.length}`)
-  lines.push('!')
-  lines.push('! ── VLANs ──')
+  const lines: string[] = [];
+  lines.push(`! Hostname: ${config.hostname || '—'}`);
+  lines.push(`! Platform: ${config.platform}`);
+  lines.push(`! Domain: ${config.domain || '—'}`);
+  lines.push(`! VLANs: ${config.vlans.length}`);
+  lines.push(`! Interfaces: ${config.interfaces.length}`);
+  lines.push(`! Port-Channels: ${config.portChannels.length}`);
+  lines.push('!');
+  lines.push('! ── VLANs ──');
   for (const v of config.vlans) {
-    lines.push(`vlan ${v.id}`)
-    lines.push(`  name ${v.name}`)
-    if (v.state !== 'active') lines.push(`  state ${v.state}`)
+    lines.push(`vlan ${v.id}`);
+    lines.push(`  name ${v.name}`);
+    if (v.state !== 'active') lines.push(`  state ${v.state}`);
   }
-  lines.push('!')
-  lines.push('! ── Interfaces ──')
+  lines.push('!');
+  lines.push('! ── Interfaces ──');
   for (const iface of config.interfaces.slice(0, 500)) {
-    lines.push(`interface ${iface.name}`)
-    if (iface.description) lines.push(`  description ${iface.description}`)
-    if (iface.switchportMode !== 'unknown') lines.push(`  switchport mode ${iface.switchportMode}`)
-    if (iface.accessVlan != null) lines.push(`  switchport access vlan ${iface.accessVlan}`)
-    if (iface.trunkAllowedVlans.length > 0) lines.push(`  switchport trunk allowed vlan ${iface.trunkAllowedVlans.join(',')}`)
-    if (iface.trunkNativeVlan != null) lines.push(`  switchport trunk native vlan ${iface.trunkNativeVlan}`)
-    if (iface.status === 'admin-down') lines.push('  shutdown')
-    if (iface.ipAddress) lines.push(`  ip address ${iface.ipAddress}`)
+    lines.push(`interface ${iface.name}`);
+    if (iface.description) lines.push(`  description ${iface.description}`);
+    if (iface.switchportMode !== 'unknown') lines.push(`  switchport mode ${iface.switchportMode}`);
+    if (iface.accessVlan != null) lines.push(`  switchport access vlan ${iface.accessVlan}`);
+    if (iface.trunkAllowedVlans.length > 0)
+      lines.push(`  switchport trunk allowed vlan ${iface.trunkAllowedVlans.join(',')}`);
+    if (iface.trunkNativeVlan != null)
+      lines.push(`  switchport trunk native vlan ${iface.trunkNativeVlan}`);
+    if (iface.status === 'admin-down') lines.push('  shutdown');
+    if (iface.ipAddress) lines.push(`  ip address ${iface.ipAddress}`);
   }
 
   // Limit to 500 lines
-  const displayLines = lines.slice(0, 500)
+  const displayLines = lines.slice(0, 500);
   if (lines.length > 500) {
-    displayLines.push(`! ... (${lines.length - 500} more lines truncated)`)
+    displayLines.push(`! ... (${lines.length - 500} more lines truncated)`);
   }
 
   return (
-    <pre style={{
-      background: '#0a0e17',
-      color: COLORS.textDim,
-      padding: 16,
-      borderRadius: 8,
-      border: `1px solid ${COLORS.border}`,
-      fontSize: 11,
-      fontFamily: 'JetBrains Mono, monospace',
-      lineHeight: 1.5,
-      maxHeight: '60vh',
-      overflowY: 'auto',
-      overflowX: 'auto',
-      whiteSpace: 'pre',
-      margin: 0,
-    }}>
+    <pre
+      style={{
+        background: '#0a0e17',
+        color: COLORS.textDim,
+        padding: 16,
+        borderRadius: 8,
+        border: `1px solid ${COLORS.border}`,
+        fontSize: 11,
+        fontFamily: 'JetBrains Mono, monospace',
+        lineHeight: 1.5,
+        maxHeight: '60vh',
+        overflowY: 'auto',
+        overflowX: 'auto',
+        whiteSpace: 'pre',
+        margin: 0,
+      }}
+    >
       {displayLines.join('\n')}
     </pre>
-  )
+  );
 }
 
 // ─── Link Dialog (Create) ────────────────────────────────────
 function CreateLinkDialog({
-  fromDevice, toDevice, onClose, onSuccess,
+  fromDevice,
+  toDevice,
+  onClose,
+  onSuccess,
 }: {
-  fromDevice: InfraDevice
-  toDevice: InfraDevice
-  onClose: () => void
-  onSuccess: () => void
+  fromDevice: InfraDevice;
+  toDevice: InfraDevice;
+  onClose: () => void;
+  onSuccess: () => void;
 }) {
   const [form, setForm] = useState({
     link_type: 'trunk' as InfraLinkType,
     speed: '',
     from_port: '',
     to_port: '',
-  })
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setSaving(true)
-    setError('')
+    e.preventDefault();
+    setSaving(true);
+    setError('');
     try {
       await api.post('/infrastructure/device-links', {
         from_device: fromDevice.id,
@@ -968,20 +1112,23 @@ function CreateLinkDialog({
         speed: form.speed.trim() || null,
         from_port: form.from_port.trim() || null,
         to_port: form.to_port.trim() || null,
-      })
-      onSuccess()
-      onClose()
+      });
+      onSuccess();
+      onClose();
     } catch (err) {
-      console.error('Failed to create link:', err)
-      setError(err instanceof Error ? err.message : 'Failed to create link')
+      console.error('Failed to create link:', err);
+      setError(err instanceof Error ? err.message : 'Failed to create link');
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
-  }
+  };
 
   return (
     <ModalDialog title="CREATE LINK" onClose={onClose}>
-      <div className="mb-3 flex items-center gap-2" style={{ fontSize: 11, color: COLORS.textDim, fontFamily: 'JetBrains Mono, monospace' }}>
+      <div
+        className="mb-3 flex items-center gap-2"
+        style={{ fontSize: 11, color: COLORS.textDim, fontFamily: 'JetBrains Mono, monospace' }}
+      >
         <span style={{ color: COLORS.cyan }}>{fromDevice.name}</span>
         <span>&#8594;</span>
         <span style={{ color: COLORS.cyan }}>{toDevice.name}</span>
@@ -994,10 +1141,14 @@ function CreateLinkDialog({
               <select
                 style={inputStyle}
                 value={form.link_type}
-                onChange={(e) => setForm(f => ({ ...f, link_type: e.target.value as InfraLinkType }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, link_type: e.target.value as InfraLinkType }))
+                }
               >
-                {LINK_TYPES.map(t => (
-                  <option key={t} value={t}>{t.toUpperCase()}</option>
+                {LINK_TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {t.toUpperCase()}
+                  </option>
                 ))}
               </select>
             </div>
@@ -1006,7 +1157,7 @@ function CreateLinkDialog({
               <input
                 style={inputStyle}
                 value={form.speed}
-                onChange={(e) => setForm(f => ({ ...f, speed: e.target.value }))}
+                onChange={(e) => setForm((f) => ({ ...f, speed: e.target.value }))}
                 placeholder="e.g. 10G, 25G, 100G"
               />
             </div>
@@ -1017,7 +1168,7 @@ function CreateLinkDialog({
               <input
                 style={inputStyle}
                 value={form.from_port}
-                onChange={(e) => setForm(f => ({ ...f, from_port: e.target.value }))}
+                onChange={(e) => setForm((f) => ({ ...f, from_port: e.target.value }))}
                 placeholder="e.g. Gi0/1"
               />
             </div>
@@ -1026,7 +1177,7 @@ function CreateLinkDialog({
               <input
                 style={inputStyle}
                 value={form.to_port}
-                onChange={(e) => setForm(f => ({ ...f, to_port: e.target.value }))}
+                onChange={(e) => setForm((f) => ({ ...f, to_port: e.target.value }))}
                 placeholder="e.g. Gi0/2"
               />
             </div>
@@ -1034,70 +1185,86 @@ function CreateLinkDialog({
         </div>
 
         {error && (
-          <div className="mt-3 text-xs" style={{ color: COLORS.red }}>{error}</div>
+          <div className="mt-3 text-xs" style={{ color: COLORS.red }}>
+            {error}
+          </div>
         )}
 
         <div className="flex justify-end gap-2 mt-5">
-          <button type="button" style={btnCancel} onClick={onClose}>Cancel</button>
-          <button type="submit" style={{ ...btnPrimary, opacity: saving ? 0.6 : 1 }} disabled={saving}>
+          <button type="button" style={btnCancel} onClick={onClose}>
+            Cancel
+          </button>
+          <button
+            type="submit"
+            style={{ ...btnPrimary, opacity: saving ? 0.6 : 1 }}
+            disabled={saving}
+          >
             {saving ? 'Creating...' : 'Create Link'}
           </button>
         </div>
       </form>
     </ModalDialog>
-  )
+  );
 }
 
 // ─── Link Detail Popup ───────────────────────────────────────
 function LinkDetailPopup({
-  link, fromDevice, toDevice, x, y, onClose, onDelete,
+  link,
+  fromDevice,
+  toDevice,
+  x,
+  y,
+  onClose,
+  onDelete,
 }: {
-  link: InfraDeviceLink
-  fromDevice: InfraDevice
-  toDevice: InfraDevice
-  x: number; y: number
-  onClose: () => void
-  onDelete: () => void
+  link: InfraDeviceLink;
+  fromDevice: InfraDevice;
+  toDevice: InfraDevice;
+  x: number;
+  y: number;
+  onClose: () => void;
+  onDelete: () => void;
 }) {
-  const [confirmDelete, setConfirmDelete] = useState(false)
-  const [deleting, setDeleting] = useState(false)
-  const popupRef = useRef<HTMLDivElement>(null)
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const popupRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (popupRef.current && !popupRef.current.contains(e.target as Node)) {
-        onClose()
+        onClose();
       }
-    }
+    };
     // Delay to avoid immediate close from the click that opened it
     const timeout = setTimeout(() => {
-      document.addEventListener('mousedown', handler)
-    }, 50)
+      document.addEventListener('mousedown', handler);
+    }, 50);
     return () => {
-      clearTimeout(timeout)
-      document.removeEventListener('mousedown', handler)
-    }
-  }, [onClose])
+      clearTimeout(timeout);
+      document.removeEventListener('mousedown', handler);
+    };
+  }, [onClose]);
 
   const handleDelete = async () => {
-    setDeleting(true)
+    setDeleting(true);
     try {
-      await api.delete(`/infrastructure/device-links/${link.id}`)
-      onDelete()
-      onClose()
+      await api.delete(`/infrastructure/device-links/${link.id}`);
+      onDelete();
+      onClose();
     } catch (err) {
-      console.error('Failed to delete link:', err)
+      console.error('Failed to delete link:', err);
     } finally {
-      setDeleting(false)
+      setDeleting(false);
     }
-  }
+  };
 
   return (
     <div
       ref={popupRef}
       className="fixed z-50 rounded-md p-3 shadow-xl"
       style={{
-        left: x, top: y,
+        left: x,
+        top: y,
         background: COLORS.bgCard,
         border: `1px solid ${COLORS.border}`,
         fontFamily: 'JetBrains Mono, monospace',
@@ -1110,15 +1277,23 @@ function LinkDetailPopup({
       <div className="space-y-1" style={{ fontSize: 10, color: COLORS.textDim }}>
         <div className="flex justify-between">
           <span>From:</span>
-          <span style={{ color: COLORS.text }}>{fromDevice.name}{link.from_port ? ` (${link.from_port})` : ''}</span>
+          <span style={{ color: COLORS.text }}>
+            {fromDevice.name}
+            {link.from_port ? ` (${link.from_port})` : ''}
+          </span>
         </div>
         <div className="flex justify-between">
           <span>To:</span>
-          <span style={{ color: COLORS.text }}>{toDevice.name}{link.to_port ? ` (${link.to_port})` : ''}</span>
+          <span style={{ color: COLORS.text }}>
+            {toDevice.name}
+            {link.to_port ? ` (${link.to_port})` : ''}
+          </span>
         </div>
         <div className="flex justify-between">
           <span>Type:</span>
-          <span style={{ color: getLinkColor(link.link_type) }}>{link.link_type.toUpperCase()}</span>
+          <span style={{ color: getLinkColor(link.link_type) }}>
+            {link.link_type.toUpperCase()}
+          </span>
         </div>
         {link.speed && (
           <div className="flex justify-between">
@@ -1142,7 +1317,12 @@ function LinkDetailPopup({
         ) : (
           <>
             <button
-              style={{ ...btnDanger, fontSize: 9, padding: '4px 10px', opacity: deleting ? 0.6 : 1 }}
+              style={{
+                ...btnDanger,
+                fontSize: 9,
+                padding: '4px 10px',
+                opacity: deleting ? 0.6 : 1,
+              }}
               onClick={handleDelete}
               disabled={deleting}
             >
@@ -1158,7 +1338,7 @@ function LinkDetailPopup({
         )}
       </div>
     </div>
-  )
+  );
 }
 
 // =============================================================
@@ -1173,220 +1353,242 @@ export function NetworkTopologyView({
   onDevicePositionUpdate,
   onRefresh,
 }: NetworkTopologyViewProps) {
-  const [selectedDevice, setSelectedDevice] = useState<string | null>(null)
-  const [showVlans, setShowVlans] = useState(true)
+  const [selectedDevice, setSelectedDevice] = useState<string | null>(null);
+  const [showVlans, setShowVlans] = useState(true);
   const [dragState, setDragState] = useState<{
-    deviceId: string
-    startX: number
-    startY: number
-    offsetX: number
-    offsetY: number
-  } | null>(null)
-  const [devicePositions, setDevicePositions] = useState<Record<string, { x: number; y: number }>>({})
-  const svgRef = useRef<SVGSVGElement>(null)
+    deviceId: string;
+    startX: number;
+    startY: number;
+    offsetX: number;
+    offsetY: number;
+  } | null>(null);
+  const [devicePositions, setDevicePositions] = useState<Record<string, { x: number; y: number }>>(
+    {},
+  );
+  const svgRef = useRef<SVGSVGElement>(null);
 
   // ─── Link Drawing Mode ───────────────────────────────────
-  const [linkMode, setLinkMode] = useState(false)
-  const [linkFrom, setLinkFrom] = useState<string | null>(null)
+  const [linkMode, setLinkMode] = useState(false);
+  const [linkFrom, setLinkFrom] = useState<string | null>(null);
 
   // ─── Context Menu ────────────────────────────────────────
   const [contextMenu, setContextMenu] = useState<{
-    x: number; y: number; items: ContextMenuItem[]
-  } | null>(null)
+    x: number;
+    y: number;
+    items: ContextMenuItem[];
+  } | null>(null);
 
   // ─── VLAN View Overlay ───────────────────────────────────
-  const [vlanViewActive, setVlanViewActive] = useState(false)
-  const [selectedVlanId, setSelectedVlanId] = useState<number | null>(null)
-  const [highlightedDevices, setHighlightedDevices] = useState<string[]>([])
-  const [detailDevice, setDetailDevice] = useState<InfraDevice | null>(null)
-  const [showConsistency, setShowConsistency] = useState(false)
+  const [vlanViewActive, setVlanViewActive] = useState(false);
+  const [selectedVlanId, setSelectedVlanId] = useState<number | null>(null);
+  const [highlightedDevices, setHighlightedDevices] = useState<string[]>([]);
+  const [detailDevice, setDetailDevice] = useState<InfraDevice | null>(null);
+  const [showConsistency, setShowConsistency] = useState(false);
 
   // Collect all VLAN IDs from device configs for the VLAN View dropdown
   const configVlanList = useMemo(() => {
-    const vlanMap = new Map<number, string>()
+    const vlanMap = new Map<number, string>();
     for (const dev of devices) {
-      const cd = dev.config_data as ParsedConfig | null | undefined
-      if (!cd?.vlans) continue
+      const cd = dev.config_data as ParsedConfig | null | undefined;
+      if (!cd?.vlans) continue;
       for (const v of cd.vlans) {
         if (!vlanMap.has(v.id)) {
-          vlanMap.set(v.id, v.name)
+          vlanMap.set(v.id, v.name);
         }
       }
     }
     return Array.from(vlanMap.entries())
       .map(([id, name]) => ({ id, name }))
-      .sort((a, b) => a.id - b.id)
-  }, [devices])
+      .sort((a, b) => a.id - b.id);
+  }, [devices]);
 
   // Determine which devices and links carry the selected VLAN
   const vlanOverlayInfo = useMemo(() => {
-    if (!vlanViewActive || selectedVlanId == null) return null
+    if (!vlanViewActive || selectedVlanId == null) return null;
 
-    const deviceIdsWithVlan = new Set<string>()
+    const deviceIdsWithVlan = new Set<string>();
     for (const dev of devices) {
-      const cd = dev.config_data as ParsedConfig | null | undefined
-      if (!cd) continue
+      const cd = dev.config_data as ParsedConfig | null | undefined;
+      if (!cd) continue;
       // Check if any VLAN definition matches
-      const hasVlan = cd.vlans?.some(v => v.id === selectedVlanId)
+      const hasVlan = cd.vlans?.some((v) => v.id === selectedVlanId);
       // Also check if any interface carries this VLAN
-      const ifaceCarries = cd.interfaces?.some(i => {
-        if (i.accessVlan === selectedVlanId) return true
-        if (i.trunkAllowedVlans.includes(selectedVlanId)) return true
-        return false
-      })
+      const ifaceCarries = cd.interfaces?.some((i) => {
+        if (i.accessVlan === selectedVlanId) return true;
+        if (i.trunkAllowedVlans.includes(selectedVlanId)) return true;
+        return false;
+      });
       if (hasVlan || ifaceCarries) {
-        deviceIdsWithVlan.add(dev.id)
+        deviceIdsWithVlan.add(dev.id);
       }
     }
 
     // Links that carry the VLAN: both endpoints have the VLAN, or trunk interfaces allow it
-    const linkIdsWithVlan = new Set<string>()
+    const linkIdsWithVlan = new Set<string>();
     for (const link of links) {
-      const fromDev = devices.find(d => d.id === link.from_device)
-      const toDev = devices.find(d => d.id === link.to_device)
-      if (!fromDev || !toDev) continue
+      const fromDev = devices.find((d) => d.id === link.from_device);
+      const toDev = devices.find((d) => d.id === link.to_device);
+      if (!fromDev || !toDev) continue;
 
-      const fromCd = fromDev.config_data as ParsedConfig | null | undefined
-      const toCd = toDev.config_data as ParsedConfig | null | undefined
+      const fromCd = fromDev.config_data as ParsedConfig | null | undefined;
+      const toCd = toDev.config_data as ParsedConfig | null | undefined;
 
       // Check from side
-      let fromCarries = false
+      let fromCarries = false;
       if (fromCd?.interfaces && link.from_port) {
-        const iface = fromCd.interfaces.find(i => i.name === link.from_port)
+        const iface = fromCd.interfaces.find((i) => i.name === link.from_port);
         if (iface) {
-          fromCarries = iface.accessVlan === selectedVlanId ||
+          fromCarries =
+            iface.accessVlan === selectedVlanId ||
             iface.trunkAllowedVlans.includes(selectedVlanId) ||
-            (iface.switchportMode === 'trunk' && iface.trunkAllowedVlans.length === 0) // "all" VLANs
+            (iface.switchportMode === 'trunk' && iface.trunkAllowedVlans.length === 0); // "all" VLANs
         }
       }
       // Fallback: device has the VLAN at all
       if (!fromCarries && deviceIdsWithVlan.has(link.from_device)) {
-        fromCarries = true
+        fromCarries = true;
       }
 
-      let toCarries = false
+      let toCarries = false;
       if (toCd?.interfaces && link.to_port) {
-        const iface = toCd.interfaces.find(i => i.name === link.to_port)
+        const iface = toCd.interfaces.find((i) => i.name === link.to_port);
         if (iface) {
-          toCarries = iface.accessVlan === selectedVlanId ||
+          toCarries =
+            iface.accessVlan === selectedVlanId ||
             iface.trunkAllowedVlans.includes(selectedVlanId) ||
-            (iface.switchportMode === 'trunk' && iface.trunkAllowedVlans.length === 0)
+            (iface.switchportMode === 'trunk' && iface.trunkAllowedVlans.length === 0);
         }
       }
       if (!toCarries && deviceIdsWithVlan.has(link.to_device)) {
-        toCarries = true
+        toCarries = true;
       }
 
       if (fromCarries && toCarries) {
-        linkIdsWithVlan.add(link.id)
+        linkIdsWithVlan.add(link.id);
       }
     }
 
-    return { deviceIdsWithVlan, linkIdsWithVlan }
-  }, [vlanViewActive, selectedVlanId, devices, links])
+    return { deviceIdsWithVlan, linkIdsWithVlan };
+  }, [vlanViewActive, selectedVlanId, devices, links]);
 
   // ─── Dialogs ─────────────────────────────────────────────
-  const [addDevicePos, setAddDevicePos] = useState<{ x: number; y: number } | null>(null)
-  const [editDevice, setEditDevice] = useState<InfraDevice | null>(null)
-  const [configDevice, setConfigDevice] = useState<InfraDevice | null>(null)
-  const [createLink, setCreateLink] = useState<{ from: InfraDevice; to: InfraDevice } | null>(null)
+  const [addDevicePos, setAddDevicePos] = useState<{ x: number; y: number } | null>(null);
+  const [editDevice, setEditDevice] = useState<InfraDevice | null>(null);
+  const [configDevice, setConfigDevice] = useState<InfraDevice | null>(null);
+  const [createLink, setCreateLink] = useState<{ from: InfraDevice; to: InfraDevice } | null>(null);
   const [selectedLink, setSelectedLink] = useState<{
-    link: InfraDeviceLink; x: number; y: number
-  } | null>(null)
+    link: InfraDeviceLink;
+    x: number;
+    y: number;
+  } | null>(null);
 
   // Build a device map for link lookups. Memoized so the identity is stable
   // across renders — otherwise every useCallback below that depends on it
   // would be rebuilt on each render (react-hooks/exhaustive-deps).
   const deviceMap = useMemo(() => {
-    const map = new Map<string, InfraDevice>()
+    const map = new Map<string, InfraDevice>();
     for (const d of devices) {
-      map.set(d.id, d)
+      map.set(d.id, d);
     }
-    return map
-  }, [devices])
+    return map;
+  }, [devices]);
 
   // Get effective position (override from drag or original)
-  const getPos = useCallback((device: InfraDevice) => {
-    const override = devicePositions[device.id]
-    return {
-      x: override?.x ?? device.topo_x ?? 400,
-      y: override?.y ?? device.topo_y ?? 200,
-    }
-  }, [devicePositions])
+  const getPos = useCallback(
+    (device: InfraDevice) => {
+      const override = devicePositions[device.id];
+      return {
+        x: override?.x ?? device.topo_x ?? 400,
+        y: override?.y ?? device.topo_y ?? 200,
+      };
+    },
+    [devicePositions],
+  );
 
   // Convert client coords to SVG coords
   const clientToSvg = useCallback((clientX: number, clientY: number) => {
-    if (!svgRef.current) return { x: 0, y: 0 }
-    const svgPoint = svgRef.current.createSVGPoint()
-    svgPoint.x = clientX
-    svgPoint.y = clientY
-    const ctm = svgRef.current.getScreenCTM()?.inverse()
-    if (!ctm) return { x: 0, y: 0 }
-    const transformed = svgPoint.matrixTransform(ctm)
-    return { x: transformed.x, y: transformed.y }
-  }, [])
+    if (!svgRef.current) return { x: 0, y: 0 };
+    const svgPoint = svgRef.current.createSVGPoint();
+    svgPoint.x = clientX;
+    svgPoint.y = clientY;
+    const ctm = svgRef.current.getScreenCTM()?.inverse();
+    if (!ctm) return { x: 0, y: 0 };
+    const transformed = svgPoint.matrixTransform(ctm);
+    return { x: transformed.x, y: transformed.y };
+  }, []);
 
   // ─── Keyboard Shortcut: L for Link Mode, ESC to cancel ──
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement || e.target instanceof HTMLTextAreaElement) return
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLSelectElement ||
+        e.target instanceof HTMLTextAreaElement
+      )
+        return;
       if (e.key === 'l' || e.key === 'L') {
-        setLinkMode(prev => !prev)
-        setLinkFrom(null)
+        setLinkMode((prev) => !prev);
+        setLinkFrom(null);
       }
       if (e.key === 'Escape') {
-        setLinkMode(false)
-        setLinkFrom(null)
-        setContextMenu(null)
-        setSelectedLink(null)
+        setLinkMode(false);
+        setLinkFrom(null);
+        setContextMenu(null);
+        setSelectedLink(null);
       }
-    }
-    document.addEventListener('keydown', handler)
-    return () => document.removeEventListener('keydown', handler)
-  }, [])
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, []);
 
   const triggerRefresh = useCallback(() => {
-    if (onRefresh) onRefresh()
-  }, [onRefresh])
+    if (onRefresh) onRefresh();
+  }, [onRefresh]);
 
   // ─── Drag & Drop ───────────────────────────────────────────
-  const handleMouseDown = useCallback((e: React.MouseEvent, deviceId: string) => {
-    if (linkMode) return // Don't drag in link mode
-    if (!svgRef.current) return
-    e.stopPropagation()
-    const transformed = clientToSvg(e.clientX, e.clientY)
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent, deviceId: string) => {
+      if (linkMode) return; // Don't drag in link mode
+      if (!svgRef.current) return;
+      e.stopPropagation();
+      const transformed = clientToSvg(e.clientX, e.clientY);
 
-    const device = deviceMap.get(deviceId)
-    if (!device) return
-    const pos = getPos(device)
+      const device = deviceMap.get(deviceId);
+      if (!device) return;
+      const pos = getPos(device);
 
-    setDragState({
-      deviceId,
-      startX: transformed.x,
-      startY: transformed.y,
-      offsetX: pos.x - transformed.x,
-      offsetY: pos.y - transformed.y,
-    })
-  }, [deviceMap, getPos, linkMode, clientToSvg])
+      setDragState({
+        deviceId,
+        startX: transformed.x,
+        startY: transformed.y,
+        offsetX: pos.x - transformed.x,
+        offsetY: pos.y - transformed.y,
+      });
+    },
+    [deviceMap, getPos, linkMode, clientToSvg],
+  );
 
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!dragState || !svgRef.current) return
-    const transformed = clientToSvg(e.clientX, e.clientY)
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      if (!dragState || !svgRef.current) return;
+      const transformed = clientToSvg(e.clientX, e.clientY);
 
-    setDevicePositions(prev => ({
-      ...prev,
-      [dragState.deviceId]: {
-        x: transformed.x + dragState.offsetX,
-        y: transformed.y + dragState.offsetY,
-      },
-    }))
-  }, [dragState, clientToSvg])
+      setDevicePositions((prev) => ({
+        ...prev,
+        [dragState.deviceId]: {
+          x: transformed.x + dragState.offsetX,
+          y: transformed.y + dragState.offsetY,
+        },
+      }));
+    },
+    [dragState, clientToSvg],
+  );
 
   const handleMouseUp = useCallback(async () => {
-    if (!dragState) return
-    const pos = devicePositions[dragState.deviceId]
+    if (!dragState) return;
+    const pos = devicePositions[dragState.deviceId];
     if (pos && onDevicePositionUpdate) {
-      onDevicePositionUpdate(dragState.deviceId, pos.x, pos.y)
+      onDevicePositionUpdate(dragState.deviceId, pos.x, pos.y);
     }
     // Persist via API
     if (pos) {
@@ -1394,143 +1596,165 @@ export function NetworkTopologyView({
         await api.patch(`/infrastructure/devices/${dragState.deviceId}/position`, {
           topo_x: Math.round(pos.x * 10) / 10,
           topo_y: Math.round(pos.y * 10) / 10,
-        })
+        });
       } catch (err) {
-        console.error('Failed to save device position:', err)
+        console.error('Failed to save device position:', err);
       }
     }
-    setDragState(null)
-  }, [dragState, devicePositions, onDevicePositionUpdate])
+    setDragState(null);
+  }, [dragState, devicePositions, onDevicePositionUpdate]);
 
   // ─── Device Click (link mode vs normal) ────────────────────
-  const handleDeviceClick = useCallback((deviceId: string) => {
-    if (dragState) return
+  const handleDeviceClick = useCallback(
+    (deviceId: string) => {
+      if (dragState) return;
 
-    if (linkMode) {
-      if (!linkFrom) {
-        setLinkFrom(deviceId)
-      } else if (linkFrom !== deviceId) {
-        const fromDev = deviceMap.get(linkFrom)
-        const toDev = deviceMap.get(deviceId)
-        if (fromDev && toDev) {
-          setCreateLink({ from: fromDev, to: toDev })
+      if (linkMode) {
+        if (!linkFrom) {
+          setLinkFrom(deviceId);
+        } else if (linkFrom !== deviceId) {
+          const fromDev = deviceMap.get(linkFrom);
+          const toDev = deviceMap.get(deviceId);
+          if (fromDev && toDev) {
+            setCreateLink({ from: fromDev, to: toDev });
+          }
+          setLinkFrom(null);
+          setLinkMode(false);
         }
-        setLinkFrom(null)
-        setLinkMode(false)
+        return;
       }
-      return
-    }
 
-    setSelectedDevice(prev => prev === deviceId ? null : deviceId)
-  }, [linkMode, linkFrom, deviceMap, dragState])
+      setSelectedDevice((prev) => (prev === deviceId ? null : deviceId));
+    },
+    [linkMode, linkFrom, deviceMap, dragState],
+  );
 
   // ─── Device Double Click → Edit ────────────────────────────
-  const handleDeviceDoubleClick = useCallback((device: InfraDevice) => {
-    if (linkMode) return
-    setEditDevice(device)
-  }, [linkMode])
+  const handleDeviceDoubleClick = useCallback(
+    (device: InfraDevice) => {
+      if (linkMode) return;
+      setEditDevice(device);
+    },
+    [linkMode],
+  );
 
   // ─── Canvas Right Click → Context Menu ─────────────────────
-  const handleCanvasContextMenu = useCallback((e: React.MouseEvent) => {
-    e.preventDefault()
-    const svgPos = clientToSvg(e.clientX, e.clientY)
-    setContextMenu({
-      x: e.clientX,
-      y: e.clientY,
-      items: [
-        {
-          label: 'Add Device',
-          icon: '\u2795',
-          onClick: () => setAddDevicePos({ x: svgPos.x, y: svgPos.y }),
-        },
-      ],
-    })
-  }, [clientToSvg])
+  const handleCanvasContextMenu = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      const svgPos = clientToSvg(e.clientX, e.clientY);
+      setContextMenu({
+        x: e.clientX,
+        y: e.clientY,
+        items: [
+          {
+            label: 'Add Device',
+            icon: '\u2795',
+            onClick: () => setAddDevicePos({ x: svgPos.x, y: svgPos.y }),
+          },
+        ],
+      });
+    },
+    [clientToSvg],
+  );
 
   // ─── Device Right Click → Context Menu ─────────────────────
-  const handleDeviceContextMenu = useCallback((e: React.MouseEvent, device: InfraDevice) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setContextMenu({
-      x: e.clientX,
-      y: e.clientY,
-      items: [
-        {
-          label: 'View Details',
-          icon: '\uD83D\uDD0D',
-          onClick: () => setDetailDevice(device),
-        },
-        {
-          label: 'Edit Device',
-          icon: '\u270F',
-          onClick: () => setEditDevice(device),
-        },
-        {
-          label: 'Upload Config',
-          icon: '\uD83D\uDCC4',
-          onClick: () => setConfigDevice(device),
-        },
-        {
-          label: 'Link from here',
-          icon: '\u26A1',
-          onClick: () => { setLinkMode(true); setLinkFrom(device.id) },
-        },
-        {
-          label: 'Delete Device',
-          icon: '\uD83D\uDDD1',
-          onClick: async () => {
-            if (window.confirm(`Delete device "${device.name}"? This will also delete all connected links.`)) {
-              try {
-                await api.delete(`/infrastructure/devices/${device.id}`)
-                triggerRefresh()
-              } catch (err) {
-                console.error('Failed to delete device:', err)
-              }
-            }
+  const handleDeviceContextMenu = useCallback(
+    (e: React.MouseEvent, device: InfraDevice) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setContextMenu({
+        x: e.clientX,
+        y: e.clientY,
+        items: [
+          {
+            label: 'View Details',
+            icon: '\uD83D\uDD0D',
+            onClick: () => setDetailDevice(device),
           },
-          danger: true,
-        },
-      ],
-    })
-  }, [triggerRefresh])
+          {
+            label: 'Edit Device',
+            icon: '\u270F',
+            onClick: () => setEditDevice(device),
+          },
+          {
+            label: 'Upload Config',
+            icon: '\uD83D\uDCC4',
+            onClick: () => setConfigDevice(device),
+          },
+          {
+            label: 'Link from here',
+            icon: '\u26A1',
+            onClick: () => {
+              setLinkMode(true);
+              setLinkFrom(device.id);
+            },
+          },
+          {
+            label: 'Delete Device',
+            icon: '\uD83D\uDDD1',
+            onClick: async () => {
+              if (
+                window.confirm(
+                  `Delete device "${device.name}"? This will also delete all connected links.`,
+                )
+              ) {
+                try {
+                  await api.delete(`/infrastructure/devices/${device.id}`);
+                  triggerRefresh();
+                } catch (err) {
+                  console.error('Failed to delete device:', err);
+                }
+              }
+            },
+            danger: true,
+          },
+        ],
+      });
+    },
+    [triggerRefresh],
+  );
 
   // ─── Link Click → Detail Popup ─────────────────────────────
   const handleLinkClick = useCallback((e: React.MouseEvent, link: InfraDeviceLink) => {
-    e.stopPropagation()
-    setSelectedLink({ link, x: e.clientX, y: e.clientY })
-  }, [])
+    e.stopPropagation();
+    setSelectedLink({ link, x: e.clientX, y: e.clientY });
+  }, []);
 
   // ─── Link Right Click → Context Menu ───────────────────────
-  const handleLinkContextMenu = useCallback((e: React.MouseEvent, link: InfraDeviceLink) => {
-    e.preventDefault()
-    e.stopPropagation()
-    const fromDev = deviceMap.get(link.from_device)
-    const toDev = deviceMap.get(link.to_device)
-    setContextMenu({
-      x: e.clientX,
-      y: e.clientY,
-      items: [
-        {
-          label: `Link: ${fromDev?.name ?? '?'} \u2194 ${toDev?.name ?? '?'}`,
-          icon: '\u26A1',
-          onClick: () => setSelectedLink({ link, x: e.clientX, y: e.clientY }),
-        },
-        {
-          label: 'Delete Link',
-          icon: '\uD83D\uDDD1',
-          onClick: async () => {
-            try {
-              await api.delete(`/infrastructure/device-links/${link.id}`)
-              triggerRefresh()
-            } catch (err) {
-              console.error('Failed to delete link:', err)
-            }
+  const handleLinkContextMenu = useCallback(
+    (e: React.MouseEvent, link: InfraDeviceLink) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const fromDev = deviceMap.get(link.from_device);
+      const toDev = deviceMap.get(link.to_device);
+      setContextMenu({
+        x: e.clientX,
+        y: e.clientY,
+        items: [
+          {
+            label: `Link: ${fromDev?.name ?? '?'} \u2194 ${toDev?.name ?? '?'}`,
+            icon: '\u26A1',
+            onClick: () => setSelectedLink({ link, x: e.clientX, y: e.clientY }),
           },
-          danger: true,
-        },
-      ],
-    })
-  }, [deviceMap, triggerRefresh])
+          {
+            label: 'Delete Link',
+            icon: '\uD83D\uDDD1',
+            onClick: async () => {
+              try {
+                await api.delete(`/infrastructure/device-links/${link.id}`);
+                triggerRefresh();
+              } catch (err) {
+                console.error('Failed to delete link:', err);
+              }
+            },
+            danger: true,
+          },
+        ],
+      });
+    },
+    [deviceMap, triggerRefresh],
+  );
 
   return (
     <div className="relative w-full h-full">
@@ -1538,16 +1762,18 @@ export function NetworkTopologyView({
       <div
         className="absolute inset-0 pointer-events-none z-50"
         style={{
-          background: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(6,182,212,0.015) 2px, rgba(6,182,212,0.015) 4px)',
+          background:
+            'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(6,182,212,0.015) 2px, rgba(6,182,212,0.015) 4px)',
         }}
       />
 
       {/* Toolbar */}
-      <div
-        className="absolute top-3 left-3 z-10 flex items-center gap-2"
-      >
+      <div className="absolute top-3 left-3 z-10 flex items-center gap-2">
         <button
-          onClick={() => { setLinkMode(prev => !prev); setLinkFrom(null) }}
+          onClick={() => {
+            setLinkMode((prev) => !prev);
+            setLinkFrom(null);
+          }}
           className="cursor-pointer rounded-md px-3 py-1.5 flex items-center gap-1.5"
           style={{
             fontSize: 10,
@@ -1592,7 +1818,11 @@ export function NetworkTopologyView({
 
         {/* VLAN View Toggle */}
         <button
-          onClick={() => { setVlanViewActive(prev => !prev); if (!vlanViewActive && configVlanList.length > 0 && selectedVlanId == null) setSelectedVlanId(configVlanList[0].id) }}
+          onClick={() => {
+            setVlanViewActive((prev) => !prev);
+            if (!vlanViewActive && configVlanList.length > 0 && selectedVlanId == null)
+              setSelectedVlanId(configVlanList[0].id);
+          }}
           className="cursor-pointer rounded-md px-3 py-1.5 flex items-center gap-1.5"
           style={{
             fontSize: 10,
@@ -1609,7 +1839,9 @@ export function NetworkTopologyView({
         {vlanViewActive && configVlanList.length > 0 && (
           <select
             value={selectedVlanId ?? ''}
-            onChange={(e) => setSelectedVlanId(e.target.value ? parseInt(e.target.value, 10) : null)}
+            onChange={(e) =>
+              setSelectedVlanId(e.target.value ? parseInt(e.target.value, 10) : null)
+            }
             style={{
               fontSize: 10,
               fontFamily: 'JetBrains Mono, monospace',
@@ -1620,15 +1852,17 @@ export function NetworkTopologyView({
               padding: '4px 8px',
             }}
           >
-            {configVlanList.map(v => (
-              <option key={v.id} value={v.id}>VLAN {v.id} — {v.name}</option>
+            {configVlanList.map((v) => (
+              <option key={v.id} value={v.id}>
+                VLAN {v.id} — {v.name}
+              </option>
             ))}
           </select>
         )}
 
         {/* Consistency Check Toggle */}
         <button
-          onClick={() => setShowConsistency(prev => !prev)}
+          onClick={() => setShowConsistency((prev) => !prev)}
           className="cursor-pointer rounded-md px-3 py-1.5 flex items-center gap-1.5"
           style={{
             fontSize: 10,
@@ -1654,14 +1888,21 @@ export function NetworkTopologyView({
         >
           VLANS
         </div>
-        {vlans.map(v => (
+        {vlans.map((v) => (
           <div key={v.id} className="flex items-center gap-1.5 mb-0.5">
             <span
               className="inline-block w-2 h-2 rounded-sm"
-              style={{ background: v.color_hex ?? COLORS.cyan, boxShadow: `0 0 4px ${v.color_hex ?? COLORS.cyan}` }}
+              style={{
+                background: v.color_hex ?? COLORS.cyan,
+                boxShadow: `0 0 4px ${v.color_hex ?? COLORS.cyan}`,
+              }}
             />
             <span
-              style={{ fontSize: 9, color: COLORS.textDim, fontFamily: 'JetBrains Mono, monospace' }}
+              style={{
+                fontSize: 9,
+                color: COLORS.textDim,
+                fontFamily: 'JetBrains Mono, monospace',
+              }}
             >
               VLAN {v.vlan_id} — {v.name}
             </span>
@@ -1671,9 +1912,13 @@ export function NetworkTopologyView({
           onClick={() => setShowVlans(!showVlans)}
           className="mt-1.5 cursor-pointer"
           style={{
-            fontSize: 8, color: COLORS.cyan, background: 'none',
-            border: `1px solid ${COLORS.cyanDim}`, borderRadius: 3,
-            padding: '2px 6px', fontFamily: 'JetBrains Mono, monospace',
+            fontSize: 8,
+            color: COLORS.cyan,
+            background: 'none',
+            border: `1px solid ${COLORS.cyanDim}`,
+            borderRadius: 3,
+            padding: '2px 6px',
+            fontFamily: 'JetBrains Mono, monospace',
           }}
         >
           {showVlans ? 'HIDE ZONES' : 'SHOW ZONES'}
@@ -1705,82 +1950,104 @@ export function NetworkTopologyView({
         {Array.from({ length: 18 }, (_, i) => (
           <line
             key={`tgx${i}`}
-            x1={i * 50} y1={0} x2={i * 50} y2={560}
-            stroke={COLORS.grid} strokeWidth="0.5"
+            x1={i * 50}
+            y1={0}
+            x2={i * 50}
+            y2={560}
+            stroke={COLORS.grid}
+            strokeWidth="0.5"
           />
         ))}
         {Array.from({ length: 12 }, (_, i) => (
           <line
             key={`tgy${i}`}
-            x1={0} y1={i * 50} x2={820} y2={i * 50}
-            stroke={COLORS.grid} strokeWidth="0.5"
+            x1={0}
+            y1={i * 50}
+            x2={820}
+            y2={i * 50}
+            stroke={COLORS.grid}
+            strokeWidth="0.5"
           />
         ))}
 
         {/* VLAN Zones */}
-        {showVlans && vlans.map(vlan => {
-          const vDevices = devices.filter(d => d.vlan_id === vlan.id)
-          if (vDevices.length === 0) return null
-          const positions = vDevices.map(d => getPos(d))
-          const minX = Math.min(...positions.map(p => p.x)) - 40
-          const minY = Math.min(...positions.map(p => p.y)) - 30
-          const maxX = Math.max(...positions.map(p => p.x)) + 40
-          const maxY = Math.max(...positions.map(p => p.y)) + 30
-          const vColor = vlan.color_hex ?? COLORS.cyan
-          return (
-            <g key={vlan.id}>
-              <rect
-                x={minX} y={minY}
-                width={maxX - minX} height={maxY - minY}
-                rx={8}
-                fill={vColor} fillOpacity="0.04"
-                stroke={vColor} strokeWidth="0.5"
-                strokeDasharray="6 3" opacity="0.6"
-              />
-              <text
-                x={minX + 6} y={minY + 12}
-                fill={vColor} fontSize="8"
-                fontFamily="JetBrains Mono, monospace" opacity="0.6"
-              >
-                VLAN {vlan.vlan_id} — {vlan.name}
-              </text>
-            </g>
-          )
-        })}
+        {showVlans &&
+          vlans.map((vlan) => {
+            const vDevices = devices.filter((d) => d.vlan_id === vlan.id);
+            if (vDevices.length === 0) return null;
+            const positions = vDevices.map((d) => getPos(d));
+            const minX = Math.min(...positions.map((p) => p.x)) - 40;
+            const minY = Math.min(...positions.map((p) => p.y)) - 30;
+            const maxX = Math.max(...positions.map((p) => p.x)) + 40;
+            const maxY = Math.max(...positions.map((p) => p.y)) + 30;
+            const vColor = vlan.color_hex ?? COLORS.cyan;
+            return (
+              <g key={vlan.id}>
+                <rect
+                  x={minX}
+                  y={minY}
+                  width={maxX - minX}
+                  height={maxY - minY}
+                  rx={8}
+                  fill={vColor}
+                  fillOpacity="0.04"
+                  stroke={vColor}
+                  strokeWidth="0.5"
+                  strokeDasharray="6 3"
+                  opacity="0.6"
+                />
+                <text
+                  x={minX + 6}
+                  y={minY + 12}
+                  fill={vColor}
+                  fontSize="8"
+                  fontFamily="JetBrains Mono, monospace"
+                  opacity="0.6"
+                >
+                  VLAN {vlan.vlan_id} — {vlan.name}
+                </text>
+              </g>
+            );
+          })}
 
         {/* Links */}
         {links.map((link, i) => {
-          const fromDev = deviceMap.get(link.from_device)
-          const toDev = deviceMap.get(link.to_device)
-          if (!fromDev || !toDev) return null
-          const fromPos = getPos(fromDev)
-          const toPos = getPos(toDev)
-          const color = getLinkColor(link.link_type)
+          const fromDev = deviceMap.get(link.from_device);
+          const toDev = deviceMap.get(link.to_device);
+          if (!fromDev || !toDev) return null;
+          const fromPos = getPos(fromDev);
+          const toPos = getPos(toDev);
+          const color = getLinkColor(link.link_type);
 
           // VLAN overlay: dim or highlight links
-          const isVlanDimmed = vlanOverlayInfo != null && !vlanOverlayInfo.linkIdsWithVlan.has(link.id)
-          const linkOpacityOverride = isVlanDimmed ? 0.15 : undefined
-          const linkWidthOverride = vlanOverlayInfo != null && !isVlanDimmed ? 3 : undefined
+          const isVlanDimmed =
+            vlanOverlayInfo != null && !vlanOverlayInfo.linkIdsWithVlan.has(link.id);
+          const linkOpacityOverride = isVlanDimmed ? 0.15 : undefined;
+          const linkWidthOverride = vlanOverlayInfo != null && !isVlanDimmed ? 3 : undefined;
 
           return (
             <g key={`link-${i}`} opacity={linkOpacityOverride}>
               <DataFlowLine
-                x1={fromPos.x} y1={fromPos.y}
-                x2={toPos.x} y2={toPos.y}
+                x1={fromPos.x}
+                y1={fromPos.y}
+                x2={toPos.x}
+                y2={toPos.y}
                 color={vlanOverlayInfo != null && !isVlanDimmed ? '#8b5cf6' : color}
                 speed={getLinkSpeed(link.speed)}
                 onClick={(e) => {
                   if (e.type === 'contextmenu') {
-                    handleLinkContextMenu(e, link)
+                    handleLinkContextMenu(e, link);
                   } else {
-                    handleLinkClick(e, link)
+                    handleLinkClick(e, link);
                   }
                 }}
               />
               {linkWidthOverride && (
                 <line
-                  x1={fromPos.x} y1={fromPos.y}
-                  x2={toPos.x} y2={toPos.y}
+                  x1={fromPos.x}
+                  y1={fromPos.y}
+                  x2={toPos.x}
+                  y2={toPos.y}
                   stroke="#8b5cf6"
                   strokeWidth={linkWidthOverride}
                   opacity={0.3}
@@ -1788,28 +2055,32 @@ export function NetworkTopologyView({
                 />
               )}
             </g>
-          )
+          );
         })}
 
         {/* Devices */}
-        {devices.map(dev => {
-          const statusColor = getStatusColor(dev.status)
-          const isSelected = selectedDevice === dev.id
-          const isDragging = dragState?.deviceId === dev.id
-          const isLinkSource = linkFrom === dev.id
-          const size = (dev.device_type === 'firewall' || dev.device_type === 'switch-core') ? 36 : 28
-          const pos = getPos(dev)
+        {devices.map((dev) => {
+          const statusColor = getStatusColor(dev.status);
+          const isSelected = selectedDevice === dev.id;
+          const isDragging = dragState?.deviceId === dev.id;
+          const isLinkSource = linkFrom === dev.id;
+          const size =
+            dev.device_type === 'firewall' || dev.device_type === 'switch-core' ? 36 : 28;
+          const pos = getPos(dev);
 
           // VLAN overlay dimming
-          const isVlanDeviceDimmed = vlanOverlayInfo != null && !vlanOverlayInfo.deviceIdsWithVlan.has(dev.id)
+          const isVlanDeviceDimmed =
+            vlanOverlayInfo != null && !vlanOverlayInfo.deviceIdsWithVlan.has(dev.id);
           // Highlight from consistency panel
-          const isHighlighted = highlightedDevices.includes(dev.id)
+          const isHighlighted = highlightedDevices.includes(dev.id);
 
           return (
             <g
               key={dev.id}
               opacity={isVlanDeviceDimmed ? 0.15 : 1}
-              className={linkMode ? 'cursor-crosshair' : isDragging ? 'cursor-grabbing' : 'cursor-pointer'}
+              className={
+                linkMode ? 'cursor-crosshair' : isDragging ? 'cursor-grabbing' : 'cursor-pointer'
+              }
               onClick={() => handleDeviceClick(dev.id)}
               onDoubleClick={() => handleDeviceDoubleClick(dev)}
               onMouseDown={(e) => handleMouseDown(e, dev.id)}
@@ -1818,7 +2089,8 @@ export function NetworkTopologyView({
               {/* Consistency highlight ring */}
               {isHighlighted && !isVlanDeviceDimmed && (
                 <circle
-                  cx={pos.x} cy={pos.y}
+                  cx={pos.x}
+                  cy={pos.y}
                   r={size / 2 + 12}
                   fill="none"
                   stroke={COLORS.amber}
@@ -1838,7 +2110,8 @@ export function NetworkTopologyView({
               {/* Link mode highlight ring */}
               {isLinkSource && (
                 <circle
-                  cx={pos.x} cy={pos.y}
+                  cx={pos.x}
+                  cy={pos.y}
                   r={size / 2 + 10}
                   fill="none"
                   stroke={COLORS.cyan}
@@ -1857,7 +2130,8 @@ export function NetworkTopologyView({
 
               {/* Glow ring */}
               <circle
-                cx={pos.x} cy={pos.y}
+                cx={pos.x}
+                cy={pos.y}
                 r={size / 2 + 4}
                 fill="none"
                 stroke={statusColor}
@@ -1876,7 +2150,8 @@ export function NetworkTopologyView({
 
               {/* Device circle */}
               <circle
-                cx={pos.x} cy={pos.y}
+                cx={pos.x}
+                cy={pos.y}
                 r={size / 2}
                 fill={COLORS.bgCard}
                 stroke={isSelected ? COLORS.borderActive : COLORS.border}
@@ -1885,8 +2160,10 @@ export function NetworkTopologyView({
 
               {/* Device icon */}
               <foreignObject
-                x={pos.x - size / 4} y={pos.y - size / 4}
-                width={size / 2} height={size / 2}
+                x={pos.x - size / 4}
+                y={pos.y - size / 4}
+                width={size / 2}
+                height={size / 2}
               >
                 <div className="flex items-center justify-center w-full h-full">
                   <DeviceIcon type={dev.device_type} size={size / 2.5} color={statusColor} />
@@ -1895,16 +2172,22 @@ export function NetworkTopologyView({
 
               {/* Device label */}
               <text
-                x={pos.x} y={pos.y + size / 2 + 12}
-                textAnchor="middle" fill={COLORS.text}
-                fontSize="8" fontFamily="JetBrains Mono, monospace"
+                x={pos.x}
+                y={pos.y + size / 2 + 12}
+                textAnchor="middle"
+                fill={COLORS.text}
+                fontSize="8"
+                fontFamily="JetBrains Mono, monospace"
               >
                 {dev.name}
               </text>
               <text
-                x={pos.x} y={pos.y + size / 2 + 22}
-                textAnchor="middle" fill={COLORS.textMuted}
-                fontSize="7" fontFamily="JetBrains Mono, monospace"
+                x={pos.x}
+                y={pos.y + size / 2 + 22}
+                textAnchor="middle"
+                fill={COLORS.textMuted}
+                fontSize="7"
+                fontFamily="JetBrains Mono, monospace"
               >
                 {dev.ip_address ?? ''}
               </text>
@@ -1913,46 +2196,59 @@ export function NetworkTopologyView({
               {isSelected && !isDragging && !linkMode && (
                 <g filter="url(#devGlow)">
                   <rect
-                    x={pos.x + size / 2 + 8} y={pos.y - 40}
-                    width={170} height={82}
+                    x={pos.x + size / 2 + 8}
+                    y={pos.y - 40}
+                    width={170}
+                    height={82}
                     rx={4}
                     fill={COLORS.bgCard}
                     stroke={COLORS.borderActive}
                     strokeWidth="0.8"
                   />
                   <text
-                    x={pos.x + size / 2 + 16} y={pos.y - 24}
-                    fill={COLORS.cyan} fontSize="9"
-                    fontFamily="JetBrains Mono, monospace" fontWeight="bold"
+                    x={pos.x + size / 2 + 16}
+                    y={pos.y - 24}
+                    fill={COLORS.cyan}
+                    fontSize="9"
+                    fontFamily="JetBrains Mono, monospace"
+                    fontWeight="bold"
                   >
                     {dev.name}
                   </text>
                   <text
-                    x={pos.x + size / 2 + 16} y={pos.y - 10}
-                    fill={COLORS.textDim} fontSize="8"
+                    x={pos.x + size / 2 + 16}
+                    y={pos.y - 10}
+                    fill={COLORS.textDim}
+                    fontSize="8"
                     fontFamily="DM Sans, sans-serif"
                   >
                     {dev.model ?? dev.device_type}
                   </text>
                   <text
-                    x={pos.x + size / 2 + 16} y={pos.y + 4}
-                    fill={COLORS.textDim} fontSize="8"
+                    x={pos.x + size / 2 + 16}
+                    y={pos.y + 4}
+                    fill={COLORS.textDim}
+                    fontSize="8"
                     fontFamily="JetBrains Mono, monospace"
                   >
                     IP: {dev.ip_address ?? 'N/A'}
                   </text>
                   {dev.manufacturer && (
                     <text
-                      x={pos.x + size / 2 + 16} y={pos.y + 18}
-                      fill={COLORS.textMuted} fontSize="7"
+                      x={pos.x + size / 2 + 16}
+                      y={pos.y + 18}
+                      fill={COLORS.textMuted}
+                      fontSize="7"
                       fontFamily="DM Sans, sans-serif"
                     >
                       {dev.manufacturer}
                     </text>
                   )}
                   <text
-                    x={pos.x + size / 2 + 16} y={pos.y + 32}
-                    fill={statusColor} fontSize="8"
+                    x={pos.x + size / 2 + 16}
+                    y={pos.y + 32}
+                    fill={statusColor}
+                    fontSize="8"
                     fontFamily="JetBrains Mono, monospace"
                   >
                     {dev.status.toUpperCase()}
@@ -1960,21 +2256,26 @@ export function NetworkTopologyView({
                 </g>
               )}
             </g>
-          )
+          );
         })}
 
         {/* Title HUD */}
         <text
-          x={20} y={24}
-          fill={COLORS.cyan} fontSize="11"
+          x={20}
+          y={24}
+          fill={COLORS.cyan}
+          fontSize="11"
           fontFamily="JetBrains Mono, monospace"
-          letterSpacing="3" opacity="0.8"
+          letterSpacing="3"
+          opacity="0.8"
         >
           BOSSVIEW :: NETWORK TOPOLOGY
         </text>
         <text
-          x={20} y={40}
-          fill={COLORS.textMuted} fontSize="9"
+          x={20}
+          y={40}
+          fill={COLORS.textMuted}
+          fontSize="9"
           fontFamily="JetBrains Mono, monospace"
         >
           {siteName} · {devices.length} DEVICES · {links.length} LINKS
@@ -1992,22 +2293,23 @@ export function NetworkTopologyView({
       )}
 
       {/* Link Detail Popup */}
-      {selectedLink && (() => {
-        const fromDev = deviceMap.get(selectedLink.link.from_device)
-        const toDev = deviceMap.get(selectedLink.link.to_device)
-        if (!fromDev || !toDev) return null
-        return (
-          <LinkDetailPopup
-            link={selectedLink.link}
-            fromDevice={fromDev}
-            toDevice={toDev}
-            x={selectedLink.x}
-            y={selectedLink.y}
-            onClose={() => setSelectedLink(null)}
-            onDelete={triggerRefresh}
-          />
-        )
-      })()}
+      {selectedLink &&
+        (() => {
+          const fromDev = deviceMap.get(selectedLink.link.from_device);
+          const toDev = deviceMap.get(selectedLink.link.to_device);
+          if (!fromDev || !toDev) return null;
+          return (
+            <LinkDetailPopup
+              link={selectedLink.link}
+              fromDevice={fromDev}
+              toDevice={toDev}
+              x={selectedLink.x}
+              y={selectedLink.y}
+              onClose={() => setSelectedLink(null)}
+              onDelete={triggerRefresh}
+            />
+          );
+        })()}
 
       {/* Add Device Dialog */}
       {addDevicePos && (
@@ -2051,10 +2353,7 @@ export function NetworkTopologyView({
 
       {/* Device Detail Dialog (Ports, VLANs, Config tabs) */}
       {detailDevice && (
-        <DeviceDetailDialog
-          device={detailDevice}
-          onClose={() => setDetailDevice(null)}
-        />
+        <DeviceDetailDialog device={detailDevice} onClose={() => setDetailDevice(null)} />
       )}
 
       {/* VLAN Consistency Panel */}
@@ -2072,5 +2371,5 @@ export function NetworkTopologyView({
         </div>
       )}
     </div>
-  )
+  );
 }

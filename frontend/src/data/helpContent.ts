@@ -1,16 +1,16 @@
 // Structured help content for the Help page
 
 export interface HelpSubSection {
-  id: string
-  title: string
-  content: string
+  id: string;
+  title: string;
+  content: string;
 }
 
 export interface HelpSection {
-  id: string
-  title: string
-  icon: string
-  subsections: HelpSubSection[]
+  id: string;
+  title: string;
+  icon: string;
+  subsections: HelpSubSection[];
 }
 
 export const helpSections: HelpSection[] = [
@@ -631,4 +631,4 @@ Permissions are enforced on both the frontend (UI visibility) and backend (API a
       },
     ],
   },
-]
+];

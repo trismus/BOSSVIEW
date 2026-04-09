@@ -1,5 +1,5 @@
-import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
-import type { InfraLocation, WanLink } from '../../types'
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import type { InfraLocation, WanLink } from '../../types';
 
 // ─── Dark Trace Color Palette ────────────────────────────────
 const COLORS = {
@@ -16,20 +16,20 @@ const COLORS = {
   textDim: '#94a3b8',
   textMuted: '#64748b',
   grid: 'rgba(6, 182, 212, 0.04)',
-}
+};
 
 interface WorldMapViewProps {
-  locations: InfraLocation[]
-  wanLinks: WanLink[]
-  onLocationClick: (location: InfraLocation) => void
+  locations: InfraLocation[];
+  wanLinks: WanLink[];
+  onLocationClick: (location: InfraLocation) => void;
 }
 
 // ─── Timezone definitions (based on PROTrack 7 Zeitzonen data) ─
 interface TimezoneConfig {
-  offset: number       // UTC offset in hours
-  label: string        // Display label
-  iana: string         // IANA timezone name
-  primary?: boolean    // Highlight main zone
+  offset: number; // UTC offset in hours
+  label: string; // Display label
+  iana: string; // IANA timezone name
+  primary?: boolean; // Highlight main zone
 }
 
 const TIMEZONES: TimezoneConfig[] = [
@@ -40,7 +40,7 @@ const TIMEZONES: TimezoneConfig[] = [
   { offset: 5.5, label: 'UTC+5:30', iana: 'Asia/Kolkata' },
   { offset: 7, label: 'UTC+7', iana: 'Asia/Bangkok' },
   { offset: 8, label: 'UTC+8', iana: 'Asia/Hong_Kong' },
-]
+];
 
 // ─── Projection calibrated to PROTrack SVG viewBox 0 0 960 440 ──────
 // The PROTrack map uses a Robinson-like projection (not pure Mercator).
@@ -52,19 +52,19 @@ const TIMEZONES: TimezoneConfig[] = [
 //   US-West(-122,37)→(144.1,141.9)
 function projectLatLon(lat: number, lon: number): [number, number] {
   // X: quadratic fit to handle Robinson-like compression at high longitudes
-  const x = -0.0046 * lon * lon + 2.083 * lon + 454
+  const x = -0.0046 * lon * lon + 2.083 * lon + 454;
 
   // Y: Mercator with calibrated scale/offset
-  const latRad = (lat * Math.PI) / 180
-  const mercN = Math.log(Math.tan(Math.PI / 4 + latRad / 2))
-  const y = 287 - 131.7 * mercN
+  const latRad = (lat * Math.PI) / 180;
+  const mercN = Math.log(Math.tan(Math.PI / 4 + latRad / 2));
+  const y = 287 - 131.7 * mercN;
 
-  return [Math.max(0, Math.min(960, x)), Math.max(0, Math.min(440, y))]
+  return [Math.max(0, Math.min(960, x)), Math.max(0, Math.min(440, y))];
 }
 
 // ─── Longitude to SVG x in viewBox 0 0 960 440 ─────────────
 function lonToX(lon: number): number {
-  return ((lon + 180) / 360) * 960
+  return ((lon + 180) / 360) * 960;
 }
 
 // ─── Format time for a given IANA timezone ──────────────────
@@ -75,28 +75,32 @@ function formatTimeForTimezone(iana: string): string {
       minute: '2-digit',
       timeZone: iana,
       hour12: false,
-    })
+    });
   } catch {
-    return '--:--'
+    return '--:--';
   }
 }
 
 // ─── Label placement configuration for overlapping locations ─
 interface LabelConfig {
-  anchor: 'start' | 'middle' | 'end'
-  dx: number
-  dy: number
-  showAlways: boolean
+  anchor: 'start' | 'middle' | 'end';
+  dx: number;
+  dy: number;
+  showAlways: boolean;
 }
 
 // Display offset for clustered locations (e.g. multiple Zurich sites)
 // so overlapping dots are visually separated on the map
 function getDisplayOffset(code: string): { dx: number; dy: number } {
   switch (code) {
-    case 'ZRH-STZ': return { dx: 0, dy: 0 }       // HQ stays central
-    case 'ZRH-BAS': return { dx: -8, dy: 6 }       // bottom-left
-    case 'ZRH-NUGOLO': return { dx: 8, dy: -6 }    // top-right
-    default: return { dx: 0, dy: 0 }
+    case 'ZRH-STZ':
+      return { dx: 0, dy: 0 }; // HQ stays central
+    case 'ZRH-BAS':
+      return { dx: -8, dy: 6 }; // bottom-left
+    case 'ZRH-NUGOLO':
+      return { dx: 8, dy: -6 }; // top-right
+    default:
+      return { dx: 0, dy: 0 };
   }
 }
 
@@ -104,17 +108,17 @@ function getLabelConfig(code: string): LabelConfig {
   switch (code) {
     // Zurich locations cluster — spread labels to avoid overlap
     case 'ZRH-STZ':
-      return { anchor: 'start', dx: 8, dy: 6, showAlways: true }
+      return { anchor: 'start', dx: 8, dy: 6, showAlways: true };
     case 'ZRH-BAS':
-      return { anchor: 'start', dx: 6, dy: 14, showAlways: true }
+      return { anchor: 'start', dx: 6, dy: 14, showAlways: true };
     case 'ZRH-NUGOLO':
-      return { anchor: 'start', dx: 6, dy: -10, showAlways: true }
+      return { anchor: 'start', dx: 6, dy: -10, showAlways: true };
     case 'FRA-DC':
-      return { anchor: 'middle', dx: 0, dy: -12, showAlways: true }
+      return { anchor: 'middle', dx: 0, dy: -12, showAlways: true };
     case 'MUC-OFF':
-      return { anchor: 'start', dx: 10, dy: 3, showAlways: true }
+      return { anchor: 'start', dx: 10, dy: 3, showAlways: true };
     default:
-      return { anchor: 'middle', dx: 0, dy: -12, showAlways: true }
+      return { anchor: 'middle', dx: 0, dy: -12, showAlways: true };
   }
 }
 
@@ -414,42 +418,69 @@ const WORLD_MAP_PATHS = [
   'M564.1,303.5L563.5,303.8L562.4,304.9L561.7,306.0L560.1,307.5L557.1,309.8L555.3,311.1L553.2,312.1L550.5,312.9L549.1,313.0L548.7,313.6L547.1,313.3L545.8,313.7L542.9,313.3L541.3,313.6L540.2,313.5L537.4,314.3L535.2,314.7L533.5,315.5L532.3,315.6L531.2,314.8L530.3,314.8L529.1,313.8L529.0,314.1L528.7,313.5L528.7,312.2L527.8,310.7L528.7,310.3L528.6,308.6L526.8,306.6L525.5,304.8L525.5,304.8L523.6,302.1L524.9,301.1L525.9,301.6L526.4,302.5L527.6,302.7L529.2,303.1L530.7,302.9L533.1,301.8L533.1,294.3L533.8,294.6L535.4,296.5L535.1,297.7L535.7,298.5L537.6,298.3L538.9,297.3L540.2,296.7L540.9,295.7L542.2,295.3L543.3,295.5L544.6,296.1L546.7,296.2L548.4,295.7L548.7,295.1L549.2,294.1L550.6,293.9L551.4,293.2L552.3,291.8L554.7,290.4L558.5,288.9L559.6,288.9L560.9,289.3L561.8,289.0L563.2,289.2L564.5,292.0L565.1,293.4L564.7,295.7L564.9,296.4L563.6,296.1L562.8,296.2L562.5,296.8L561.8,297.6L561.8,298.3L563.4,299.4L565.0,299.2L565.5,298.3L567.5,298.3L566.9,299.8L566.6,301.5L565.9,302.5L564.1,303.5Z',
   'M557.3,302.9L556.1,302.2L554.9,302.7L553.4,303.5L552.0,304.8L554.0,306.5L555.0,306.3L555.4,305.6L556.9,305.2L557.4,304.5L558.2,303.5L557.3,302.9Z',
   'M567.4,264.3L568.6,265.1L569.3,266.7L568.8,267.2L568.3,268.7L568.8,270.3L568.0,270.9L567.2,272.7L568.6,273.2L560.5,274.7L560.7,276.1L558.7,276.4L557.2,277.1L556.9,277.8L555.9,277.9L553.6,279.5L552.1,280.8L551.2,280.8L550.4,280.6L547.4,280.4L546.9,280.2L546.9,280.1L545.8,279.6L544.1,279.5L541.9,280.0L540.2,278.8L538.4,277.2L538.5,271.2L544.0,271.2L543.8,270.5L544.2,269.8L543.7,268.9L544.0,268.0L543.8,267.4L544.7,267.5L544.8,268.1L546.1,268.0L547.8,268.2L548.7,269.1L550.8,269.3L552.4,268.7L553.0,269.7L555.1,270.0L556.1,270.8L557.2,271.8L559.2,271.8L559.0,269.8L558.2,270.1L556.4,269.4L555.7,269.1L556.0,267.2L556.5,265.0L555.9,264.2L556.6,263.0L557.3,262.8L560.9,262.4L562.0,262.6L563.1,263.1L564.2,263.4L565.8,263.7L567.4,264.3Z',
-  'M563.2,289.2L561.8,289.0L560.9,289.3L559.6,288.9L558.5,288.9L556.8,288.0L554.7,287.7L553.9,286.4L553.9,285.8L552.8,285.5L549.8,283.4L548.9,282.3L548.4,281.9L547.4,280.4L550.4,280.6L551.2,280.8L552.1,280.8L553.6,279.5L555.9,277.9L556.9,277.8L557.2,277.1L558.7,276.4L560.7,276.1L560.9,276.8L563.1,276.8L564.4,277.2L564.9,277.7L566.2,277.8L567.6,278.4L567.6,280.8L567.1,282.2L567.0,283.6L567.4,284.2L567.1,285.4L566.7,285.5L566.0,287.0L563.2,289.2Z']
+  'M563.2,289.2L561.8,289.0L560.9,289.3L559.6,288.9L558.5,288.9L556.8,288.0L554.7,287.7L553.9,286.4L553.9,285.8L552.8,285.5L549.8,283.4L548.9,282.3L548.4,281.9L547.4,280.4L550.4,280.6L551.2,280.8L552.1,280.8L553.6,279.5L555.9,277.9L556.9,277.8L557.2,277.1L558.7,276.4L560.7,276.1L560.9,276.8L563.1,276.8L564.4,277.2L564.9,277.7L566.2,277.8L567.6,278.4L567.6,280.8L567.1,282.2L567.0,283.6L567.4,284.2L567.1,285.4L566.7,285.5L566.0,287.0L563.2,289.2Z',
+];
 
 // ─── Animated Pulse Dot ──────────────────────────────────────
-function PulseDot({ cx, cy, color, size = 4 }: { cx: number; cy: number; color: string; size?: number }) {
+function PulseDot({
+  cx,
+  cy,
+  color,
+  size = 4,
+}: {
+  cx: number;
+  cy: number;
+  color: string;
+  size?: number;
+}) {
   return (
     <g>
       <circle cx={cx} cy={cy} r={size} fill={color} opacity="0.8">
-        <animate attributeName="r" values={`${size};${size * 3};${size}`} dur="2.5s" repeatCount="indefinite" />
+        <animate
+          attributeName="r"
+          values={`${size};${size * 3};${size}`}
+          dur="2.5s"
+          repeatCount="indefinite"
+        />
         <animate attributeName="opacity" values="0.8;0;0.8" dur="2.5s" repeatCount="indefinite" />
       </circle>
       <circle cx={cx} cy={cy} r={size * 0.7} fill={color} />
     </g>
-  )
+  );
 }
 
 // ─── WAN Link Bezier Curve ──────────────────────────────────
 function WanLinkCurve({
-  x1, y1, x2, y2, color, speed = '3s', dashed = false,
+  x1,
+  y1,
+  x2,
+  y2,
+  color,
+  speed = '3s',
+  dashed = false,
 }: {
-  x1: number; y1: number; x2: number; y2: number
-  color: string; speed?: string; dashed?: boolean
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  color: string;
+  speed?: string;
+  dashed?: boolean;
 }) {
   // Compute quadratic bezier control point — arc upward
-  const midX = (x1 + x2) / 2
-  const midY = (y1 + y2) / 2
-  const dx = x2 - x1
-  const dy = y2 - y1
-  const dist = Math.sqrt(dx * dx + dy * dy)
+  const midX = (x1 + x2) / 2;
+  const midY = (y1 + y2) / 2;
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const dist = Math.sqrt(dx * dx + dy * dy);
   // Curve amount proportional to distance
-  const curveAmount = Math.min(dist * 0.2, 40)
+  const curveAmount = Math.min(dist * 0.2, 40);
   // Perpendicular offset (curve upward)
-  const nx = -dy / dist
-  const ny = dx / dist
-  const cx = midX + nx * curveAmount
-  const cy = midY + ny * curveAmount
-  const pathD = `M${x1},${y1} Q${cx},${cy} ${x2},${y2}`
+  const nx = -dy / dist;
+  const ny = dx / dist;
+  const cx = midX + nx * curveAmount;
+  const cy = midY + ny * curveAmount;
+  const pathD = `M${x1},${y1} Q${cx},${cy} ${x2},${y2}`;
 
   return (
     <g>
@@ -457,51 +488,74 @@ function WanLinkCurve({
       <path
         d={pathD}
         fill="none"
-        stroke={color} strokeWidth="1" opacity="0.15"
+        stroke={color}
+        strokeWidth="1"
+        opacity="0.15"
         strokeDasharray={dashed ? '6 4' : 'none'}
       />
       {/* Animated dashes */}
       <path
         d={pathD}
         fill="none"
-        stroke={color} strokeWidth="1.5" opacity="0.5"
-        strokeDasharray="4 12" strokeDashoffset="0"
+        stroke={color}
+        strokeWidth="1.5"
+        opacity="0.5"
+        strokeDasharray="4 12"
+        strokeDashoffset="0"
       >
-        <animate attributeName="stroke-dashoffset" values="0;-16" dur={speed} repeatCount="indefinite" />
+        <animate
+          attributeName="stroke-dashoffset"
+          values="0;-16"
+          dur={speed}
+          repeatCount="indefinite"
+        />
       </path>
       {/* Moving dot along curve */}
       <circle r="2" fill={color} opacity="0.9">
         <animateMotion dur={speed} repeatCount="indefinite" path={pathD} />
       </circle>
     </g>
-  )
+  );
 }
 
 function getStatusColor(status: string): string {
   switch (status) {
-    case 'operational': return COLORS.green
-    case 'warning': return COLORS.amber
-    case 'critical': return COLORS.red
-    case 'maintenance': return COLORS.blue
-    default: return COLORS.textMuted
+    case 'operational':
+      return COLORS.green;
+    case 'warning':
+      return COLORS.amber;
+    case 'critical':
+      return COLORS.red;
+    case 'maintenance':
+      return COLORS.blue;
+    default:
+      return COLORS.textMuted;
   }
 }
 
 function getLinkColor(linkType: string): string {
   switch (linkType) {
-    case 'primary': return COLORS.cyan
-    case 'secondary': return COLORS.blue
-    default: return COLORS.textMuted
+    case 'primary':
+      return COLORS.cyan;
+    case 'secondary':
+      return COLORS.blue;
+    default:
+      return COLORS.textMuted;
   }
 }
 
 function getLocationTypeLabel(locationType: string): string {
   switch (locationType) {
-    case 'headquarters': return 'HQ'
-    case 'datacenter': return 'Datacenter'
-    case 'office': return 'Office'
-    case 'branch': return 'Branch'
-    default: return locationType
+    case 'headquarters':
+      return 'HQ';
+    case 'datacenter':
+      return 'Datacenter';
+    case 'office':
+      return 'Office';
+    case 'branch':
+      return 'Branch';
+    default:
+      return locationType;
   }
 }
 
@@ -511,27 +565,27 @@ function KpiSidebar({
   wanLinks,
   onLocationClick,
 }: {
-  locations: InfraLocation[]
-  wanLinks: WanLink[]
-  onLocationClick: (loc: InfraLocation) => void
+  locations: InfraLocation[];
+  wanLinks: WanLink[];
+  onLocationClick: (loc: InfraLocation) => void;
 }) {
-  const totalDevices = locations.reduce((sum, l) => sum + (l.device_count ?? 0), 0)
-  const totalAssets = locations.reduce((sum, l) => sum + (l.asset_count ?? 0), 0)
-  const activeWanLinks = wanLinks.length
+  const totalDevices = locations.reduce((sum, l) => sum + (l.device_count ?? 0), 0);
+  const totalAssets = locations.reduce((sum, l) => sum + (l.asset_count ?? 0), 0);
+  const activeWanLinks = wanLinks.length;
 
   const statusCounts = useMemo(() => {
-    const counts = { operational: 0, warning: 0, critical: 0, maintenance: 0, offline: 0 }
+    const counts = { operational: 0, warning: 0, critical: 0, maintenance: 0, offline: 0 };
     for (const loc of locations) {
-      const key = loc.status as keyof typeof counts
-      if (key in counts) counts[key]++
+      const key = loc.status as keyof typeof counts;
+      if (key in counts) counts[key]++;
     }
-    return counts
-  }, [locations])
+    return counts;
+  }, [locations]);
 
   const kpiItemStyle: React.CSSProperties = {
     padding: '10px 12px',
     borderBottom: `1px solid ${COLORS.border}`,
-  }
+  };
 
   const kpiLabel: React.CSSProperties = {
     fontFamily: 'DM Sans, sans-serif',
@@ -540,7 +594,7 @@ function KpiSidebar({
     letterSpacing: 1,
     textTransform: 'uppercase' as const,
     marginBottom: 4,
-  }
+  };
 
   const kpiValue: React.CSSProperties = {
     fontFamily: 'JetBrains Mono, monospace',
@@ -548,7 +602,7 @@ function KpiSidebar({
     fontWeight: 700,
     color: COLORS.text,
     lineHeight: 1.2,
-  }
+  };
 
   return (
     <div
@@ -560,10 +614,7 @@ function KpiSidebar({
       }}
     >
       {/* Header */}
-      <div
-        className="px-3 py-2 shrink-0"
-        style={{ borderBottom: `1px solid ${COLORS.border}` }}
-      >
+      <div className="px-3 py-2 shrink-0" style={{ borderBottom: `1px solid ${COLORS.border}` }}>
         <div
           style={{
             fontFamily: 'JetBrains Mono, monospace',
@@ -586,24 +637,51 @@ function KpiSidebar({
             <div className="flex items-center gap-1.5 ml-auto">
               {statusCounts.operational > 0 && (
                 <span className="flex items-center gap-0.5">
-                  <span className="inline-block w-2 h-2 rounded-full" style={{ background: COLORS.green }} />
-                  <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: COLORS.textDim }}>
+                  <span
+                    className="inline-block w-2 h-2 rounded-full"
+                    style={{ background: COLORS.green }}
+                  />
+                  <span
+                    style={{
+                      fontFamily: 'JetBrains Mono, monospace',
+                      fontSize: 9,
+                      color: COLORS.textDim,
+                    }}
+                  >
                     {statusCounts.operational}
                   </span>
                 </span>
               )}
               {statusCounts.warning > 0 && (
                 <span className="flex items-center gap-0.5">
-                  <span className="inline-block w-2 h-2 rounded-full" style={{ background: COLORS.amber }} />
-                  <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: COLORS.textDim }}>
+                  <span
+                    className="inline-block w-2 h-2 rounded-full"
+                    style={{ background: COLORS.amber }}
+                  />
+                  <span
+                    style={{
+                      fontFamily: 'JetBrains Mono, monospace',
+                      fontSize: 9,
+                      color: COLORS.textDim,
+                    }}
+                  >
                     {statusCounts.warning}
                   </span>
                 </span>
               )}
               {statusCounts.critical > 0 && (
                 <span className="flex items-center gap-0.5">
-                  <span className="inline-block w-2 h-2 rounded-full" style={{ background: COLORS.red }} />
-                  <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: COLORS.textDim }}>
+                  <span
+                    className="inline-block w-2 h-2 rounded-full"
+                    style={{ background: COLORS.red }}
+                  />
+                  <span
+                    style={{
+                      fontFamily: 'JetBrains Mono, monospace',
+                      fontSize: 9,
+                      color: COLORS.textDim,
+                    }}
+                  >
                     {statusCounts.critical}
                   </span>
                 </span>
@@ -638,26 +716,28 @@ function KpiSidebar({
 
         {/* Timezone Mismatches */}
         {(() => {
-          const totalTzMismatches = locations.reduce((sum, l) => sum + (l.tz_mismatch_count ?? 0), 0)
+          const totalTzMismatches = locations.reduce(
+            (sum, l) => sum + (l.tz_mismatch_count ?? 0),
+            0,
+          );
           return (
             <div style={kpiItemStyle}>
               <div style={kpiLabel}>TZ Mismatches</div>
-              <div style={{
-                ...kpiValue,
-                color: totalTzMismatches > 0 ? COLORS.amber : COLORS.green,
-              }}>
+              <div
+                style={{
+                  ...kpiValue,
+                  color: totalTzMismatches > 0 ? COLORS.amber : COLORS.green,
+                }}
+              >
                 {totalTzMismatches}
               </div>
             </div>
-          )
+          );
         })()}
       </div>
 
       {/* Location List */}
-      <div
-        className="px-3 py-2 shrink-0"
-        style={{ borderBottom: `1px solid ${COLORS.border}` }}
-      >
+      <div className="px-3 py-2 shrink-0" style={{ borderBottom: `1px solid ${COLORS.border}` }}>
         <div
           style={{
             fontFamily: 'JetBrains Mono, monospace',
@@ -670,8 +750,8 @@ function KpiSidebar({
         </div>
       </div>
       <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
-        {locations.map(loc => {
-          const statusColor = getStatusColor(loc.status)
+        {locations.map((loc) => {
+          const statusColor = getStatusColor(loc.status);
           return (
             <button
               key={loc.id}
@@ -686,10 +766,10 @@ function KpiSidebar({
                 borderBottomColor: COLORS.border,
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(6,182,212,0.05)'
+                e.currentTarget.style.background = 'rgba(6,182,212,0.05)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'transparent'
+                e.currentTarget.style.background = 'transparent';
               }}
             >
               <div className="flex items-center gap-2">
@@ -731,11 +811,11 @@ function KpiSidebar({
                 {loc.city}, {loc.country}
               </div>
             </button>
-          )
+          );
         })}
       </div>
     </div>
-  )
+  );
 }
 
 // ─── HTML Tooltip Overlay ───────────────────────────────────
@@ -745,44 +825,44 @@ function LocationTooltip({
   svgX,
   svgY,
 }: {
-  location: InfraLocation
-  svgRef: React.RefObject<SVGSVGElement | null>
-  svgX: number
-  svgY: number
+  location: InfraLocation;
+  svgRef: React.RefObject<SVGSVGElement | null>;
+  svgX: number;
+  svgY: number;
 }) {
-  const [pos, setPos] = useState<{ x: number; y: number } | null>(null)
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
-    const svg = svgRef.current
-    if (!svg) return
+    const svg = svgRef.current;
+    if (!svg) return;
 
-    const rect = svg.getBoundingClientRect()
-    const viewBox = svg.viewBox.baseVal
-    if (!viewBox || viewBox.width === 0) return
+    const rect = svg.getBoundingClientRect();
+    const viewBox = svg.viewBox.baseVal;
+    if (!viewBox || viewBox.width === 0) return;
 
-    const scaleX = rect.width / viewBox.width
-    const scaleY = rect.height / viewBox.height
-    const scale = Math.min(scaleX, scaleY)
+    const scaleX = rect.width / viewBox.width;
+    const scaleY = rect.height / viewBox.height;
+    const scale = Math.min(scaleX, scaleY);
 
     // Center the viewBox in the SVG element
-    const offsetX = (rect.width - viewBox.width * scale) / 2
-    const offsetY = (rect.height - viewBox.height * scale) / 2
+    const offsetX = (rect.width - viewBox.width * scale) / 2;
+    const offsetY = (rect.height - viewBox.height * scale) / 2;
 
-    const x = offsetX + (svgX - viewBox.x) * scale
-    const y = offsetY + (svgY - viewBox.y) * scale
+    const x = offsetX + (svgX - viewBox.x) * scale;
+    const y = offsetY + (svgY - viewBox.y) * scale;
 
-    setPos({ x, y })
-  }, [svgRef, svgX, svgY])
+    setPos({ x, y });
+  }, [svgRef, svgX, svgY]);
 
-  if (!pos) return null
+  if (!pos) return null;
 
-  const statusColor = getStatusColor(location.status)
-  const deviceCount = location.device_count ?? 0
-  const assetCount = location.asset_count ?? 0
-  const localTime = location.timezone ? formatTimeForTimezone(location.timezone) : '--:--'
+  const statusColor = getStatusColor(location.status);
+  const deviceCount = location.device_count ?? 0;
+  const assetCount = location.asset_count ?? 0;
+  const localTime = location.timezone ? formatTimeForTimezone(location.timezone) : '--:--';
 
   // Position tooltip above the dot, flip if too close to top
-  const tooltipAbove = pos.y > 180
+  const tooltipAbove = pos.y > 180;
   const tooltipStyle: React.CSSProperties = {
     position: 'absolute',
     left: pos.x,
@@ -791,7 +871,7 @@ function LocationTooltip({
     zIndex: 100,
     pointerEvents: 'none',
     minWidth: 200,
-  }
+  };
 
   return (
     <div style={tooltipStyle}>
@@ -863,18 +943,34 @@ function LocationTooltip({
           {/* Stats grid */}
           <div className="grid grid-cols-2 gap-x-4 gap-y-1">
             <div className="flex items-center justify-between">
-              <span style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 9, color: COLORS.textMuted }}>
+              <span
+                style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 9, color: COLORS.textMuted }}
+              >
                 Devices
               </span>
-              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: COLORS.text }}>
+              <span
+                style={{
+                  fontFamily: 'JetBrains Mono, monospace',
+                  fontSize: 10,
+                  color: COLORS.text,
+                }}
+              >
                 {deviceCount}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 9, color: COLORS.textMuted }}>
+              <span
+                style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 9, color: COLORS.textMuted }}
+              >
                 Assets
               </span>
-              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: COLORS.text }}>
+              <span
+                style={{
+                  fontFamily: 'JetBrains Mono, monospace',
+                  fontSize: 10,
+                  color: COLORS.text,
+                }}
+              >
                 {assetCount}
               </span>
             </div>
@@ -886,10 +982,18 @@ function LocationTooltip({
               className="mt-2 pt-2 flex items-center justify-between"
               style={{ borderTop: `1px solid ${COLORS.border}` }}
             >
-              <span style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 9, color: COLORS.textMuted }}>
+              <span
+                style={{ fontFamily: 'DM Sans, sans-serif', fontSize: 9, color: COLORS.textMuted }}
+              >
                 {location.timezone}
               </span>
-              <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: COLORS.cyan }}>
+              <span
+                style={{
+                  fontFamily: 'JetBrains Mono, monospace',
+                  fontSize: 11,
+                  color: COLORS.cyan,
+                }}
+              >
                 {localTime}
               </span>
             </div>
@@ -904,12 +1008,15 @@ function LocationTooltip({
                 border: `1px solid ${COLORS.amber}30`,
               }}
             >
-              <span style={{
-                fontFamily: 'DM Sans, sans-serif',
-                fontSize: 9,
-                color: COLORS.amber,
-              }}>
-                ⚠ {location.tz_mismatch_count} workstation{location.tz_mismatch_count === 1 ? '' : 's'} with timezone mismatch
+              <span
+                style={{
+                  fontFamily: 'DM Sans, sans-serif',
+                  fontSize: 9,
+                  color: COLORS.amber,
+                }}
+              >
+                ⚠ {location.tz_mismatch_count} workstation
+                {location.tz_mismatch_count === 1 ? '' : 's'} with timezone mismatch
               </span>
             </div>
           )}
@@ -936,65 +1043,66 @@ function LocationTooltip({
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 // ─── Main WorldMapView Component ────────────────────────────
 export function WorldMapView({ locations, wanLinks, onLocationClick }: WorldMapViewProps) {
-  const [hoveredLoc, setHoveredLoc] = useState<string | null>(null)
-  const [currentTime, setCurrentTime] = useState(new Date())
-  const svgRef = useRef<SVGSVGElement | null>(null)
-  const containerRef = useRef<HTMLDivElement | null>(null)
+  const [hoveredLoc, setHoveredLoc] = useState<string | null>(null);
+  const [currentTime, setCurrentTime] = useState(new Date());
+  const svgRef = useRef<SVGSVGElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
 
   // Update time every 30 seconds for timezone labels
   useEffect(() => {
-    const interval = setInterval(() => setCurrentTime(new Date()), 30_000)
-    return () => clearInterval(interval)
-  }, [])
+    const interval = setInterval(() => setCurrentTime(new Date()), 30_000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Suppress unused var warning — currentTime triggers re-renders for timezone display
-  void currentTime
+  void currentTime;
 
   // Project locations to SVG coordinates
-  const locPoints = useMemo(() =>
-    locations.map(loc => {
-      const [px, py] = projectLatLon(loc.latitude, loc.longitude)
-      const offset = getDisplayOffset(loc.code)
-      return { ...loc, x: px + offset.dx, y: py + offset.dy }
-    }),
-    [locations]
-  )
+  const locPoints = useMemo(
+    () =>
+      locations.map((loc) => {
+        const [px, py] = projectLatLon(loc.latitude, loc.longitude);
+        const offset = getDisplayOffset(loc.code);
+        return { ...loc, x: px + offset.dx, y: py + offset.dy };
+      }),
+    [locations],
+  );
 
   const hoveredLocation = useMemo(
-    () => locPoints.find(l => l.id === hoveredLoc) ?? null,
-    [locPoints, hoveredLoc]
-  )
+    () => locPoints.find((l) => l.id === hoveredLoc) ?? null,
+    [locPoints, hoveredLoc],
+  );
 
   // Precompute summary stats
-  const totalAssets = useMemo(() =>
-    locations.reduce((sum, l) => sum + (l.asset_count ?? 0), 0),
-    [locations]
-  )
+  const totalAssets = useMemo(
+    () => locations.reduce((sum, l) => sum + (l.asset_count ?? 0), 0),
+    [locations],
+  );
 
-  const totalDevices = useMemo(() =>
-    locations.reduce((sum, l) => sum + (l.device_count ?? 0), 0),
-    [locations]
-  )
+  const totalDevices = useMemo(
+    () => locations.reduce((sum, l) => sum + (l.device_count ?? 0), 0),
+    [locations],
+  );
 
-  const handleMouseEnter = useCallback((id: string) => setHoveredLoc(id), [])
-  const handleMouseLeave = useCallback(() => setHoveredLoc(null), [])
+  const handleMouseEnter = useCallback((id: string) => setHoveredLoc(id), []);
+  const handleMouseLeave = useCallback(() => setHoveredLoc(null), []);
 
   // Compute timezone band positions
   const timezoneBands = useMemo(() => {
     return TIMEZONES.map((tz) => {
       // Each timezone offset roughly corresponds to 15 degrees of longitude
-      const centerLon = tz.offset * 15
-      const bandWidth = 15 // 15 degrees per timezone hour
-      const leftLon = centerLon - bandWidth / 2
-      const rightLon = centerLon + bandWidth / 2
+      const centerLon = tz.offset * 15;
+      const bandWidth = 15; // 15 degrees per timezone hour
+      const leftLon = centerLon - bandWidth / 2;
+      const rightLon = centerLon + bandWidth / 2;
 
-      const x1 = lonToX(leftLon)
-      const x2 = lonToX(rightLon)
+      const x1 = lonToX(leftLon);
+      const x2 = lonToX(rightLon);
 
       return {
         ...tz,
@@ -1002,9 +1110,9 @@ export function WorldMapView({ locations, wanLinks, onLocationClick }: WorldMapV
         x2,
         width: x2 - x1,
         centerX: (x1 + x2) / 2,
-      }
-    })
-  }, [])
+      };
+    });
+  }, []);
 
   return (
     <div
@@ -1018,7 +1126,8 @@ export function WorldMapView({ locations, wanLinks, onLocationClick }: WorldMapV
         <div
           className="absolute inset-0 pointer-events-none z-20"
           style={{
-            background: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(6,182,212,0.012) 2px, rgba(6,182,212,0.012) 4px)',
+            background:
+              'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(6,182,212,0.012) 2px, rgba(6,182,212,0.012) 4px)',
           }}
         />
 
@@ -1063,29 +1172,45 @@ export function WorldMapView({ locations, wanLinks, onLocationClick }: WorldMapV
           {Array.from({ length: 25 }, (_, i) => (
             <line
               key={`gx${i}`}
-              x1={i * 40} y1={0} x2={i * 40} y2={440}
-              stroke={COLORS.grid} strokeWidth="0.3"
+              x1={i * 40}
+              y1={0}
+              x2={i * 40}
+              y2={440}
+              stroke={COLORS.grid}
+              strokeWidth="0.3"
             />
           ))}
           {Array.from({ length: 12 }, (_, i) => (
             <line
               key={`gy${i}`}
-              x1={0} y1={i * 40} x2={960} y2={i * 40}
-              stroke={COLORS.grid} strokeWidth="0.3"
+              x1={0}
+              y1={i * 40}
+              x2={960}
+              y2={i * 40}
+              stroke={COLORS.grid}
+              strokeWidth="0.3"
             />
           ))}
 
           {/* Equator line */}
           <line
-            x1={0} y1={220} x2={960} y2={220}
-            stroke="rgba(6,182,212,0.06)" strokeWidth="0.5"
+            x1={0}
+            y1={220}
+            x2={960}
+            y2={220}
+            stroke="rgba(6,182,212,0.06)"
+            strokeWidth="0.5"
             strokeDasharray="8,4"
           />
 
           {/* Prime meridian */}
           <line
-            x1={480} y1={0} x2={480} y2={440}
-            stroke="rgba(6,182,212,0.06)" strokeWidth="0.5"
+            x1={480}
+            y1={0}
+            x2={480}
+            y2={440}
+            stroke="rgba(6,182,212,0.06)"
+            strokeWidth="0.5"
             strokeDasharray="8,4"
           />
 
@@ -1144,29 +1269,31 @@ export function WorldMapView({ locations, wanLinks, onLocationClick }: WorldMapV
 
           {/* WAN link curves */}
           {wanLinks.map((link, i) => {
-            const from = locPoints.find(l => l.id === link.from_location)
-            const to = locPoints.find(l => l.id === link.to_location)
-            if (!from || !to) return null
-            const lineColor = getLinkColor(link.link_type)
+            const from = locPoints.find((l) => l.id === link.from_location);
+            const to = locPoints.find((l) => l.id === link.to_location);
+            if (!from || !to) return null;
+            const lineColor = getLinkColor(link.link_type);
             return (
               <WanLinkCurve
                 key={`wan-${i}`}
-                x1={from.x} y1={from.y}
-                x2={to.x} y2={to.y}
+                x1={from.x}
+                y1={from.y}
+                x2={to.x}
+                y2={to.y}
                 color={lineColor}
                 speed={link.link_type === 'primary' ? '3s' : '5s'}
                 dashed={link.link_type === 'backup'}
               />
-            )
+            );
           })}
 
           {/* Location dots */}
-          {locPoints.map(loc => {
-            const statusColor = getStatusColor(loc.status)
-            const isHQ = loc.location_type === 'headquarters'
-            const isHovered = hoveredLoc === loc.id
-            const labelCfg = getLabelConfig(loc.code)
-            const showLabel = labelCfg.showAlways || isHovered
+          {locPoints.map((loc) => {
+            const statusColor = getStatusColor(loc.status);
+            const isHQ = loc.location_type === 'headquarters';
+            const isHovered = hoveredLoc === loc.id;
+            const labelCfg = getLabelConfig(loc.code);
+            const showLabel = labelCfg.showAlways || isHovered;
             return (
               <g
                 key={loc.id}
@@ -1178,7 +1305,8 @@ export function WorldMapView({ locations, wanLinks, onLocationClick }: WorldMapV
                 {/* Hover highlight ring */}
                 {isHovered && (
                   <circle
-                    cx={loc.x} cy={loc.y}
+                    cx={loc.x}
+                    cy={loc.y}
                     r={isHQ ? 14 : 10}
                     fill="none"
                     stroke={statusColor}
@@ -1187,27 +1315,30 @@ export function WorldMapView({ locations, wanLinks, onLocationClick }: WorldMapV
                   />
                 )}
 
-                <PulseDot
-                  cx={loc.x} cy={loc.y}
-                  color={statusColor}
-                  size={isHQ ? 5 : 3.5}
-                />
+                <PulseDot cx={loc.x} cy={loc.y} color={statusColor} size={isHQ ? 5 : 3.5} />
 
                 {/* Timezone mismatch badge */}
                 {(loc.tz_mismatch_count ?? 0) > 0 && (
                   <g>
                     <circle
-                      cx={loc.x + 6} cy={loc.y - 6}
+                      cx={loc.x + 6}
+                      cy={loc.y - 6}
                       r={4}
                       fill={COLORS.amber}
                       stroke={COLORS.bgCard}
                       strokeWidth="0.5"
                       opacity="0.95"
                     >
-                      <animate attributeName="opacity" values="0.95;0.6;0.95" dur="2s" repeatCount="indefinite" />
+                      <animate
+                        attributeName="opacity"
+                        values="0.95;0.6;0.95"
+                        dur="2s"
+                        repeatCount="indefinite"
+                      />
                     </circle>
                     <text
-                      x={loc.x + 6} y={loc.y - 4.5}
+                      x={loc.x + 6}
+                      y={loc.y - 4.5}
                       textAnchor="middle"
                       fill="#fff"
                       fontSize="5"
@@ -1236,24 +1367,30 @@ export function WorldMapView({ locations, wanLinks, onLocationClick }: WorldMapV
                   </text>
                 )}
               </g>
-            )
+            );
           })}
 
           {/* Title HUD */}
           <text
-            x={166} y={100}
-            fill={COLORS.cyan} fontSize="10"
+            x={166}
+            y={100}
+            fill={COLORS.cyan}
+            fontSize="10"
             fontFamily="JetBrains Mono, monospace"
-            letterSpacing="3" opacity="0.8"
+            letterSpacing="3"
+            opacity="0.8"
           >
             BOSSVIEW :: GLOBAL INFRASTRUCTURE
           </text>
           <text
-            x={166} y={114}
-            fill={COLORS.textMuted} fontSize="8"
+            x={166}
+            y={114}
+            fill={COLORS.textMuted}
+            fontSize="8"
             fontFamily="JetBrains Mono, monospace"
           >
-            LSYFN · {locations.length} LOCATIONS · {totalAssets} ASSETS · {totalDevices} DEVICES · 7 TIMEZONES
+            LSYFN · {locations.length} LOCATIONS · {totalAssets} ASSETS · {totalDevices} DEVICES · 7
+            TIMEZONES
           </text>
 
           {/* Legend */}
@@ -1265,13 +1402,19 @@ export function WorldMapView({ locations, wanLinks, onLocationClick }: WorldMapV
             ].map((item, i) => (
               <g key={item.label} transform={`translate(0, ${i * 14})`}>
                 <line
-                  x1={0} y1={0} x2={16} y2={0}
-                  stroke={item.color} strokeWidth="1.5"
+                  x1={0}
+                  y1={0}
+                  x2={16}
+                  y2={0}
+                  stroke={item.color}
+                  strokeWidth="1.5"
                   strokeDasharray={item.dashed ? '4 3' : 'none'}
                 />
                 <text
-                  x={22} y={3}
-                  fill={COLORS.textDim} fontSize="7"
+                  x={22}
+                  y={3}
+                  fill={COLORS.textDim}
+                  fontSize="7"
                   fontFamily="JetBrains Mono, monospace"
                 >
                   {item.label}
@@ -1283,11 +1426,7 @@ export function WorldMapView({ locations, wanLinks, onLocationClick }: WorldMapV
       </div>
 
       {/* KPI Sidebar */}
-      <KpiSidebar
-        locations={locations}
-        wanLinks={wanLinks}
-        onLocationClick={onLocationClick}
-      />
+      <KpiSidebar locations={locations} wanLinks={wanLinks} onLocationClick={onLocationClick} />
     </div>
-  )
+  );
 }

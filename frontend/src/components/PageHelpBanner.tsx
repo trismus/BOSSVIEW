@@ -1,31 +1,36 @@
-import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 
 interface PageHelpBannerProps {
-  pageKey: string
-  title: string
-  description: string
-  learnMoreSection?: string
+  pageKey: string;
+  title: string;
+  description: string;
+  learnMoreSection?: string;
 }
 
 function getStorageKey(pageKey: string): string {
-  return `bossview-help-dismissed-${pageKey}`
+  return `bossview-help-dismissed-${pageKey}`;
 }
 
-export function PageHelpBanner({ pageKey, title, description, learnMoreSection }: PageHelpBannerProps) {
-  const [isDismissed, setIsDismissed] = useState(true)
+export function PageHelpBanner({
+  pageKey,
+  title,
+  description,
+  learnMoreSection,
+}: PageHelpBannerProps) {
+  const [isDismissed, setIsDismissed] = useState(true);
 
   useEffect(() => {
-    const dismissed = localStorage.getItem(getStorageKey(pageKey))
-    setIsDismissed(dismissed === 'true')
-  }, [pageKey])
+    const dismissed = localStorage.getItem(getStorageKey(pageKey));
+    setIsDismissed(dismissed === 'true');
+  }, [pageKey]);
 
   const handleDismiss = () => {
-    localStorage.setItem(getStorageKey(pageKey), 'true')
-    setIsDismissed(true)
-  }
+    localStorage.setItem(getStorageKey(pageKey), 'true');
+    setIsDismissed(true);
+  };
 
-  if (isDismissed) return null
+  if (isDismissed) return null;
 
   return (
     <div className="mb-4 px-4 py-3 bg-cyan-900/20 border border-cyan-800/40 rounded-lg flex items-start gap-3">
@@ -60,10 +65,16 @@ export function PageHelpBanner({ pageKey, title, description, learnMoreSection }
         className="text-slate-500 hover:text-slate-300 transition-colors p-1"
         aria-label="Dismiss help banner"
       >
-        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <svg
+          className="w-4 h-4"
+          fill="none"
+          viewBox="0 0 24 24"
+          strokeWidth={1.5}
+          stroke="currentColor"
+        >
           <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
         </svg>
       </button>
     </div>
-  )
+  );
 }

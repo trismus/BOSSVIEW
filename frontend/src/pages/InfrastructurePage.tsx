@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback } from 'react'
-import { PageHelpBanner } from '../components/PageHelpBanner'
-import { useInfraMap } from '../hooks/useInfraMap'
-import { WorldMapView } from '../components/infra/WorldMapView'
-import { NetworkTopologyView } from '../components/infra/NetworkTopologyView'
-import { RackView } from '../components/infra/RackView'
-import type { InfraLocation, InfraLocationStatus } from '../types'
+import { useState, useEffect, useCallback } from 'react';
+import { PageHelpBanner } from '../components/PageHelpBanner';
+import { useInfraMap } from '../hooks/useInfraMap';
+import { WorldMapView } from '../components/infra/WorldMapView';
+import { NetworkTopologyView } from '../components/infra/NetworkTopologyView';
+import { RackView } from '../components/infra/RackView';
+import type { InfraLocation, InfraLocationStatus } from '../types';
 
 // ─── Dark Trace Color Palette ────────────────────────────────
 const COLORS = {
@@ -20,14 +20,14 @@ const COLORS = {
   text: '#e2e8f0',
   textDim: '#94a3b8',
   textMuted: '#64748b',
-}
+};
 
-type ViewId = 'world' | 'topology' | 'rack'
+type ViewId = 'world' | 'topology' | 'rack';
 
 interface ViewTab {
-  id: ViewId
-  label: string
-  icon: string
+  id: ViewId;
+  label: string;
+  icon: string;
 }
 
 const STATUS_MAP: Record<InfraLocationStatus, { color: string; label: string }> = {
@@ -36,7 +36,7 @@ const STATUS_MAP: Record<InfraLocationStatus, { color: string; label: string }> 
   critical: { color: COLORS.red, label: 'CRITICAL' },
   maintenance: { color: COLORS.blue, label: 'MAINT' },
   offline: { color: COLORS.textMuted, label: 'OFFLINE' },
-}
+};
 
 export function InfrastructurePage() {
   const {
@@ -50,16 +50,16 @@ export function InfrastructurePage() {
     isLoadingTopology,
     connected,
     error,
-  } = useInfraMap()
+  } = useInfraMap();
 
-  const [activeView, setActiveView] = useState<ViewId>('world')
-  const [time, setTime] = useState(new Date())
+  const [activeView, setActiveView] = useState<ViewId>('world');
+  const [time, setTime] = useState(new Date());
 
   // Live clock
   useEffect(() => {
-    const interval = setInterval(() => setTime(new Date()), 1000)
-    return () => clearInterval(interval)
-  }, [])
+    const interval = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   // Build dynamic view tabs based on selected location
   const viewTabs: ViewTab[] = [
@@ -70,26 +70,29 @@ export function InfrastructurePage() {
           { id: 'rack' as ViewId, label: `${topology.location.code} RACKS`, icon: '\u25A6' },
         ]
       : []),
-  ]
+  ];
 
   // Handle location click on world map → load topology + switch view
-  const handleLocationClick = useCallback(async (location: InfraLocation) => {
-    await loadTopology(location.id)
-    setActiveView('topology')
-  }, [loadTopology])
+  const handleLocationClick = useCallback(
+    async (location: InfraLocation) => {
+      await loadTopology(location.id);
+      setActiveView('topology');
+    },
+    [loadTopology],
+  );
 
   // Handle back to world map
   const handleBackToWorld = useCallback(() => {
-    setActiveView('world')
-    clearTopology()
-  }, [clearTopology])
+    setActiveView('world');
+    clearTopology();
+  }, [clearTopology]);
 
   // Compute summary stats
-  const totalAssets = locations.reduce((sum, l) => sum + (l.asset_count ?? 0), 0)
-  const totalDevices = locations.reduce((sum, l) => sum + (l.device_count ?? 0), 0)
-  const warningCount = locations.filter(l => l.status === 'warning').length
-  const criticalCount = locations.filter(l => l.status === 'critical').length
-  const maintenanceCount = locations.filter(l => l.status === 'maintenance').length
+  const totalAssets = locations.reduce((sum, l) => sum + (l.asset_count ?? 0), 0);
+  const totalDevices = locations.reduce((sum, l) => sum + (l.device_count ?? 0), 0);
+  const warningCount = locations.filter((l) => l.status === 'warning').length;
+  const criticalCount = locations.filter((l) => l.status === 'critical').length;
+  const maintenanceCount = locations.filter((l) => l.status === 'maintenance').length;
 
   const renderView = () => {
     if (isLoading) {
@@ -102,13 +105,17 @@ export function InfrastructurePage() {
             />
             <div
               className="uppercase tracking-wider"
-              style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: COLORS.textMuted }}
+              style={{
+                fontFamily: 'JetBrains Mono, monospace',
+                fontSize: 10,
+                color: COLORS.textMuted,
+              }}
             >
               LOADING INFRASTRUCTURE DATA...
             </div>
           </div>
         </div>
-      )
+      );
     }
 
     if (error) {
@@ -118,13 +125,16 @@ export function InfrastructurePage() {
             className="rounded-lg p-6 text-center max-w-md"
             style={{ background: 'rgba(239,68,68,0.1)', border: `1px solid rgba(239,68,68,0.3)` }}
           >
-            <div className="text-red-400 mb-2" style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11 }}>
+            <div
+              className="text-red-400 mb-2"
+              style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11 }}
+            >
               CONNECTION ERROR
             </div>
             <div className="text-red-300 text-sm">{error}</div>
           </div>
         </div>
-      )
+      );
     }
 
     switch (activeView) {
@@ -135,7 +145,7 @@ export function InfrastructurePage() {
             wanLinks={wanLinks}
             onLocationClick={handleLocationClick}
           />
-        )
+        );
       case 'topology':
         if (isLoadingTopology) {
           return (
@@ -145,9 +155,9 @@ export function InfrastructurePage() {
                 style={{ borderColor: COLORS.cyan, borderTopColor: 'transparent' }}
               />
             </div>
-          )
+          );
         }
-        if (!topology) return null
+        if (!topology) return null;
         return (
           <NetworkTopologyView
             siteName={`${topology.location.name} · ${topology.location.code}`}
@@ -157,9 +167,9 @@ export function InfrastructurePage() {
             links={topology.links}
             onRefresh={() => loadTopology(topology.location.id)}
           />
-        )
+        );
       case 'rack':
-        if (!topology) return null
+        if (!topology) return null;
         return (
           <RackView
             siteName={`${topology.location.name} · ${topology.location.code}`}
@@ -168,11 +178,11 @@ export function InfrastructurePage() {
             locationId={topology.location.id}
             onRefresh={() => loadTopology(topology.location.id)}
           />
-        )
+        );
       default:
-        return null
+        return null;
     }
-  }
+  };
 
   return (
     <div
@@ -226,9 +236,13 @@ export function InfrastructurePage() {
                 onClick={handleBackToWorld}
                 className="cursor-pointer"
                 style={{
-                  fontFamily: 'JetBrains Mono, monospace', fontSize: 9,
-                  color: COLORS.cyan, background: 'none', border: `1px solid ${COLORS.borderActive}`,
-                  borderRadius: 3, padding: '2px 8px',
+                  fontFamily: 'JetBrains Mono, monospace',
+                  fontSize: 9,
+                  color: COLORS.cyan,
+                  background: 'none',
+                  border: `1px solid ${COLORS.borderActive}`,
+                  borderRadius: 3,
+                  padding: '2px 8px',
                 }}
               >
                 ← GLOBAL MAP
@@ -245,15 +259,24 @@ export function InfrastructurePage() {
               style={{ background: connected ? COLORS.green : COLORS.red }}
             />
             <span
-              style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: COLORS.textMuted }}
+              style={{
+                fontFamily: 'JetBrains Mono, monospace',
+                fontSize: 8,
+                color: COLORS.textMuted,
+              }}
             >
               {connected ? 'LIVE' : 'OFFLINE'}
             </span>
           </div>
           <div
-            style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 10, color: COLORS.textMuted }}
+            style={{
+              fontFamily: 'JetBrains Mono, monospace',
+              fontSize: 10,
+              color: COLORS.textMuted,
+            }}
           >
-            {time.toLocaleTimeString('de-CH', { hour12: false })} · {time.toLocaleDateString('de-CH')}
+            {time.toLocaleTimeString('de-CH', { hour12: false })} ·{' '}
+            {time.toLocaleDateString('de-CH')}
           </div>
         </div>
       </div>
@@ -263,7 +286,7 @@ export function InfrastructurePage() {
         className="flex gap-0.5 px-4 py-1.5 shrink-0 overflow-x-auto"
         style={{ borderBottom: `1px solid ${COLORS.border}`, background: COLORS.bgPanel }}
       >
-        {viewTabs.map(view => (
+        {viewTabs.map((view) => (
           <button
             key={view.id}
             onClick={() => setActiveView(view.id)}
@@ -305,9 +328,7 @@ export function InfrastructurePage() {
       </div>
 
       {/* ── Main Content ── */}
-      <div className="flex-1 relative overflow-hidden">
-        {renderView()}
-      </div>
+      <div className="flex-1 relative overflow-hidden">{renderView()}</div>
 
       {/* ── Bottom Bar ── */}
       <div
@@ -326,12 +347,12 @@ export function InfrastructurePage() {
         </span>
       </div>
     </div>
-  )
+  );
 }
 
 // ─── Status Badge ────────────────────────────────────────────
 function StatusBadge({ status }: { status: InfraLocationStatus }) {
-  const s = STATUS_MAP[status] ?? STATUS_MAP.operational
+  const s = STATUS_MAP[status] ?? STATUS_MAP.operational;
   return (
     <span
       className="inline-flex items-center gap-1 uppercase tracking-wider"
@@ -343,5 +364,5 @@ function StatusBadge({ status }: { status: InfraLocationStatus }) {
       />
       {s.label}
     </span>
-  )
+  );
 }

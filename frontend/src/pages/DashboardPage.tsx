@@ -1,44 +1,44 @@
-import { useState, useEffect, useCallback } from 'react'
-import { apiFetch } from '../api/client'
-import { KPICard } from '../components/KPICard'
-import { useWebSocket } from '../hooks/useWebSocket'
-import type { DashboardKPIs } from '../types'
+import { useState, useEffect, useCallback } from 'react';
+import { apiFetch } from '../api/client';
+import { KPICard } from '../components/KPICard';
+import { useWebSocket } from '../hooks/useWebSocket';
+import type { DashboardKPIs } from '../types';
 
 export function DashboardPage() {
-  const [kpis, setKpis] = useState<DashboardKPIs | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const { on } = useWebSocket()
+  const [kpis, setKpis] = useState<DashboardKPIs | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const { on } = useWebSocket();
 
   const fetchKPIs = useCallback(async () => {
     try {
-      const data = await apiFetch<{ data: DashboardKPIs }>('/dashboard/kpis')
-      setKpis(data.data)
+      const data = await apiFetch<{ data: DashboardKPIs }>('/dashboard/kpis');
+      setKpis(data.data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load dashboard')
+      setError(err instanceof Error ? err.message : 'Failed to load dashboard');
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }, [])
+  }, []);
 
   useEffect(() => {
-    fetchKPIs()
-  }, [fetchKPIs])
+    fetchKPIs();
+  }, [fetchKPIs]);
 
   // Auto-refresh when KPIs are updated via WebSocket
   useEffect(() => {
     const unsubscribe = on('kpi:updated', () => {
-      fetchKPIs()
-    })
-    return unsubscribe
-  }, [on, fetchKPIs])
+      fetchKPIs();
+    });
+    return unsubscribe;
+  }, [on, fetchKPIs]);
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
       </div>
-    )
+    );
   }
 
   if (error) {
@@ -46,20 +46,16 @@ export function DashboardPage() {
       <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 text-red-400">
         {error}
       </div>
-    )
+    );
   }
 
-  if (!kpis) return null
+  if (!kpis) return null;
 
   return (
     <div className="space-y-8">
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPICard
-          title="Total Assets"
-          value={kpis.total_assets}
-          color="blue"
-        />
+        <KPICard title="Total Assets" value={kpis.total_assets} color="blue" />
         <KPICard
           title="Active"
           value={kpis.assets_by_status.active ?? 0}
@@ -143,11 +139,13 @@ export function DashboardPage() {
                 medium: 'bg-yellow-500',
                 low: 'bg-green-500',
                 unclassified: 'bg-slate-500',
-              }
+              };
               return (
                 <div key={criticality} className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className={`w-2 h-2 rounded-full ${colorMap[criticality] ?? 'bg-slate-500'}`} />
+                    <div
+                      className={`w-2 h-2 rounded-full ${colorMap[criticality] ?? 'bg-slate-500'}`}
+                    />
                     <span className="text-sm text-slate-300 capitalize">{criticality}</span>
                   </div>
                   <div className="flex items-center gap-3">
@@ -157,10 +155,12 @@ export function DashboardPage() {
                         style={{ width: `${Math.min((count / kpis.total_assets) * 100, 100)}%` }}
                       />
                     </div>
-                    <span className="text-sm font-medium text-slate-400 w-8 text-right">{count}</span>
+                    <span className="text-sm font-medium text-slate-400 w-8 text-right">
+                      {count}
+                    </span>
                   </div>
                 </div>
-              )
+              );
             })}
           </div>
         </div>
@@ -176,7 +176,7 @@ export function DashboardPage() {
               inactive: 'text-slate-400 bg-slate-500/10 border-slate-500/30',
               maintenance: 'text-amber-400 bg-amber-500/10 border-amber-500/30',
               decommissioned: 'text-red-400 bg-red-500/10 border-red-500/30',
-            }
+            };
             return (
               <div
                 key={status}
@@ -185,10 +185,10 @@ export function DashboardPage() {
                 <p className="text-2xl font-bold">{count}</p>
                 <p className="text-sm capitalize mt-1">{status}</p>
               </div>
-            )
+            );
           })}
         </div>
       </div>
     </div>
-  )
+  );
 }

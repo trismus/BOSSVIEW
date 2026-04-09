@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
-import { io, Socket } from 'socket.io-client'
+import { useEffect, useRef, useState, useCallback } from 'react';
+import { io, Socket } from 'socket.io-client';
 
 export type BossviewEvent =
   | 'asset:created'
@@ -9,19 +9,19 @@ export type BossviewEvent =
   | 'incident:updated'
   | 'change:created'
   | 'change:updated'
-  | 'kpi:updated'
+  | 'kpi:updated';
 
 interface WebSocketMessage {
-  event: BossviewEvent
-  data?: unknown
-  timestamp: string
+  event: BossviewEvent;
+  data?: unknown;
+  timestamp: string;
 }
 
-type EventHandler = (message: WebSocketMessage) => void
+type EventHandler = (message: WebSocketMessage) => void;
 
 interface UseWebSocketReturn {
-  isConnected: boolean
-  on: (event: BossviewEvent, handler: EventHandler) => () => void
+  isConnected: boolean;
+  on: (event: BossviewEvent, handler: EventHandler) => () => void;
 }
 
 /**
@@ -29,16 +29,16 @@ interface UseWebSocketReturn {
  * Auto-connects on mount, auto-reconnects on disconnect.
  */
 export function useWebSocket(): UseWebSocketReturn {
-  const socketRef = useRef<Socket | null>(null)
-  const [isConnected, setIsConnected] = useState(false)
-  const handlersRef = useRef<Map<BossviewEvent, Set<EventHandler>>>(new Map())
+  const socketRef = useRef<Socket | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const handlersRef = useRef<Map<BossviewEvent, Set<EventHandler>>>(new Map());
 
   useEffect(() => {
     // Determine WebSocket URL from the page origin (same host, /ws path)
-    const wsUrl = window.location.origin
+    const wsUrl = window.location.origin;
 
     // Send JWT token for WebSocket authentication
-    const token = localStorage.getItem('accessToken')
+    const token = localStorage.getItem('accessToken');
 
     const socket = io(wsUrl, {
       path: '/ws',
@@ -49,52 +49,56 @@ export function useWebSocket(): UseWebSocketReturn {
       reconnectionDelayMax: 10000,
       timeout: 10000,
       auth: { token: token ?? '' },
-    })
+    });
 
-    socketRef.current = socket
+    socketRef.current = socket;
 
     socket.on('connect', () => {
-      setIsConnected(true)
-    })
+      setIsConnected(true);
+    });
 
     socket.on('disconnect', () => {
-      setIsConnected(false)
-    })
+      setIsConnected(false);
+    });
 
     // Register listeners for all event types
     const events: BossviewEvent[] = [
-      'asset:created', 'asset:updated', 'asset:deleted',
-      'incident:created', 'incident:updated',
-      'change:created', 'change:updated',
+      'asset:created',
+      'asset:updated',
+      'asset:deleted',
+      'incident:created',
+      'incident:updated',
+      'change:created',
+      'change:updated',
       'kpi:updated',
-    ]
+    ];
 
     for (const event of events) {
       socket.on(event, (message: WebSocketMessage) => {
-        const handlers = handlersRef.current.get(event)
+        const handlers = handlersRef.current.get(event);
         if (handlers) {
-          handlers.forEach((handler) => handler(message))
+          handlers.forEach((handler) => handler(message));
         }
-      })
+      });
     }
 
     return () => {
-      socket.disconnect()
-      socketRef.current = null
-    }
-  }, [])
+      socket.disconnect();
+      socketRef.current = null;
+    };
+  }, []);
 
   const on = useCallback((event: BossviewEvent, handler: EventHandler): (() => void) => {
     if (!handlersRef.current.has(event)) {
-      handlersRef.current.set(event, new Set())
+      handlersRef.current.set(event, new Set());
     }
-    handlersRef.current.get(event)!.add(handler)
+    handlersRef.current.get(event)!.add(handler);
 
     // Return unsubscribe function
     return () => {
-      handlersRef.current.get(event)?.delete(handler)
-    }
-  }, [])
+      handlersRef.current.get(event)?.delete(handler);
+    };
+  }, []);
 
-  return { isConnected, on }
+  return { isConnected, on };
 }

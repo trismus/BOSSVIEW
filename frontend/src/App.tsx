@@ -1,18 +1,18 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { AuthProvider } from './context/AuthProvider'
-import { ProtectedRoute } from './components/ProtectedRoute'
-import { Layout } from './components/Layout'
-import { LoginPage } from './pages/LoginPage'
-import { DashboardPage } from './pages/DashboardPage'
-import { AssetsPage } from './pages/AssetsPage'
-import { IncidentsPage } from './pages/IncidentsPage'
-import { ChangesPage } from './pages/ChangesPage'
-import { ConnectorsPage } from './pages/ConnectorsPage'
-import { VulnerabilitiesPage } from './pages/VulnerabilitiesPage'
-import { InfrastructurePage } from './pages/InfrastructurePage'
-import { NamingConventionPage } from './pages/NamingConventionPage'
-import { DirectoryUsersPage } from './pages/DirectoryUsersPage'
-import { HelpPage } from './pages/HelpPage'
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './context/AuthProvider';
+import { ProtectedRoute } from './components/ProtectedRoute';
+import { Layout } from './components/Layout';
+import { LoginPage } from './pages/LoginPage';
+import { DashboardPage } from './pages/DashboardPage';
+import { AssetsPage } from './pages/AssetsPage';
+import { IncidentsPage } from './pages/IncidentsPage';
+import { ChangesPage } from './pages/ChangesPage';
+import { ConnectorsPage } from './pages/ConnectorsPage';
+import { VulnerabilitiesPage } from './pages/VulnerabilitiesPage';
+import { InfrastructurePage } from './pages/InfrastructurePage';
+import { NamingConventionPage } from './pages/NamingConventionPage';
+import { DirectoryUsersPage } from './pages/DirectoryUsersPage';
+import { HelpPage } from './pages/HelpPage';
 
 export function App() {
   return (
@@ -123,5 +123,5 @@ export function App() {
         </Routes>
       </AuthProvider>
     </BrowserRouter>
-  )
+  );
 }

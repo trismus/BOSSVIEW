@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback } from 'react'
-import { apiFetch } from '../api/client'
-import type { Vulnerability, PaginatedResponse, VulnerabilityStats } from '../types'
-import { VulnerabilityDetailDrawer } from '../components/VulnerabilityDetailDrawer'
+import { useState, useEffect, useCallback } from 'react';
+import { apiFetch } from '../api/client';
+import type { Vulnerability, PaginatedResponse, VulnerabilityStats } from '../types';
+import { VulnerabilityDetailDrawer } from '../components/VulnerabilityDetailDrawer';
 
-const SEVERITIES = ['critical', 'high', 'medium', 'low', 'info']
+const SEVERITIES = ['critical', 'high', 'medium', 'low', 'info'];
 const CATEGORIES = [
   'EOL/Obsolete Software',
   'Remote Code Execution',
@@ -14,51 +14,60 @@ const CATEGORIES = [
   'Security Feature Bypass',
   'Missing Patch',
   'Other',
-]
+];
 
 export function VulnerabilitiesPage() {
-  const [vulns, setVulns] = useState<Vulnerability[]>([])
-  const [stats, setStats] = useState<VulnerabilityStats | null>(null)
-  const [total, setTotal] = useState(0)
-  const [page, setPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [search, setSearch] = useState('')
-  const [filterSeverity, setFilterSeverity] = useState('')
-  const [filterCategory, setFilterCategory] = useState('')
-  const [selectedVulnId, setSelectedVulnId] = useState<string | null>(null)
+  const [vulns, setVulns] = useState<Vulnerability[]>([]);
+  const [stats, setStats] = useState<VulnerabilityStats | null>(null);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [filterSeverity, setFilterSeverity] = useState('');
+  const [filterCategory, setFilterCategory] = useState('');
+  const [selectedVulnId, setSelectedVulnId] = useState<string | null>(null);
 
   const fetchVulns = useCallback(async () => {
-    setIsLoading(true)
-    setError(null)
+    setIsLoading(true);
+    setError(null);
     try {
-      const params = new URLSearchParams({ page: page.toString(), limit: '25', sort: 'affected_hosts', order: 'desc' })
-      if (search) params.set('search', search)
-      if (filterSeverity) params.set('severity', filterSeverity)
-      if (filterCategory) params.set('category', filterCategory)
-      const data = await apiFetch<PaginatedResponse<Vulnerability>>(`/vulnerabilities?${params}`)
-      setVulns(data.data)
-      setTotal(data.total)
-      setTotalPages(data.totalPages)
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: '25',
+        sort: 'affected_hosts',
+        order: 'desc',
+      });
+      if (search) params.set('search', search);
+      if (filterSeverity) params.set('severity', filterSeverity);
+      if (filterCategory) params.set('category', filterCategory);
+      const data = await apiFetch<PaginatedResponse<Vulnerability>>(`/vulnerabilities?${params}`);
+      setVulns(data.data);
+      setTotal(data.total);
+      setTotalPages(data.totalPages);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load vulnerabilities')
+      setError(err instanceof Error ? err.message : 'Failed to load vulnerabilities');
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }, [page, search, filterSeverity, filterCategory])
+  }, [page, search, filterSeverity, filterCategory]);
 
   const fetchStats = useCallback(async () => {
     try {
-      const data = await apiFetch<{ data: VulnerabilityStats }>('/vulnerabilities/stats')
-      setStats(data.data)
+      const data = await apiFetch<{ data: VulnerabilityStats }>('/vulnerabilities/stats');
+      setStats(data.data);
     } catch {
       // Stats are non-critical, silently fail
     }
-  }, [])
+  }, []);
 
-  useEffect(() => { fetchVulns() }, [fetchVulns])
-  useEffect(() => { fetchStats() }, [fetchStats])
+  useEffect(() => {
+    fetchVulns();
+  }, [fetchVulns]);
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
 
   const severityBadge = (severity: string) => {
     const colors: Record<string, string> = {
@@ -67,13 +76,15 @@ export function VulnerabilitiesPage() {
       medium: 'bg-yellow-500/20 text-yellow-400',
       low: 'bg-slate-500/20 text-slate-400',
       info: 'bg-blue-500/20 text-blue-400',
-    }
+    };
     return (
-      <span className={`px-2 py-0.5 rounded-full text-xs font-medium uppercase ${colors[severity] ?? 'bg-slate-500/20 text-slate-400'}`}>
+      <span
+        className={`px-2 py-0.5 rounded-full text-xs font-medium uppercase ${colors[severity] ?? 'bg-slate-500/20 text-slate-400'}`}
+      >
         {severity}
       </span>
-    )
-  }
+    );
+  };
 
   const statusBadge = (status: string) => {
     const colors: Record<string, string> = {
@@ -81,13 +92,15 @@ export function VulnerabilitiesPage() {
       fixed: 'bg-emerald-500/20 text-emerald-400',
       ignored: 'bg-slate-500/20 text-slate-400',
       accepted: 'bg-yellow-500/20 text-yellow-400',
-    }
+    };
     return (
-      <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${colors[status] ?? 'bg-slate-500/20 text-slate-400'}`}>
+      <span
+        className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${colors[status] ?? 'bg-slate-500/20 text-slate-400'}`}
+      >
         {status}
       </span>
-    )
-  }
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -125,31 +138,51 @@ export function VulnerabilitiesPage() {
             type="text"
             placeholder="Search vulnerabilities..."
             value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
             className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 w-72"
           />
           <select
             value={filterSeverity}
-            onChange={(e) => { setFilterSeverity(e.target.value); setPage(1) }}
+            onChange={(e) => {
+              setFilterSeverity(e.target.value);
+              setPage(1);
+            }}
             className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">All Severities</option>
-            {SEVERITIES.map((s) => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
+            {SEVERITIES.map((s) => (
+              <option key={s} value={s}>
+                {s.charAt(0).toUpperCase() + s.slice(1)}
+              </option>
+            ))}
           </select>
           <select
             value={filterCategory}
-            onChange={(e) => { setFilterCategory(e.target.value); setPage(1) }}
+            onChange={(e) => {
+              setFilterCategory(e.target.value);
+              setPage(1);
+            }}
             className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">All Categories</option>
-            {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+            {CATEGORIES.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
           </select>
         </div>
       </div>
 
       {error && (
         <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-sm text-red-400">
-          {error} <button onClick={() => setError(null)} className="ml-2 underline">Dismiss</button>
+          {error}{' '}
+          <button onClick={() => setError(null)} className="ml-2 underline">
+            Dismiss
+          </button>
         </div>
       )}
 
@@ -171,13 +204,16 @@ export function VulnerabilitiesPage() {
                 <tr>
                   <td colSpan={5} className="px-4 py-12 text-center text-slate-500">
                     <div className="flex items-center justify-center gap-2">
-                      <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" /> Loading...
+                      <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />{' '}
+                      Loading...
                     </div>
                   </td>
                 </tr>
               ) : vulns.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-4 py-12 text-center text-slate-500">No vulnerabilities found</td>
+                  <td colSpan={5} className="px-4 py-12 text-center text-slate-500">
+                    No vulnerabilities found
+                  </td>
                 </tr>
               ) : (
                 vulns.map((vuln, i) => (
@@ -187,9 +223,13 @@ export function VulnerabilitiesPage() {
                     className={`border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors cursor-pointer ${i % 2 === 0 ? 'bg-slate-800/40' : ''}`}
                   >
                     <td className="px-3 py-2">{severityBadge(vuln.severity)}</td>
-                    <td className="px-3 py-2 font-medium text-slate-200 max-w-[400px] truncate">{vuln.title}</td>
+                    <td className="px-3 py-2 font-medium text-slate-200 max-w-[400px] truncate">
+                      {vuln.title}
+                    </td>
                     <td className="px-3 py-2 text-slate-400">{vuln.category ?? '-'}</td>
-                    <td className="px-3 py-2 text-right text-slate-300 font-mono">{vuln.affected_hosts}</td>
+                    <td className="px-3 py-2 text-right text-slate-300 font-mono">
+                      {vuln.affected_hosts}
+                    </td>
                     <td className="px-3 py-2">{statusBadge(vuln.status)}</td>
                   </tr>
                 ))
@@ -200,7 +240,9 @@ export function VulnerabilitiesPage() {
 
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-slate-700">
-            <p className="text-sm text-slate-400">{total} vulnerabilit{total !== 1 ? 'ies' : 'y'} total</p>
+            <p className="text-sm text-slate-400">
+              {total} vulnerabilit{total !== 1 ? 'ies' : 'y'} total
+            </p>
             <div className="flex gap-2">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
@@ -209,7 +251,9 @@ export function VulnerabilitiesPage() {
               >
                 Previous
               </button>
-              <span className="px-3 py-1 text-sm text-slate-400">Page {page} of {totalPages}</span>
+              <span className="px-3 py-1 text-sm text-slate-400">
+                Page {page} of {totalPages}
+              </span>
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
@@ -228,11 +272,11 @@ export function VulnerabilitiesPage() {
           vulnerabilityId={selectedVulnId}
           onClose={() => setSelectedVulnId(null)}
           onUpdated={() => {
-            fetchVulns()
-            fetchStats()
+            fetchVulns();
+            fetchStats();
           }}
         />
       )}
     </div>
-  )
+  );
 }

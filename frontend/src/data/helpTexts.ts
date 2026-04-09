@@ -1,9 +1,9 @@
 // Help text entries for contextual tooltips and quick help lookups
 
 export interface HelpTextEntry {
-  title: string
-  content: string
-  helpSection?: string
+  title: string;
+  content: string;
+  helpSection?: string;
 }
 
 export const helpTexts: Record<string, HelpTextEntry> = {
@@ -156,4 +156,4 @@ export const helpTexts: Record<string, HelpTextEntry> = {
       'Every data change is logged with user, timestamp, IP address, and old/new values. Audit logs are append-only and retained for 3+ years.',
     helpSection: 'administration',
   },
-}
+};

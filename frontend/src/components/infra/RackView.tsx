@@ -1,6 +1,6 @@
-import { useState, useCallback, useRef } from 'react'
-import { api } from '../../api/client'
-import type { InfraRack, InfraDevice, InfraDeviceType, InfraRackDevice } from '../../types'
+import { useState, useCallback, useRef } from 'react';
+import { api } from '../../api/client';
+import type { InfraRack, InfraDevice, InfraDeviceType, InfraRackDevice } from '../../types';
 
 // ─── Dark Trace Color Palette ────────────────────────────────
 const COLORS = {
@@ -17,14 +17,14 @@ const COLORS = {
   text: '#e2e8f0',
   textDim: '#94a3b8',
   textMuted: '#64748b',
-}
+};
 
 interface RackViewProps {
-  siteName: string
-  racks: InfraRack[]
-  devices: InfraDevice[]
-  locationId: string
-  onRefresh: () => void
+  siteName: string;
+  racks: InfraRack[];
+  devices: InfraDevice[];
+  locationId: string;
+  onRefresh: () => void;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────
@@ -41,26 +41,35 @@ function getTypeColor(type: string): string {
     'patch-panel': COLORS.textMuted,
     pdu: COLORS.amber,
     wireless: COLORS.purpleGlow,
-  }
-  return map[type] ?? COLORS.textDim
+  };
+  return map[type] ?? COLORS.textDim;
 }
 
 function getStatusColor(status: string): string {
   switch (status) {
-    case 'operational': return COLORS.green
-    case 'warning': return COLORS.amber
-    case 'critical': return COLORS.red
-    case 'maintenance': return COLORS.blue
-    default: return COLORS.textMuted
+    case 'operational':
+      return COLORS.green;
+    case 'warning':
+      return COLORS.amber;
+    case 'critical':
+      return COLORS.red;
+    case 'maintenance':
+      return COLORS.blue;
+    default:
+      return COLORS.textMuted;
   }
 }
 
 function getDefaultUHeight(type: InfraDeviceType): number {
   switch (type) {
-    case 'storage': return 4
-    case 'server': return 2
-    case 'ups': return 2
-    default: return 1
+    case 'storage':
+      return 4;
+    case 'server':
+      return 2;
+    case 'ups':
+      return 2;
+    default:
+      return 1;
   }
 }
 
@@ -76,12 +85,12 @@ function getTypeIcon(type: InfraDeviceType): string {
     'patch-panel': '\u2261',
     pdu: '\u23DA',
     wireless: '\u25C9',
-  }
-  return icons[type] ?? '\u25A1'
+  };
+  return icons[type] ?? '\u25A1';
 }
 
-const UNIT_HEIGHT = 14
-const RACK_WIDTH = 200
+const UNIT_HEIGHT = 14;
+const RACK_WIDTH = 200;
 
 const LEGEND_ITEMS: Array<{ type: InfraDeviceType; label: string }> = [
   { type: 'firewall', label: 'Firewall' },
@@ -90,24 +99,24 @@ const LEGEND_ITEMS: Array<{ type: InfraDeviceType; label: string }> = [
   { type: 'server', label: 'Server' },
   { type: 'storage', label: 'Storage' },
   { type: 'ups', label: 'UPS' },
-]
+];
 
 // ─── Drag data transferred between panels ────────────────────
 
 interface DragPayload {
-  deviceId: string
-  deviceName: string
-  deviceType: InfraDeviceType
-  uHeight: number
-  sourceRackId?: string
+  deviceId: string;
+  deviceName: string;
+  deviceType: InfraDeviceType;
+  uHeight: number;
+  sourceRackId?: string;
 }
 
 // ─── Confirm Dialog ──────────────────────────────────────────
 
 interface ConfirmDialogProps {
-  message: string
-  onConfirm: () => void
-  onCancel: () => void
+  message: string;
+  onConfirm: () => void;
+  onCancel: () => void;
 }
 
 function ConfirmDialog({ message, onConfirm, onCancel }: ConfirmDialogProps) {
@@ -149,21 +158,24 @@ function ConfirmDialog({ message, onConfirm, onCancel }: ConfirmDialogProps) {
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 // ─── U-Height Selector ──────────────────────────────────────
 
 interface UHeightSelectorProps {
-  value: number
-  onChange: (v: number) => void
+  value: number;
+  onChange: (v: number) => void;
 }
 
 function UHeightSelector({ value, onChange }: UHeightSelectorProps) {
   return (
     <div className="flex items-center gap-1">
       <button
-        onClick={(e) => { e.stopPropagation(); onChange(Math.max(1, value - 1)) }}
+        onClick={(e) => {
+          e.stopPropagation();
+          onChange(Math.max(1, value - 1));
+        }}
         className="w-4 h-4 flex items-center justify-center rounded text-[9px]"
         style={{ background: COLORS.border, color: COLORS.textDim }}
       >
@@ -176,42 +188,47 @@ function UHeightSelector({ value, onChange }: UHeightSelectorProps) {
         {value}U
       </span>
       <button
-        onClick={(e) => { e.stopPropagation(); onChange(Math.min(10, value + 1)) }}
+        onClick={(e) => {
+          e.stopPropagation();
+          onChange(Math.min(10, value + 1));
+        }}
         className="w-4 h-4 flex items-center justify-center rounded text-[9px]"
         style={{ background: COLORS.border, color: COLORS.textDim }}
       >
         +
       </button>
     </div>
-  )
+  );
 }
 
 // ─── Unassigned Devices Panel ────────────────────────────────
 
 interface UnassignedPanelProps {
-  devices: InfraDevice[]
-  uHeights: Record<string, number>
-  onUHeightChange: (deviceId: string, h: number) => void
+  devices: InfraDevice[];
+  uHeights: Record<string, number>;
+  onUHeightChange: (deviceId: string, h: number) => void;
 }
 
 function UnassignedPanel({ devices, uHeights, onUHeightChange }: UnassignedPanelProps) {
-  const [typeFilter, setTypeFilter] = useState<string>('all')
+  const [typeFilter, setTypeFilter] = useState<string>('all');
 
-  const deviceTypes = Array.from(new Set(devices.map(d => d.device_type))).sort()
-  const filtered = typeFilter === 'all'
-    ? devices
-    : devices.filter(d => d.device_type === typeFilter)
+  const deviceTypes = Array.from(new Set(devices.map((d) => d.device_type))).sort();
+  const filtered =
+    typeFilter === 'all' ? devices : devices.filter((d) => d.device_type === typeFilter);
 
-  const handleDragStart = useCallback((e: React.DragEvent, device: InfraDevice) => {
-    const payload: DragPayload = {
-      deviceId: device.id,
-      deviceName: device.name,
-      deviceType: device.device_type,
-      uHeight: uHeights[device.id] ?? getDefaultUHeight(device.device_type),
-    }
-    e.dataTransfer.setData('application/json', JSON.stringify(payload))
-    e.dataTransfer.effectAllowed = 'move'
-  }, [uHeights])
+  const handleDragStart = useCallback(
+    (e: React.DragEvent, device: InfraDevice) => {
+      const payload: DragPayload = {
+        deviceId: device.id,
+        deviceName: device.name,
+        deviceType: device.device_type,
+        uHeight: uHeights[device.id] ?? getDefaultUHeight(device.device_type),
+      };
+      e.dataTransfer.setData('application/json', JSON.stringify(payload));
+      e.dataTransfer.effectAllowed = 'move';
+    },
+    [uHeights],
+  );
 
   return (
     <div
@@ -219,10 +236,7 @@ function UnassignedPanel({ devices, uHeights, onUHeightChange }: UnassignedPanel
       style={{ background: COLORS.bgCard, border: `1px solid ${COLORS.border}` }}
     >
       {/* Header */}
-      <div
-        className="px-3 py-2 border-b"
-        style={{ borderColor: COLORS.border }}
-      >
+      <div className="px-3 py-2 border-b" style={{ borderColor: COLORS.border }}>
         <div
           className="uppercase tracking-[2px] mb-1"
           style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: COLORS.cyan }}
@@ -241,7 +255,7 @@ function UnassignedPanel({ devices, uHeights, onUHeightChange }: UnassignedPanel
       <div className="px-2 py-1.5 border-b" style={{ borderColor: COLORS.border }}>
         <select
           value={typeFilter}
-          onChange={e => setTypeFilter(e.target.value)}
+          onChange={(e) => setTypeFilter(e.target.value)}
           className="w-full rounded px-1.5 py-0.5 text-[9px] outline-none"
           style={{
             fontFamily: 'JetBrains Mono, monospace',
@@ -251,8 +265,10 @@ function UnassignedPanel({ devices, uHeights, onUHeightChange }: UnassignedPanel
           }}
         >
           <option value="all">ALL TYPES</option>
-          {deviceTypes.map(t => (
-            <option key={t} value={t}>{t.toUpperCase()}</option>
+          {deviceTypes.map((t) => (
+            <option key={t} value={t}>
+              {t.toUpperCase()}
+            </option>
           ))}
         </select>
       </div>
@@ -262,20 +278,24 @@ function UnassignedPanel({ devices, uHeights, onUHeightChange }: UnassignedPanel
         {filtered.length === 0 ? (
           <div
             className="text-center py-6"
-            style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: COLORS.textMuted }}
+            style={{
+              fontFamily: 'JetBrains Mono, monospace',
+              fontSize: 9,
+              color: COLORS.textMuted,
+            }}
           >
             NO UNASSIGNED DEVICES
           </div>
         ) : (
-          filtered.map(device => {
-            const col = getTypeColor(device.device_type)
-            const uH = uHeights[device.id] ?? getDefaultUHeight(device.device_type)
+          filtered.map((device) => {
+            const col = getTypeColor(device.device_type);
+            const uH = uHeights[device.id] ?? getDefaultUHeight(device.device_type);
 
             return (
               <div
                 key={device.id}
                 draggable
-                onDragStart={e => handleDragStart(e, device)}
+                onDragStart={(e) => handleDragStart(e, device)}
                 className="rounded px-2 py-1.5 mb-1 cursor-grab active:cursor-grabbing select-none"
                 style={{
                   background: `${col}10`,
@@ -287,86 +307,99 @@ function UnassignedPanel({ devices, uHeights, onUHeightChange }: UnassignedPanel
                     <span style={{ fontSize: 10 }}>{getTypeIcon(device.device_type)}</span>
                     <span
                       className="truncate"
-                      style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 9, color: COLORS.text }}
+                      style={{
+                        fontFamily: 'JetBrains Mono, monospace',
+                        fontSize: 9,
+                        color: COLORS.text,
+                      }}
                     >
                       {device.name}
                     </span>
                   </div>
-                  <UHeightSelector
-                    value={uH}
-                    onChange={v => onUHeightChange(device.id, v)}
-                  />
+                  <UHeightSelector value={uH} onChange={(v) => onUHeightChange(device.id, v)} />
                 </div>
                 <div
                   className="mt-0.5 flex items-center gap-2"
-                  style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 7, color: COLORS.textMuted }}
+                  style={{
+                    fontFamily: 'JetBrains Mono, monospace',
+                    fontSize: 7,
+                    color: COLORS.textMuted,
+                  }}
                 >
                   <span>{device.device_type}</span>
                   {device.ip_address && <span>{device.ip_address}</span>}
                 </div>
               </div>
-            )
+            );
           })
         )}
       </div>
     </div>
-  )
+  );
 }
 
 // ─── Interactive Rack Component ──────────────────────────────
 
 interface InteractiveRackProps {
-  rack: InfraRack
-  onDrop: (rackId: string, uStart: number, payload: DragPayload) => void
-  onRemoveDevice: (device: InfraRackDevice) => void
-  isUpdating: boolean
+  rack: InfraRack;
+  onDrop: (rackId: string, uStart: number, payload: DragPayload) => void;
+  onRemoveDevice: (device: InfraRackDevice) => void;
+  isUpdating: boolean;
 }
 
 function InteractiveRack({ rack, onDrop, onRemoveDevice, isUpdating }: InteractiveRackProps) {
-  const [hoveredUnit, setHoveredUnit] = useState<string | null>(null)
-  const [dropTarget, setDropTarget] = useState<{ uStart: number; uHeight: number; valid: boolean } | null>(null)
-  const dragPayloadRef = useRef<DragPayload | null>(null)
+  const [hoveredUnit, setHoveredUnit] = useState<string | null>(null);
+  const [dropTarget, setDropTarget] = useState<{
+    uStart: number;
+    uHeight: number;
+    valid: boolean;
+  } | null>(null);
+  const dragPayloadRef = useRef<DragPayload | null>(null);
 
-  const totalUnits = rack.total_units
-  const svgHeight = totalUnits * UNIT_HEIGHT + 10
-  const svgWidth = RACK_WIDTH + 40
+  const totalUnits = rack.total_units;
+  const svgHeight = totalUnits * UNIT_HEIGHT + 10;
+  const svgWidth = RACK_WIDTH + 40;
 
   // Build occupancy map: which units are occupied
-  const occupancyMap = new Map<number, InfraRackDevice>()
+  const occupancyMap = new Map<number, InfraRackDevice>();
   for (const dev of rack.devices ?? []) {
     for (let u = dev.rack_u_start; u < dev.rack_u_start + dev.rack_u_height; u++) {
-      occupancyMap.set(u, dev)
+      occupancyMap.set(u, dev);
     }
   }
 
   const isSlotFree = (uStart: number, uHeight: number, excludeDeviceId?: string): boolean => {
     for (let u = uStart; u < uStart + uHeight; u++) {
-      if (u > totalUnits) return false
-      const occupier = occupancyMap.get(u)
-      if (occupier && occupier.device_id !== excludeDeviceId) return false
+      if (u > totalUnits) return false;
+      const occupier = occupancyMap.get(u);
+      if (occupier && occupier.device_id !== excludeDeviceId) return false;
     }
-    return true
-  }
+    return true;
+  };
 
   const handleDragOver = (e: React.DragEvent, uSlot: number) => {
-    e.preventDefault()
-    e.dataTransfer.dropEffect = 'move'
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
 
     // Try to parse payload from ref (set on drag enter)
-    const payload = dragPayloadRef.current
-    if (!payload) return
+    const payload = dragPayloadRef.current;
+    if (!payload) return;
 
-    const uHeight = payload.uHeight
-    const valid = isSlotFree(uSlot, uHeight, payload.sourceRackId === rack.id ? payload.deviceId : undefined)
+    const uHeight = payload.uHeight;
+    const valid = isSlotFree(
+      uSlot,
+      uHeight,
+      payload.sourceRackId === rack.id ? payload.deviceId : undefined,
+    );
 
-    setDropTarget({ uStart: uSlot, uHeight, valid })
-  }
+    setDropTarget({ uStart: uSlot, uHeight, valid });
+  };
 
   const handleDragEnter = (e: React.DragEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     // Store drag data on first enter
     try {
-      const raw = e.dataTransfer.types.includes('application/json')
+      const raw = e.dataTransfer.types.includes('application/json');
       if (raw && !dragPayloadRef.current) {
         // Note: getData may not work in dragenter in all browsers;
         // we rely on dragover + drop for the actual data
@@ -374,34 +407,43 @@ function InteractiveRack({ rack, onDrop, onRemoveDevice, isUpdating }: Interacti
     } catch {
       // Silently ignore
     }
-  }
+  };
 
   const handleDragLeave = (e: React.DragEvent) => {
     // Only clear if leaving the rack SVG entirely
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-    const { clientX, clientY } = e
-    if (clientX < rect.left || clientX > rect.right || clientY < rect.top || clientY > rect.bottom) {
-      setDropTarget(null)
-      dragPayloadRef.current = null
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const { clientX, clientY } = e;
+    if (
+      clientX < rect.left ||
+      clientX > rect.right ||
+      clientY < rect.top ||
+      clientY > rect.bottom
+    ) {
+      setDropTarget(null);
+      dragPayloadRef.current = null;
     }
-  }
+  };
 
   const handleDrop = (e: React.DragEvent, uSlot: number) => {
-    e.preventDefault()
-    setDropTarget(null)
-    dragPayloadRef.current = null
+    e.preventDefault();
+    setDropTarget(null);
+    dragPayloadRef.current = null;
 
     try {
-      const raw = e.dataTransfer.getData('application/json')
-      if (!raw) return
-      const payload = JSON.parse(raw) as DragPayload
-      const valid = isSlotFree(uSlot, payload.uHeight, payload.sourceRackId === rack.id ? payload.deviceId : undefined)
-      if (!valid) return
-      onDrop(rack.id, uSlot, payload)
+      const raw = e.dataTransfer.getData('application/json');
+      if (!raw) return;
+      const payload = JSON.parse(raw) as DragPayload;
+      const valid = isSlotFree(
+        uSlot,
+        payload.uHeight,
+        payload.sourceRackId === rack.id ? payload.deviceId : undefined,
+      );
+      if (!valid) return;
+      onDrop(rack.id, uSlot, payload);
     } catch (err) {
-      console.error('Drop parse error:', err)
+      console.error('Drop parse error:', err);
     }
-  }
+  };
 
   // For SVG drop targets, we use invisible overlay rects
   // and a wrapping div for HTML5 drag events
@@ -424,18 +466,12 @@ function InteractiveRack({ rack, onDrop, onRemoveDevice, isUpdating }: Interacti
         {rack.name}
       </div>
 
-      <div
-        onDragEnter={handleDragEnter}
-        onDragLeave={handleDragLeave}
-      >
-        <svg
-          width={svgWidth}
-          height={svgHeight}
-          viewBox={`0 0 ${svgWidth} ${svgHeight}`}
-        >
+      <div onDragEnter={handleDragEnter} onDragLeave={handleDragLeave}>
+        <svg width={svgWidth} height={svgHeight} viewBox={`0 0 ${svgWidth} ${svgHeight}`}>
           {/* Rack frame */}
           <rect
-            x={18} y={0}
+            x={18}
+            y={0}
             width={RACK_WIDTH + 4}
             height={totalUnits * UNIT_HEIGHT + 4}
             rx={2}
@@ -446,20 +482,26 @@ function InteractiveRack({ rack, onDrop, onRemoveDevice, isUpdating }: Interacti
 
           {/* Empty U slots as drop targets */}
           {Array.from({ length: totalUnits }, (_, i) => {
-            const uNum = i + 1
-            const isOccupied = occupancyMap.has(uNum)
+            const uNum = i + 1;
+            const isOccupied = occupancyMap.has(uNum);
 
             // Drop highlight
-            let slotFill = COLORS.bg
-            if (dropTarget && uNum >= dropTarget.uStart && uNum < dropTarget.uStart + dropTarget.uHeight) {
-              slotFill = dropTarget.valid ? '#064e3b' : '#7f1d1d'
+            let slotFill = COLORS.bg;
+            if (
+              dropTarget &&
+              uNum >= dropTarget.uStart &&
+              uNum < dropTarget.uStart + dropTarget.uHeight
+            ) {
+              slotFill = dropTarget.valid ? '#064e3b' : '#7f1d1d';
             }
 
             return (
               <g key={`u-${i}`}>
                 <rect
-                  x={20} y={i * UNIT_HEIGHT + 2}
-                  width={RACK_WIDTH} height={UNIT_HEIGHT - 1}
+                  x={20}
+                  y={i * UNIT_HEIGHT + 2}
+                  width={RACK_WIDTH}
+                  height={UNIT_HEIGHT - 1}
                   rx={1}
                   fill={slotFill}
                   stroke={COLORS.border}
@@ -479,40 +521,42 @@ function InteractiveRack({ rack, onDrop, onRemoveDevice, isUpdating }: Interacti
                 {/* Invisible drop target overlay (only for unoccupied slots) */}
                 {!isOccupied && (
                   <foreignObject
-                    x={20} y={i * UNIT_HEIGHT + 2}
-                    width={RACK_WIDTH} height={UNIT_HEIGHT - 1}
+                    x={20}
+                    y={i * UNIT_HEIGHT + 2}
+                    width={RACK_WIDTH}
+                    height={UNIT_HEIGHT - 1}
                   >
                     <div
                       style={{ width: '100%', height: '100%' }}
-                      onDragOver={e => {
+                      onDragOver={(e) => {
                         // Parse payload on first dragover
                         if (!dragPayloadRef.current) {
                           try {
                             // In some browsers, getData works in dragover
-                            const raw = e.dataTransfer.getData('application/json')
-                            if (raw) dragPayloadRef.current = JSON.parse(raw)
+                            const raw = e.dataTransfer.getData('application/json');
+                            if (raw) dragPayloadRef.current = JSON.parse(raw);
                           } catch {
                             // getData may fail in dragover in some browsers — use fallback
                           }
                         }
-                        handleDragOver(e, uNum)
+                        handleDragOver(e, uNum);
                       }}
-                      onDrop={e => handleDrop(e, uNum)}
+                      onDrop={(e) => handleDrop(e, uNum)}
                     />
                   </foreignObject>
                 )}
               </g>
-            )
+            );
           })}
 
           {/* Devices in rack */}
           {rack.devices?.map((dev, di) => {
-            const y = (dev.rack_u_start - 1) * UNIT_HEIGHT + 2
-            const h = dev.rack_u_height * UNIT_HEIGHT - 1
-            const col = getTypeColor(dev.device_type)
-            const statusCol = getStatusColor(dev.status)
-            const unitKey = `${rack.id}-${di}`
-            const isHovered = hoveredUnit === unitKey
+            const y = (dev.rack_u_start - 1) * UNIT_HEIGHT + 2;
+            const h = dev.rack_u_height * UNIT_HEIGHT - 1;
+            const col = getTypeColor(dev.device_type);
+            const statusCol = getStatusColor(dev.status);
+            const unitKey = `${rack.id}-${di}`;
+            const isHovered = hoveredUnit === unitKey;
 
             return (
               <g
@@ -523,8 +567,10 @@ function InteractiveRack({ rack, onDrop, onRemoveDevice, isUpdating }: Interacti
               >
                 {/* Device block */}
                 <rect
-                  x={20} y={y}
-                  width={RACK_WIDTH} height={h}
+                  x={20}
+                  y={y}
+                  width={RACK_WIDTH}
+                  height={h}
                   rx={1}
                   fill={col}
                   fillOpacity={isHovered ? 0.25 : 0.12}
@@ -544,8 +590,10 @@ function InteractiveRack({ rack, onDrop, onRemoveDevice, isUpdating }: Interacti
 
                 {/* Device name */}
                 <text
-                  x={38} y={y + h / 2 + 3}
-                  fill={COLORS.text} fontSize="8"
+                  x={38}
+                  y={y + h / 2 + 3}
+                  fill={COLORS.text}
+                  fontSize="8"
                   fontFamily="JetBrains Mono, monospace"
                 >
                   {dev.name}
@@ -555,7 +603,8 @@ function InteractiveRack({ rack, onDrop, onRemoveDevice, isUpdating }: Interacti
                 <text
                   x={RACK_WIDTH + 10}
                   y={y + h / 2 + 3}
-                  fill={COLORS.textMuted} fontSize="7"
+                  fill={COLORS.textMuted}
+                  fontSize="7"
                   fontFamily="JetBrains Mono, monospace"
                   textAnchor="end"
                 >
@@ -567,20 +616,24 @@ function InteractiveRack({ rack, onDrop, onRemoveDevice, isUpdating }: Interacti
                   <g
                     className="cursor-pointer"
                     onClick={(e) => {
-                      e.stopPropagation()
-                      onRemoveDevice(dev)
+                      e.stopPropagation();
+                      onRemoveDevice(dev);
                     }}
                   >
                     <rect
-                      x={RACK_WIDTH + 12} y={y + h / 2 - 5}
-                      width={10} height={10}
+                      x={RACK_WIDTH + 12}
+                      y={y + h / 2 - 5}
+                      width={10}
+                      height={10}
                       rx={2}
                       fill={COLORS.red}
                       fillOpacity={0.8}
                     />
                     <text
-                      x={RACK_WIDTH + 17} y={y + h / 2 + 2}
-                      fill="#fff" fontSize="7"
+                      x={RACK_WIDTH + 17}
+                      y={y + h / 2 + 2}
+                      fill="#fff"
+                      fontSize="7"
                       fontFamily="JetBrains Mono, monospace"
                       textAnchor="middle"
                     >
@@ -592,11 +645,15 @@ function InteractiveRack({ rack, onDrop, onRemoveDevice, isUpdating }: Interacti
                 {/* Hover glow */}
                 {isHovered && (
                   <rect
-                    x={20} y={y}
-                    width={RACK_WIDTH} height={h}
+                    x={20}
+                    y={y}
+                    width={RACK_WIDTH}
+                    height={h}
                     rx={1}
                     fill="none"
-                    stroke={col} strokeWidth="1" opacity="0.6"
+                    stroke={col}
+                    strokeWidth="1"
+                    opacity="0.6"
                   >
                     <animate
                       attributeName="opacity"
@@ -607,7 +664,7 @@ function InteractiveRack({ rack, onDrop, onRemoveDevice, isUpdating }: Interacti
                   </rect>
                 )}
               </g>
-            )
+            );
           })}
         </svg>
       </div>
@@ -617,77 +674,84 @@ function InteractiveRack({ rack, onDrop, onRemoveDevice, isUpdating }: Interacti
         className="mt-2 text-center"
         style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 8, color: COLORS.textMuted }}
       >
-        {rack.devices?.length ?? 0} devices · {
-          totalUnits - (rack.devices?.reduce((sum, d) => sum + d.rack_u_height, 0) ?? 0)
-        }U free
+        {rack.devices?.length ?? 0} devices ·{' '}
+        {totalUnits - (rack.devices?.reduce((sum, d) => sum + d.rack_u_height, 0) ?? 0)}U free
       </div>
     </div>
-  )
+  );
 }
 
 // ─── Main RackView Component ─────────────────────────────────
 
-export function RackView({ siteName, racks, devices, locationId: _locationId, onRefresh }: RackViewProps) {
-  const [isUpdating, setIsUpdating] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [confirmRemove, setConfirmRemove] = useState<InfraRackDevice | null>(null)
-  const [uHeights, setUHeights] = useState<Record<string, number>>({})
+export function RackView({
+  siteName,
+  racks,
+  devices,
+  locationId: _locationId,
+  onRefresh,
+}: RackViewProps) {
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [confirmRemove, setConfirmRemove] = useState<InfraRackDevice | null>(null);
+  const [uHeights, setUHeights] = useState<Record<string, number>>({});
 
   // Devices that have no rack assignment
-  const assignedDeviceIds = new Set<string>()
+  const assignedDeviceIds = new Set<string>();
   for (const rack of racks) {
     for (const dev of rack.devices ?? []) {
-      assignedDeviceIds.add(dev.device_id)
+      assignedDeviceIds.add(dev.device_id);
     }
   }
-  const unassignedDevices = devices.filter(d => !assignedDeviceIds.has(d.id))
+  const unassignedDevices = devices.filter((d) => !assignedDeviceIds.has(d.id));
 
   const handleUHeightChange = useCallback((deviceId: string, h: number) => {
-    setUHeights(prev => ({ ...prev, [deviceId]: h }))
-  }, [])
+    setUHeights((prev) => ({ ...prev, [deviceId]: h }));
+  }, []);
 
-  const assignToRack = useCallback(async (
-    rackId: string,
-    uStart: number,
-    payload: DragPayload,
-  ) => {
-    setIsUpdating(true)
-    setError(null)
-    try {
-      await api.patch(`/infrastructure/devices/${payload.deviceId}/rack`, {
-        rack_id: rackId,
-        rack_u_start: uStart,
-        rack_u_height: payload.uHeight,
-      })
-      onRefresh()
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to assign device'
-      console.error('Rack assignment failed:', err)
-      setError(message)
-    } finally {
-      setIsUpdating(false)
-    }
-  }, [onRefresh])
+  const assignToRack = useCallback(
+    async (rackId: string, uStart: number, payload: DragPayload) => {
+      setIsUpdating(true);
+      setError(null);
+      try {
+        await api.patch(`/infrastructure/devices/${payload.deviceId}/rack`, {
+          rack_id: rackId,
+          rack_u_start: uStart,
+          rack_u_height: payload.uHeight,
+        });
+        onRefresh();
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to assign device';
+        console.error('Rack assignment failed:', err);
+        setError(message);
+      } finally {
+        setIsUpdating(false);
+      }
+    },
+    [onRefresh],
+  );
 
-  const removeFromRack = useCallback(async (device: InfraRackDevice) => {
-    setIsUpdating(true)
-    setError(null)
-    setConfirmRemove(null)
-    try {
-      await api.patch(`/infrastructure/devices/${device.device_id}/rack`, {
-        rack_id: null,
-        rack_u_start: null,
-        rack_u_height: device.rack_u_height,
-      })
-      onRefresh()
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to remove device'
-      console.error('Rack removal failed:', err)
-      setError(message)
-    } finally {
-      setIsUpdating(false)
-    }
-  }, [onRefresh])
+  const removeFromRack = useCallback(
+    async (device: InfraRackDevice) => {
+      setIsUpdating(true);
+      setError(null);
+      setConfirmRemove(null);
+      try {
+        await api.patch(`/infrastructure/devices/${device.device_id}/rack`, {
+          rack_id: null,
+          rack_u_start: null,
+          rack_u_height: device.rack_u_height,
+        });
+        onRefresh();
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Failed to remove device';
+        console.error('Rack removal failed:', err);
+        setError(message);
+      } finally {
+        setIsUpdating(false);
+      }
+    },
+    [onRefresh],
+  );
 
   return (
     <div className="relative w-full h-full overflow-auto">
@@ -695,7 +759,8 @@ export function RackView({ siteName, racks, devices, locationId: _locationId, on
       <div
         className="absolute inset-0 pointer-events-none z-50"
         style={{
-          background: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(6,182,212,0.015) 2px, rgba(6,182,212,0.015) 4px)',
+          background:
+            'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(6,182,212,0.015) 2px, rgba(6,182,212,0.015) 4px)',
         }}
       />
 
@@ -749,12 +814,12 @@ export function RackView({ siteName, racks, devices, locationId: _locationId, on
 
           {/* Rack grid */}
           <div className="flex gap-6 flex-wrap flex-1">
-            {racks.map(rack => (
+            {racks.map((rack) => (
               <InteractiveRack
                 key={rack.id}
                 rack={rack}
                 onDrop={assignToRack}
-                onRemoveDevice={dev => setConfirmRemove(dev)}
+                onRemoveDevice={(dev) => setConfirmRemove(dev)}
                 isUpdating={isUpdating}
               />
             ))}
@@ -763,14 +828,18 @@ export function RackView({ siteName, racks, devices, locationId: _locationId, on
 
         {/* Legend */}
         <div className="flex gap-4 mt-4 flex-wrap">
-          {LEGEND_ITEMS.map(item => (
+          {LEGEND_ITEMS.map((item) => (
             <div key={item.type} className="flex items-center gap-1">
               <span
                 className="inline-block w-2.5 h-2.5 rounded-sm opacity-50"
                 style={{ background: getTypeColor(item.type) }}
               />
               <span
-                style={{ fontSize: 8, color: COLORS.textDim, fontFamily: 'JetBrains Mono, monospace' }}
+                style={{
+                  fontSize: 8,
+                  color: COLORS.textDim,
+                  fontFamily: 'JetBrains Mono, monospace',
+                }}
               >
                 {item.label}
               </span>
@@ -779,5 +848,5 @@ export function RackView({ siteName, racks, devices, locationId: _locationId, on
         </div>
       </div>
     </div>
-  )
+  );
 }

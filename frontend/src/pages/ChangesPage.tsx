@@ -1,41 +1,57 @@
-import { useState, useEffect, useCallback } from 'react'
-import { apiFetch } from '../api/client'
-import type { Change, PaginatedResponse } from '../types'
+import { useState, useEffect, useCallback } from 'react';
+import { apiFetch } from '../api/client';
+import type { Change, PaginatedResponse } from '../types';
 
-const RISK_LEVELS = ['low', 'medium', 'high', 'critical']
-const STATUSES = ['draft', 'submitted', 'approved', 'rejected', 'in_progress', 'completed', 'failed', 'cancelled']
+const RISK_LEVELS = ['low', 'medium', 'high', 'critical'];
+const STATUSES = [
+  'draft',
+  'submitted',
+  'approved',
+  'rejected',
+  'in_progress',
+  'completed',
+  'failed',
+  'cancelled',
+];
 
 export function ChangesPage() {
-  const [changes, setChanges] = useState<Change[]>([])
-  const [total, setTotal] = useState(0)
-  const [page, setPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [search, setSearch] = useState('')
-  const [filterStatus, setFilterStatus] = useState('')
-  const [filterRisk, setFilterRisk] = useState('')
+  const [changes, setChanges] = useState<Change[]>([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+  const [filterRisk, setFilterRisk] = useState('');
 
   const fetchChanges = useCallback(async () => {
-    setIsLoading(true)
-    setError(null)
+    setIsLoading(true);
+    setError(null);
     try {
-      const params = new URLSearchParams({ page: page.toString(), limit: '25', sort: 'created_at', order: 'desc' })
-      if (search) params.set('search', search)
-      if (filterStatus) params.set('status', filterStatus)
-      if (filterRisk) params.set('risk_level', filterRisk)
-      const data = await apiFetch<PaginatedResponse<Change>>(`/changes?${params}`)
-      setChanges(data.data)
-      setTotal(data.total)
-      setTotalPages(data.totalPages)
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: '25',
+        sort: 'created_at',
+        order: 'desc',
+      });
+      if (search) params.set('search', search);
+      if (filterStatus) params.set('status', filterStatus);
+      if (filterRisk) params.set('risk_level', filterRisk);
+      const data = await apiFetch<PaginatedResponse<Change>>(`/changes?${params}`);
+      setChanges(data.data);
+      setTotal(data.total);
+      setTotalPages(data.totalPages);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load changes')
+      setError(err instanceof Error ? err.message : 'Failed to load changes');
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }, [page, search, filterStatus, filterRisk])
+  }, [page, search, filterStatus, filterRisk]);
 
-  useEffect(() => { fetchChanges() }, [fetchChanges])
+  useEffect(() => {
+    fetchChanges();
+  }, [fetchChanges]);
 
   const riskBadge = (risk: string) => {
     const colors: Record<string, string> = {
@@ -43,13 +59,15 @@ export function ChangesPage() {
       medium: 'bg-yellow-500/20 text-yellow-400',
       high: 'bg-orange-500/20 text-orange-400',
       critical: 'bg-red-500/20 text-red-400',
-    }
+    };
     return (
-      <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${colors[risk] ?? 'bg-slate-500/20 text-slate-400'}`}>
+      <span
+        className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${colors[risk] ?? 'bg-slate-500/20 text-slate-400'}`}
+      >
         {risk}
       </span>
-    )
-  }
+    );
+  };
 
   const statusBadge = (status: string) => {
     const colors: Record<string, string> = {
@@ -61,28 +79,39 @@ export function ChangesPage() {
       completed: 'bg-emerald-500/20 text-emerald-400',
       failed: 'bg-red-500/20 text-red-400',
       cancelled: 'bg-slate-500/20 text-slate-400',
-    }
+    };
     return (
-      <span className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${colors[status] ?? 'bg-slate-500/20 text-slate-400'}`}>
+      <span
+        className={`px-2 py-0.5 rounded-full text-xs font-medium capitalize ${colors[status] ?? 'bg-slate-500/20 text-slate-400'}`}
+      >
         {status.replace(/_/g, ' ')}
       </span>
-    )
-  }
+    );
+  };
 
   const successBadge = (success: boolean | null) => {
-    if (success === null) return <span className="text-slate-500">-</span>
-    return success
-      ? <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-400">Success</span>
-      : <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-red-500/20 text-red-400">Failed</span>
-  }
+    if (success === null) return <span className="text-slate-500">-</span>;
+    return success ? (
+      <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/20 text-emerald-400">
+        Success
+      </span>
+    ) : (
+      <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-red-500/20 text-red-400">
+        Failed
+      </span>
+    );
+  };
 
   const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return '-'
+    if (!dateStr) return '-';
     return new Date(dateStr).toLocaleString('de-CH', {
-      day: '2-digit', month: '2-digit', year: 'numeric',
-      hour: '2-digit', minute: '2-digit',
-    })
-  }
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -93,31 +122,51 @@ export function ChangesPage() {
             type="text"
             placeholder="Search changes..."
             value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
             className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 w-64"
           />
           <select
             value={filterStatus}
-            onChange={(e) => { setFilterStatus(e.target.value); setPage(1) }}
+            onChange={(e) => {
+              setFilterStatus(e.target.value);
+              setPage(1);
+            }}
             className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">All Statuses</option>
-            {STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>)}
+            {STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {s.replace(/_/g, ' ')}
+              </option>
+            ))}
           </select>
           <select
             value={filterRisk}
-            onChange={(e) => { setFilterRisk(e.target.value); setPage(1) }}
+            onChange={(e) => {
+              setFilterRisk(e.target.value);
+              setPage(1);
+            }}
             className="px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">All Risk Levels</option>
-            {RISK_LEVELS.map((r) => <option key={r} value={r}>{r}</option>)}
+            {RISK_LEVELS.map((r) => (
+              <option key={r} value={r}>
+                {r}
+              </option>
+            ))}
           </select>
         </div>
       </div>
 
       {error && (
         <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-sm text-red-400">
-          {error} <button onClick={() => setError(null)} className="ml-2 underline">Dismiss</button>
+          {error}{' '}
+          <button onClick={() => setError(null)} className="ml-2 underline">
+            Dismiss
+          </button>
         </div>
       )}
 
@@ -141,13 +190,16 @@ export function ChangesPage() {
                 <tr>
                   <td colSpan={7} className="px-4 py-12 text-center text-slate-500">
                     <div className="flex items-center justify-center gap-2">
-                      <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" /> Loading...
+                      <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />{' '}
+                      Loading...
                     </div>
                   </td>
                 </tr>
               ) : changes.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-slate-500">No changes found</td>
+                  <td colSpan={7} className="px-4 py-12 text-center text-slate-500">
+                    No changes found
+                  </td>
                 </tr>
               ) : (
                 changes.map((change, i) => (
@@ -155,12 +207,20 @@ export function ChangesPage() {
                     key={change.id}
                     className={`border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors ${i % 2 === 0 ? 'bg-slate-800/40' : ''}`}
                   >
-                    <td className="px-3 py-2 font-medium text-slate-200 max-w-[300px] truncate">{change.title}</td>
+                    <td className="px-3 py-2 font-medium text-slate-200 max-w-[300px] truncate">
+                      {change.title}
+                    </td>
                     <td className="px-3 py-2">{riskBadge(change.risk_level)}</td>
                     <td className="px-3 py-2">{statusBadge(change.status)}</td>
-                    <td className="px-3 py-2 text-slate-400 font-mono text-[10px]">{change.requested_by ? change.requested_by.substring(0, 8) + '...' : '-'}</td>
-                    <td className="px-3 py-2 text-slate-400 whitespace-nowrap">{formatDate(change.scheduled_start)}</td>
-                    <td className="px-3 py-2 text-slate-400 whitespace-nowrap">{formatDate(change.scheduled_end)}</td>
+                    <td className="px-3 py-2 text-slate-400 font-mono text-[10px]">
+                      {change.requested_by ? change.requested_by.substring(0, 8) + '...' : '-'}
+                    </td>
+                    <td className="px-3 py-2 text-slate-400 whitespace-nowrap">
+                      {formatDate(change.scheduled_start)}
+                    </td>
+                    <td className="px-3 py-2 text-slate-400 whitespace-nowrap">
+                      {formatDate(change.scheduled_end)}
+                    </td>
                     <td className="px-3 py-2">{successBadge(change.success)}</td>
                   </tr>
                 ))
@@ -171,7 +231,9 @@ export function ChangesPage() {
 
         {totalPages > 1 && (
           <div className="flex items-center justify-between px-4 py-3 border-t border-slate-700">
-            <p className="text-sm text-slate-400">{total} change{total !== 1 ? 's' : ''} total</p>
+            <p className="text-sm text-slate-400">
+              {total} change{total !== 1 ? 's' : ''} total
+            </p>
             <div className="flex gap-2">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
@@ -180,7 +242,9 @@ export function ChangesPage() {
               >
                 Previous
               </button>
-              <span className="px-3 py-1 text-sm text-slate-400">Page {page} of {totalPages}</span>
+              <span className="px-3 py-1 text-sm text-slate-400">
+                Page {page} of {totalPages}
+              </span>
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
@@ -193,5 +257,5 @@ export function ChangesPage() {
         )}
       </div>
     </div>
-  )
+  );
 }

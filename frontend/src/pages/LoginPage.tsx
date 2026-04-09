@@ -1,31 +1,31 @@
-import { useState, type FormEvent } from 'react'
-import { useAuth } from '../hooks/useAuth'
-import { Navigate } from 'react-router-dom'
+import { useState, type FormEvent } from 'react';
+import { useAuth } from '../hooks/useAuth';
+import { Navigate } from 'react-router-dom';
 
 export function LoginPage() {
-  const { login, isAuthenticated } = useAuth()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const { login, isAuthenticated } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (isAuthenticated) {
-    return <Navigate to="/" replace />
+    return <Navigate to="/" replace />;
   }
 
   const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault()
-    setError(null)
-    setIsSubmitting(true)
+    e.preventDefault();
+    setError(null);
+    setIsSubmitting(true);
 
     try {
-      await login(email, password)
+      await login(email, password);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed')
+      setError(err instanceof Error ? err.message : 'Login failed');
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
@@ -37,7 +37,8 @@ export function LoginPage() {
             alt="BOSSVIEW Logo"
             className="mx-auto mb-4 max-w-[200px]"
             style={{
-              filter: 'invert(1) drop-shadow(0 0 20px rgba(6,182,212,0.3)) drop-shadow(0 0 40px rgba(6,182,212,0.15))',
+              filter:
+                'invert(1) drop-shadow(0 0 20px rgba(6,182,212,0.3)) drop-shadow(0 0 40px rgba(6,182,212,0.15))',
             }}
           />
           <h1 className="text-4xl font-bold text-white tracking-tight">
@@ -115,5 +116,5 @@ export function LoginPage() {
         </form>
       </div>
     </div>
-  )
+  );
 }
