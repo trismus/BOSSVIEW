@@ -34,7 +34,7 @@ export function LoginPage() {
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
-            <Logo variant="lockup" height={120} aria-label="SKYNEX — Mission Control for IT" />
+            <Logo variant="lockup" height={288} aria-label="SKYNEX — Mission Control for IT" />
           </div>
           <p className="text-slate-400 mt-2">IT Infrastructure Management</p>
         </div>
