@@ -4,6 +4,7 @@ import { useInfraMap } from '../hooks/useInfraMap';
 import { WorldMapView } from '../components/infra/WorldMapView';
 import { NetworkTopologyView } from '../components/infra/NetworkTopologyView';
 import { RackView } from '../components/infra/RackView';
+import { api } from '../api/client';
 import type { InfraLocation, InfraLocationStatus } from '../types';
 
 // ─── Dark Trace Color Palette ────────────────────────────────
@@ -21,6 +22,14 @@ const COLORS = {
   textDim: '#94a3b8',
   textMuted: '#64748b',
 };
+
+interface SyncResult {
+  synced: number;
+  created: number;
+  updated: number;
+  skipped: number;
+  errors: Array<{ assetName: string; error: string }>;
+}
 
 type ViewId = 'world' | 'topology' | 'rack';
 
@@ -54,6 +63,24 @@ export function InfrastructurePage() {
 
   const [activeView, setActiveView] = useState<ViewId>('world');
   const [time, setTime] = useState(new Date());
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState<SyncResult | null>(null);
+
+  // Sync assets to infra_devices
+  const handleSyncAssets = useCallback(async () => {
+    setIsSyncing(true);
+    setSyncResult(null);
+    try {
+      const res = await api.post<{ data: SyncResult }>('/infrastructure/sync-assets');
+      setSyncResult(res.data);
+      // Auto-hide success message after 5 seconds
+      setTimeout(() => setSyncResult(null), 5000);
+    } catch (err) {
+      console.error('Sync failed:', err);
+    } finally {
+      setIsSyncing(false);
+    }
+  }, []);
 
   // Live clock
   useEffect(() => {
@@ -317,6 +344,55 @@ export function InfrastructurePage() {
         >
           {locations.length} SITES · {totalAssets} ASSETS · {totalDevices} DEVICES
         </span>
+
+        {/* Sync from Assets Button */}
+        <button
+          onClick={handleSyncAssets}
+          disabled={isSyncing}
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded cursor-pointer transition-all"
+          style={{
+            background: isSyncing ? 'rgba(6,182,212,0.2)' : 'rgba(6,182,212,0.1)',
+            border: `1px solid ${COLORS.cyan}40`,
+            color: COLORS.cyan,
+            fontFamily: 'JetBrains Mono, monospace',
+            fontSize: 9,
+            opacity: isSyncing ? 0.7 : 1,
+          }}
+        >
+          {isSyncing ? (
+            <>
+              <span
+                className="inline-block w-3 h-3 border border-current rounded-full animate-spin"
+                style={{ borderTopColor: 'transparent' }}
+              />
+              SYNCING...
+            </>
+          ) : (
+            <>
+              <span style={{ fontSize: 11 }}>&#x21BB;</span>
+              SYNC FROM ASSETS
+            </>
+          )}
+        </button>
+
+        {/* Sync Result Toast */}
+        {syncResult && (
+          <span
+            className="px-2 py-0.5 rounded"
+            style={{
+              fontSize: 8,
+              fontFamily: 'JetBrains Mono, monospace',
+              background:
+                syncResult.errors.length > 0 ? 'rgba(245,158,11,0.15)' : 'rgba(16,185,129,0.15)',
+              color: syncResult.errors.length > 0 ? COLORS.amber : COLORS.green,
+              border: `1px solid ${syncResult.errors.length > 0 ? COLORS.amber : COLORS.green}40`,
+            }}
+          >
+            +{syncResult.created} NEW · {syncResult.updated} UPD · {syncResult.skipped} SKIP
+            {syncResult.errors.length > 0 && ` · ${syncResult.errors.length} ERR`}
+          </span>
+        )}
+
         <span
           className="ml-auto"
           style={{ fontSize: 8, color: COLORS.textMuted, fontFamily: 'JetBrains Mono, monospace' }}

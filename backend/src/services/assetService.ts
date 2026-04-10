@@ -375,6 +375,131 @@ export async function syncAssetToInfraDevice(asset: Asset): Promise<void> {
   }
 }
 
+// ============================================
+// Bulk Sync Assets to Infra Devices (Issue #62)
+// ============================================
+
+export interface BulkSyncResult {
+  synced: number
+  created: number
+  updated: number
+  skipped: number
+  errors: Array<{ assetName: string; error: string }>
+}
+
+/**
+ * Sync all syncable assets (servers, network devices, storage) to infra_devices.
+ * Creates new devices for assets without an infra_device, updates existing ones.
+ */
+export async function bulkSyncAssetsToInfra(): Promise<BulkSyncResult> {
+  const result: BulkSyncResult = {
+    synced: 0,
+    created: 0,
+    updated: 0,
+    skipped: 0,
+    errors: [],
+  }
+
+  // Fetch all syncable assets
+  const assetsResult = await query<Asset>(
+    `SELECT * FROM assets WHERE type = ANY($1)`,
+    [SYNCABLE_ASSET_TYPES]
+  )
+
+  for (const asset of assetsResult.rows) {
+    const locationCode = (asset.location as Record<string, unknown>)?.code as string | undefined
+    if (!locationCode) {
+      result.skipped++
+      continue
+    }
+
+    const deviceType = resolveDeviceType(asset.type, asset.name)
+    const deviceStatus = resolveDeviceStatus(asset.status)
+
+    try {
+      // Check if infra_device already linked to this asset
+      const existing = await query<{ id: string }>(
+        `SELECT id FROM infra_devices WHERE asset_id = $1`,
+        [asset.id]
+      )
+
+      if (existing.rows.length > 0) {
+        // UPDATE existing device
+        await query(
+          `UPDATE infra_devices
+           SET name = $1, ip_address = $2, status = $3, device_type = $4, updated_at = NOW()
+           WHERE asset_id = $5`,
+          [asset.name, asset.ip_address, deviceStatus, deviceType, asset.id]
+        )
+        result.updated++
+        result.synced++
+        continue
+      }
+
+      // Check if device with same name already exists (not linked)
+      const existingByName = await query<{ id: string; asset_id: string | null }>(
+        `SELECT id, asset_id FROM infra_devices WHERE LOWER(name) = LOWER($1)`,
+        [asset.name]
+      )
+
+      if (existingByName.rows.length > 0) {
+        const dev = existingByName.rows[0]
+        if (!dev.asset_id) {
+          // Link existing device to this asset
+          await query(
+            `UPDATE infra_devices
+             SET asset_id = $1, ip_address = $2, status = $3, device_type = $4, updated_at = NOW()
+             WHERE id = $5`,
+            [asset.id, asset.ip_address, deviceStatus, deviceType, dev.id]
+          )
+          result.updated++
+          result.synced++
+        } else {
+          result.skipped++
+        }
+        continue
+      }
+
+      // Resolve location_id
+      const locResult = await query<{ id: string }>(
+        `SELECT id FROM infra_locations WHERE code = $1`,
+        [locationCode]
+      )
+      if (locResult.rows.length === 0) {
+        result.skipped++
+        continue
+      }
+      const locationId = locResult.rows[0].id
+
+      // Calculate next free topo_x position
+      const layout = TOPO_LAYOUT[deviceType] ?? { y: 350, spacing: 80 }
+      const maxXResult = await query<{ max_x: string | null }>(
+        `SELECT MAX(topo_x) AS max_x FROM infra_devices
+         WHERE location_id = $1 AND device_type = $2`,
+        [locationId, deviceType]
+      )
+      const maxX = maxXResult.rows[0]?.max_x ? parseFloat(maxXResult.rows[0].max_x) : 0
+      const nextX = maxX >= 100 ? maxX + layout.spacing : 100
+
+      // Create new infra_device
+      await query(
+        `INSERT INTO infra_devices (location_id, name, device_type, ip_address, status, asset_id, topo_x, topo_y)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+        [locationId, asset.name, deviceType, asset.ip_address, deviceStatus, asset.id, nextX, layout.y]
+      )
+      result.created++
+      result.synced++
+    } catch (err) {
+      result.errors.push({
+        assetName: asset.name,
+        error: err instanceof Error ? err.message : 'Unknown error',
+      })
+    }
+  }
+
+  return result
+}
+
 export interface DashboardKPIs {
   total_assets: number
   assets_by_status: Record<string, number>

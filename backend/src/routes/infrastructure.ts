@@ -8,6 +8,7 @@ import { asyncHandler } from '../middleware/errorHandler'
 import { query as queryDb } from '../db/pool'
 import { emitEvent } from '../websocket'
 import { parseConfig } from '../services/configParser'
+import { bulkSyncAssetsToInfra } from '../services/assetService'
 
 const configUpload = multer({
   storage: multer.memoryStorage(),
@@ -906,6 +907,42 @@ router.get(
         devices: result.rows[0],
         locations: locationResult.rows[0],
       },
+    })
+  })
+)
+
+// ============================================
+// POST /sync-assets — bulk sync assets to infra_devices (Issue #62)
+// ============================================
+router.post(
+  '/sync-assets',
+  requireRole('admin', 'engineer'),
+  auditLog('infra_sync'),
+  asyncHandler(async (req: Request, res: Response) => {
+    const result = await bulkSyncAssetsToInfra()
+
+    await writeAuditLog({
+      userId: req.user!.sub,
+      action: 'SYNC',
+      entityType: 'infra_device',
+      entityId: 'bulk',
+      oldValue: null,
+      newValue: {
+        synced: result.synced,
+        created: result.created,
+        updated: result.updated,
+        skipped: result.skipped,
+        errorCount: result.errors.length,
+      },
+      ipAddress: (req.ip as string | undefined) ?? req.socket.remoteAddress ?? null,
+      userAgent: req.headers['user-agent'] ?? null,
+    })
+
+    emitEvent('asset:updated', { entity: 'infra_devices', action: 'bulk_sync' })
+
+    res.json({
+      message: `Synced ${result.synced} assets to infrastructure devices`,
+      data: result,
     })
   })
 )
