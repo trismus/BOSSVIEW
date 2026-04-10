@@ -74,7 +74,8 @@ router.get(
   '/:id',
   requireRole('admin', 'engineer', 'manager', 'auditor', 'readonly'),
   asyncHandler(async (req: Request, res: Response) => {
-    const asset = await getAssetById(req.params.id)
+    const assetId = req.params.id as string
+    const asset = await getAssetById(assetId)
 
     if (!asset) {
       res.status(404).json({ error: 'Asset not found', code: 'NOT_FOUND' })
@@ -100,7 +101,7 @@ router.get(
        ORDER BY
          CASE v.severity WHEN 'critical' THEN 1 WHEN 'high' THEN 2 WHEN 'medium' THEN 3 WHEN 'low' THEN 4 ELSE 5 END,
          v.affected_hosts DESC`,
-      [req.params.id]
+      [assetId]
     )
 
     res.json({ data: { ...asset, vulnerabilities: vulnResult.rows } })
@@ -112,7 +113,8 @@ router.get(
   '/:id/history',
   requireRole('admin', 'engineer', 'manager', 'auditor'),
   asyncHandler(async (req: Request, res: Response) => {
-    const history = await getAssetHistory(req.params.id)
+    const assetId = req.params.id as string
+    const history = await getAssetHistory(assetId)
     res.json({ data: history })
   })
 )
@@ -138,23 +140,24 @@ router.put(
   requireRole('admin', 'engineer'),
   auditLog('asset'),
   asyncHandler(async (req: Request, res: Response) => {
+    const assetId = req.params.id as string
     const data = updateAssetSchema.parse(req.body)
 
     // Get old value for audit trail
-    const oldAsset = await getAssetById(req.params.id)
+    const oldAsset = await getAssetById(assetId)
     if (!oldAsset) {
       res.status(404).json({ error: 'Asset not found', code: 'NOT_FOUND' })
       return
     }
 
-    const updated = await updateAsset(req.params.id, data as Parameters<typeof updateAsset>[1])
+    const updated = await updateAsset(assetId, data as Parameters<typeof updateAsset>[1])
 
     // Write detailed audit log with old/new values
     await writeAuditLog({
       userId: req.user!.sub,
       action: 'UPDATE',
       entityType: 'asset',
-      entityId: req.params.id,
+      entityId: assetId,
       oldValue: oldAsset,
       newValue: updated,
       ipAddress: req.ip ?? req.socket.remoteAddress ?? null,
@@ -173,13 +176,14 @@ router.delete(
   requireRole('admin'),
   auditLog('asset'),
   asyncHandler(async (req: Request, res: Response) => {
-    const oldAsset = await getAssetById(req.params.id)
+    const assetId = req.params.id as string
+    const oldAsset = await getAssetById(assetId)
     if (!oldAsset) {
       res.status(404).json({ error: 'Asset not found', code: 'NOT_FOUND' })
       return
     }
 
-    const deleted = await deleteAsset(req.params.id)
+    const deleted = await deleteAsset(assetId)
 
     if (!deleted) {
       res.status(404).json({ error: 'Asset not found', code: 'NOT_FOUND' })
@@ -191,14 +195,14 @@ router.delete(
       userId: req.user!.sub,
       action: 'DELETE',
       entityType: 'asset',
-      entityId: req.params.id,
+      entityId: assetId,
       oldValue: oldAsset,
       newValue: null,
       ipAddress: req.ip ?? req.socket.remoteAddress ?? null,
       userAgent: req.headers['user-agent'] ?? null,
     })
 
-    emitEvent('asset:deleted', { id: req.params.id })
+    emitEvent('asset:deleted', { id: assetId })
     emitEvent('kpi:updated')
     res.json({ message: 'Asset deleted successfully' })
   })
@@ -299,7 +303,7 @@ router.get(
   '/:id/users',
   requireRole('admin', 'engineer', 'manager', 'auditor', 'readonly'),
   asyncHandler(async (req: Request, res: Response) => {
-    const assetId = req.params.id
+    const assetId = req.params.id as string
 
     const asset = await getAssetById(assetId)
     if (!asset) {
@@ -339,7 +343,7 @@ router.get(
   '/:id/relations',
   requireRole('admin', 'engineer', 'manager', 'auditor', 'readonly'),
   asyncHandler(async (req: Request, res: Response) => {
-    const assetId = req.params.id
+    const assetId = req.params.id as string
 
     // Verify asset exists
     const asset = await getAssetById(assetId)
@@ -387,7 +391,7 @@ router.post(
   requireRole('admin', 'engineer'),
   auditLog('asset_relation'),
   asyncHandler(async (req: Request, res: Response) => {
-    const sourceId = req.params.id
+    const sourceId = req.params.id as string
     const { targetId, relationType } = createRelationSchema.parse(req.body)
 
     // Verify source asset exists
@@ -455,8 +459,8 @@ router.delete(
   requireRole('admin', 'engineer'),
   auditLog('asset_relation'),
   asyncHandler(async (req: Request, res: Response) => {
-    const assetId = req.params.id
-    const relationId = req.params.relationId
+    const assetId = req.params.id as string
+    const relationId = req.params.relationId as string
 
     // Verify the relation exists and belongs to this asset
     const existing = await queryDb<{

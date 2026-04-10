@@ -34,7 +34,7 @@ export function errorHandler(
   }
 
   // PostgreSQL unique constraint violation
-  if ((err as Record<string, unknown>).code === '23505') {
+  if ((err as unknown as Record<string, unknown>).code === '23505') {
     res.status(409).json({
       error: 'Resource already exists',
       code: 'DUPLICATE_ENTRY',
@@ -43,7 +43,7 @@ export function errorHandler(
   }
 
   // PostgreSQL check constraint violation
-  if ((err as Record<string, unknown>).code === '23514') {
+  if ((err as unknown as Record<string, unknown>).code === '23514') {
     res.status(400).json({
       error: 'Invalid value for field',
       code: 'CHECK_VIOLATION',
@@ -53,7 +53,7 @@ export function errorHandler(
   }
 
   // Other PostgreSQL errors — never leak details in production
-  const errCode = (err as Record<string, unknown>).code
+  const errCode = (err as unknown as Record<string, unknown>).code
   if (typeof errCode === 'string' && PG_ERROR_CODES.has(errCode)) {
     res.status(500).json({
       error: 'A database error occurred',

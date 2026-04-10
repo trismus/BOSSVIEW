@@ -61,7 +61,7 @@ export function Layout({ children }: LayoutProps) {
         className="h-14 flex items-center justify-center px-6 hover:opacity-80 transition-opacity"
         aria-label="SKYNEX — Mission Control for IT"
       >
-        <Logo variant="lockup" height={28} />
+        <Logo variant="lockup" height={56} />
       </Link>
 
       {/* Navigation */}

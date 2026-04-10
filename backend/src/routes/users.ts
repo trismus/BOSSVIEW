@@ -415,7 +415,7 @@ router.put(
   auditLog('user'),
   asyncHandler(async (req: Request, res: Response) => {
     const data = updateUserSchema.parse(req.body)
-    const userId = req.params.id
+    const userId = req.params.id as string
 
     // Get old user for audit
     const oldResult = await query<{
@@ -531,7 +531,7 @@ router.put(
   auditLog('user'),
   asyncHandler(async (req: Request, res: Response) => {
     const { newPassword } = adminChangePasswordSchema.parse(req.body)
-    const userId = req.params.id
+    const userId = req.params.id as string
 
     // Check user exists
     const userResult = await query<{ id: string }>(
@@ -575,7 +575,7 @@ router.delete(
   requireRole('admin'),
   auditLog('user'),
   asyncHandler(async (req: Request, res: Response) => {
-    const userId = req.params.id
+    const userId = req.params.id as string
 
     // Prevent self-deletion
     if (userId === req.user!.sub) {

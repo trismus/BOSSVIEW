@@ -33,7 +33,7 @@ router.get(
   '/:id/relations',
   requireRole('admin', 'engineer', 'manager', 'auditor', 'readonly'),
   asyncHandler(async (req: Request, res: Response) => {
-    const assetId = req.params.id
+    const assetId = req.params.id as string
 
     const result = await query<AssetRelation>(
       `SELECT
@@ -62,7 +62,7 @@ router.post(
   requireRole('admin', 'engineer'),
   auditLog('asset_relation'),
   asyncHandler(async (req: Request, res: Response) => {
-    const sourceId = req.params.id
+    const sourceId = req.params.id as string
     const data = createRelationSchema.parse(req.body)
 
     // Prevent self-referencing relations
@@ -120,7 +120,8 @@ router.delete(
   requireRole('admin', 'engineer'),
   auditLog('asset_relation'),
   asyncHandler(async (req: Request, res: Response) => {
-    const { id: assetId, relationId } = req.params
+    const assetId = req.params.id as string
+    const relationId = req.params.relationId as string
 
     // Verify the relation belongs to the asset
     const existing = await query<AssetRelation>(

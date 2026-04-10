@@ -1,4 +1,4 @@
-import { Pool } from 'pg'
+import { Pool, QueryResultRow } from 'pg'
 import { config } from '../config'
 
 export const pool = new Pool({
@@ -12,7 +12,8 @@ pool.on('error', (err) => {
   console.error('Unexpected database pool error:', err)
 })
 
-export async function query<T extends Record<string, unknown> = Record<string, unknown>>(
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function query<T extends QueryResultRow = any>(
   text: string,
   params?: unknown[]
 ): Promise<import('pg').QueryResult<T>> {

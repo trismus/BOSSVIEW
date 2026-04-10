@@ -196,9 +196,10 @@ router.get(
   '/:id',
   requireRole('admin', 'engineer', 'manager', 'auditor', 'readonly'),
   asyncHandler(async (req: Request, res: Response) => {
+    const incidentId = req.params.id as string
     const result = await query<Incident>(
       `SELECT * FROM incidents WHERE id = $1`,
-      [req.params.id]
+      [incidentId]
     )
 
     if (result.rows.length === 0) {
@@ -212,7 +213,7 @@ router.get(
        FROM asset_incidents ai
        JOIN assets a ON ai.asset_id = a.id
        WHERE ai.incident_id = $1`,
-      [req.params.id]
+      [incidentId]
     )
 
     res.json({
@@ -278,13 +279,14 @@ router.put(
   requireRole('admin', 'engineer', 'manager'),
   auditLog('incident'),
   asyncHandler(async (req: Request, res: Response) => {
+    const incidentId = req.params.id as string
     const data = updateIncidentSchema.parse(req.body)
     const { asset_ids, ...updateData } = data
 
     // Get current incident for audit trail
     const currentResult = await query<Incident>(
       `SELECT * FROM incidents WHERE id = $1`,
-      [req.params.id]
+      [incidentId]
     )
 
     if (currentResult.rows.length === 0) {
@@ -338,7 +340,7 @@ router.put(
 
     if (fields.length > 0) {
       fields.push(`updated_at = NOW()`)
-      values.push(req.params.id)
+      values.push(incidentId)
 
       const result = await query<Incident>(
         `UPDATE incidents SET ${fields.join(', ')} WHERE id = $${paramIndex} RETURNING *`,
@@ -351,13 +353,13 @@ router.put(
     // Update asset links if provided
     if (asset_ids !== undefined) {
       // Remove old links and insert new
-      await query(`DELETE FROM asset_incidents WHERE incident_id = $1`, [req.params.id])
+      await query(`DELETE FROM asset_incidents WHERE incident_id = $1`, [incidentId])
 
       if (asset_ids.length > 0) {
         const assetValues = asset_ids
           .map((_, i) => `($${i * 2 + 1}, $${i * 2 + 2})`)
           .join(', ')
-        const assetParams = asset_ids.flatMap((assetId) => [assetId, req.params.id])
+        const assetParams = asset_ids.flatMap((assetId) => [assetId, incidentId])
 
         await query(
           `INSERT INTO asset_incidents (asset_id, incident_id) VALUES ${assetValues} ON CONFLICT DO NOTHING`,
@@ -371,7 +373,7 @@ router.put(
       userId: req.user!.sub,
       action: 'UPDATE',
       entityType: 'incident',
-      entityId: req.params.id,
+      entityId: incidentId,
       oldValue: oldIncident,
       newValue: updated,
       ipAddress: req.ip ?? req.socket.remoteAddress ?? null,

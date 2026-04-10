@@ -31,10 +31,11 @@ export async function verifyPassword(hash: string, password: string): Promise<bo
 }
 
 export function generateAccessToken(user: UserPayload): string {
+  const expiresIn = config.JWT_EXPIRY // e.g. '15m'
   return jwt.sign(
     { sub: user.id, email: user.email, role: user.role },
     config.JWT_SECRET,
-    { algorithm: 'HS256', expiresIn: config.JWT_EXPIRY as string }
+    { algorithm: 'HS256', expiresIn } as jwt.SignOptions
   )
 }
 

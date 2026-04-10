@@ -186,9 +186,10 @@ router.get(
   '/:id',
   requireRole('admin', 'engineer', 'manager', 'auditor', 'readonly'),
   asyncHandler(async (req: Request, res: Response) => {
+    const changeId = req.params.id as string
     const result = await query<Change>(
       `SELECT * FROM changes WHERE id = $1`,
-      [req.params.id]
+      [changeId]
     )
 
     if (result.rows.length === 0) {
@@ -202,7 +203,7 @@ router.get(
        FROM asset_changes ac
        JOIN assets a ON ac.asset_id = a.id
        WHERE ac.change_id = $1`,
-      [req.params.id]
+      [changeId]
     )
 
     res.json({
@@ -268,13 +269,14 @@ router.put(
   requireRole('admin', 'engineer', 'manager'),
   auditLog('change'),
   asyncHandler(async (req: Request, res: Response) => {
+    const changeId = req.params.id as string
     const data = updateChangeSchema.parse(req.body)
     const { asset_ids, ...updateData } = data
 
     // Get current change for audit trail
     const currentResult = await query<Change>(
       `SELECT * FROM changes WHERE id = $1`,
-      [req.params.id]
+      [changeId]
     )
 
     if (currentResult.rows.length === 0) {
@@ -337,7 +339,7 @@ router.put(
 
     if (fields.length > 0) {
       fields.push(`updated_at = NOW()`)
-      values.push(req.params.id)
+      values.push(changeId)
 
       const result = await query<Change>(
         `UPDATE changes SET ${fields.join(', ')} WHERE id = $${paramIndex} RETURNING *`,
@@ -349,13 +351,13 @@ router.put(
 
     // Update asset links if provided
     if (asset_ids !== undefined) {
-      await query(`DELETE FROM asset_changes WHERE change_id = $1`, [req.params.id])
+      await query(`DELETE FROM asset_changes WHERE change_id = $1`, [changeId])
 
       if (asset_ids.length > 0) {
         const assetValues = asset_ids
           .map((_, i) => `($${i * 2 + 1}, $${i * 2 + 2})`)
           .join(', ')
-        const assetParams = asset_ids.flatMap((assetId) => [assetId, req.params.id])
+        const assetParams = asset_ids.flatMap((assetId) => [assetId, changeId])
 
         await query(
           `INSERT INTO asset_changes (asset_id, change_id) VALUES ${assetValues} ON CONFLICT DO NOTHING`,
@@ -369,7 +371,7 @@ router.put(
       userId: req.user!.sub,
       action: 'UPDATE',
       entityType: 'change',
-      entityId: req.params.id,
+      entityId: changeId,
       oldValue: oldChange,
       newValue: updated,
       ipAddress: req.ip ?? req.socket.remoteAddress ?? null,

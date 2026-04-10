@@ -252,12 +252,13 @@ router.put(
   requireRole('admin', 'engineer'),
   auditLog('vulnerability'),
   asyncHandler(async (req: Request, res: Response) => {
+    const vulnId = req.params.id as string
     const data = updateVulnSchema.parse(req.body)
 
     // Get old value for audit trail
     const oldResult = await query<Vulnerability>(
       `SELECT * FROM vulnerabilities WHERE id = $1`,
-      [req.params.id]
+      [vulnId]
     )
 
     if (oldResult.rows.length === 0) {
@@ -291,7 +292,7 @@ router.put(
 
     const updateResult = await query<Vulnerability>(
       `UPDATE vulnerabilities SET ${setClauses.join(', ')} WHERE id = $${paramIndex} RETURNING *`,
-      [...values, req.params.id]
+      [...values, vulnId]
     )
 
     const updated = updateResult.rows[0]
@@ -301,7 +302,7 @@ router.put(
       userId: req.user!.sub,
       action: 'UPDATE',
       entityType: 'vulnerability',
-      entityId: req.params.id,
+      entityId: vulnId,
       oldValue: oldVuln,
       newValue: updated,
       ipAddress: req.ip ?? req.socket.remoteAddress ?? null,

@@ -5,7 +5,7 @@ import Redis from 'ioredis'
 import { Client as PgClient } from 'pg'
 import jwt from 'jsonwebtoken'
 import { query as queryDb } from './db/pool'
-import config from './config'
+import { config } from './config'
 
 let io: SocketIOServer | null = null
 let pgListenClient: PgClient | null = null
