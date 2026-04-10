@@ -45,12 +45,27 @@ export default {
           '0%': { transform: 'translateX(0)', opacity: '1' },
           '100%': { transform: 'translateX(100%)', opacity: '0' },
         },
+        'modal-enter': {
+          '0%': { transform: 'scale(0.95)', opacity: '0' },
+          '100%': { transform: 'scale(1)', opacity: '1' },
+        },
+        'modal-backdrop': {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        'popover-enter': {
+          '0%': { transform: 'scale(0.95) translateY(-4px)', opacity: '0' },
+          '100%': { transform: 'scale(1) translateY(0)', opacity: '1' },
+        },
       },
       animation: {
         ...(skynexTheme.theme.extend.animation ?? {}),
         'slide-in-right': 'slide-in-right 0.2s ease-out',
         'toast-enter': 'toast-enter 0.2s ease-out',
         'toast-exit': 'toast-exit 0.2s ease-in forwards',
+        'modal-enter': 'modal-enter 0.2s ease-out',
+        'modal-backdrop': 'modal-backdrop 0.15s ease-out',
+        'popover-enter': 'popover-enter 0.15s ease-out',
       },
     },
   },
