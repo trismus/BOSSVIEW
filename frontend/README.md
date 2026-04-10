@@ -1,6 +1,6 @@
-# BOSSVIEW Frontend
+# SKYNEX Frontend
 
-React-basierte Single-Page-Application (SPA) fuer BOSSVIEW — das Dark-Mode-Dashboard der Luftfahrt-IT-Management-Plattform. Visualisiert Asset-Inventar (PROTack) und Schwachstellen (Qualys), bietet Import-Workflows und Echtzeit-Status der zugrundeliegenden Infrastruktur.
+React-basierte Single-Page-Application (SPA) fuer SKYNEX — das Dark-Mode-Dashboard der Luftfahrt-IT-Management-Plattform. Visualisiert Asset-Inventar (PROTack) und Schwachstellen (Qualys), bietet Import-Workflows und Echtzeit-Status der zugrundeliegenden Infrastruktur.
 
 Stack: React 18 + TypeScript + Vite + Tailwind CSS + React Router.
 

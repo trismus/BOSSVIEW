@@ -1947,7 +1947,7 @@ export function NetworkTopologyView({
           fontFamily="JetBrains Mono, monospace"
           letterSpacing="3" opacity="0.8"
         >
-          BOSSVIEW :: NETWORK TOPOLOGY
+          SKYNEX :: NETWORK TOPOLOGY
         </text>
         <text
           x={20} y={40}

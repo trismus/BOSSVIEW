@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { Navigate } from 'react-router-dom';
+import { Logo } from '../components/brand/Logo';
 
 export function LoginPage() {
   const { login, isAuthenticated } = useAuth();
@@ -32,18 +33,9 @@ export function LoginPage() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <img
-            src="/logo.png"
-            alt="BOSSVIEW Logo"
-            className="mx-auto mb-4 max-w-[200px]"
-            style={{
-              filter:
-                'invert(1) drop-shadow(0 0 20px rgba(6,182,212,0.3)) drop-shadow(0 0 40px rgba(6,182,212,0.15))',
-            }}
-          />
-          <h1 className="text-4xl font-bold text-white tracking-tight">
-            BOSS<span className="text-blue-500">VIEW</span>
-          </h1>
+          <div className="flex justify-center mb-4">
+            <Logo variant="lockup" height={48} aria-label="SKYNEX — Mission Control for IT" />
+          </div>
           <p className="text-slate-400 mt-2">IT Infrastructure Management</p>
         </div>
 
@@ -77,7 +69,7 @@ export function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
-                placeholder="admin@bossview.local"
+                placeholder="admin@skynex.local"
                 className="w-full px-3 py-2.5 bg-slate-700 border border-slate-600 rounded-lg text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
@@ -110,7 +102,7 @@ export function LoginPage() {
           {/* Dev credentials hint */}
           <div className="border-t border-slate-700 pt-4">
             <p className="text-xs text-slate-500 text-center">
-              Dev: admin@bossview.local / Admin123!
+              Dev: admin@skynex.local / Admin123!
             </p>
           </div>
         </form>

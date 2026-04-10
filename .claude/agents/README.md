@@ -1,6 +1,6 @@
-# BOSSVIEW Agent-Team
+# SKYNEX Agent-Team
 
-Dieses Verzeichnis enthält die Subagenten für die Entwicklung von BOSSVIEW. Jeder Agent ist auf eine Rolle spezialisiert und kennt die Repo-Struktur, die Compliance-Anforderungen (ISO 27001, Luftfahrt) und die projektweiten Regeln aus `CLAUDE.md`.
+Dieses Verzeichnis enthält die Subagenten für die Entwicklung von SKYNEX. Jeder Agent ist auf eine Rolle spezialisiert und kennt die Repo-Struktur, die Compliance-Anforderungen (ISO 27001, Luftfahrt) und die projektweiten Regeln aus `CLAUDE.md`.
 
 ## Rollen im Überblick
 

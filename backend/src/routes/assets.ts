@@ -245,7 +245,7 @@ router.post(
       if (isProTrack) {
         return mapProTrackRecord(record, req.user!.sub)
       }
-      // Generic CSV format (BOSSVIEW native columns)
+      // Generic CSV format (SKYNEX native columns)
       return {
         external_id: record.external_id ?? null,
         source: record.source ?? 'csv_import',

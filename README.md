@@ -1,12 +1,12 @@
-# BOSSVIEW
+# SKYNEX
 
-**Zentralisierte Web-Plattform für IT-Infrastruktur-Management in der Luftfahrtindustrie**
+**SKYNEX — Mission Control for IT Infrastructure**
 
 ---
 
 ## Überblick
 
-BOSSVIEW vereint Asset Management, Incident & Change Tracking, Netzwerk-Topologie und KPIs in einem zentralen Dashboard — mit automatisierter Report-Generierung und vollständigem Audit-Trail für die Luftfahrtindustrie.
+SKYNEX vereint Asset Management, Incident & Change Tracking, Netzwerk-Topologie und KPIs in einem zentralen Dashboard — mit automatisierter Report-Generierung und vollständigem Audit-Trail für die Luftfahrtindustrie.
 
 ## Features
 
@@ -31,8 +31,8 @@ BOSSVIEW vereint Asset Management, Incident & Change Tracking, Netzwerk-Topologi
 ## Schnellstart
 
 ```bash
-git clone https://github.com/trismus/BOSSVIEW.git
-cd BOSSVIEW
+git clone https://github.com/trismus/SKYNEX.git
+cd SKYNEX
 cp .env.example .env
 ```
 
@@ -53,14 +53,14 @@ docker compose up
 
 Die Anwendung ist unter `https://localhost` erreichbar.
 
-**Default Login:** `admin@bossview.local` / `Admin123!`
+**Default Login:** `admin@skynex.local` / `Admin123!`
 
 > Nach dem ersten Login das Passwort sofort ändern.
 
 ## Projektstruktur
 
 ```
-BOSSVIEW/
+SKYNEX/
 ├── frontend/          React SPA
 ├── backend/           Express.js API + Connector Engine
 ├── database/          SQL Migrations

@@ -1,8 +1,8 @@
 {
-  "name": "bossview-api",
+  "name": "skynex-api",
   "version": "0.1.0",
   "private": true,
-  "description": "BOSSVIEW REST API — IT Infrastructure Management for Aviation",
+  "description": "SKYNEX REST API — IT Infrastructure Management for Aviation",
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",

@@ -106,7 +106,8 @@ export function SidebarSection({ id, title, defaultExpanded = true, children }: 
   if (!context) throw new Error('SidebarSection must be used within Sidebar');
 
   const { expandedSections, toggleSection } = context;
-  const isExpanded = expandedSections.has(id) || (defaultExpanded && !expandedSections.has(`_collapsed_${id}`));
+  const _isExpanded = expandedSections.has(id) || (defaultExpanded && !expandedSections.has(`_collapsed_${id}`));
+  void _isExpanded; // Used for debugging
 
   // Handle initial collapsed state
   const handleToggle = () => {
@@ -274,7 +275,7 @@ function ChevronIcon({ expanded }: { expanded: boolean }) {
 // Keyboard Navigation Hook (for use with Sidebar)
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function useSidebarKeyboardNavigation(itemIds: string[]) {
+export function useSidebarKeyboardNavigation(_itemIds: string[]) {
   const containerRef = useRef<HTMLElement>(null);
 
   const handleKeyDown = useCallback(

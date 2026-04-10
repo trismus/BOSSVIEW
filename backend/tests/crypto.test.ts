@@ -11,7 +11,7 @@ import {
 describe('crypto utilities', () => {
   describe('encrypt / decrypt roundtrip', () => {
     it('should encrypt and decrypt a simple string', () => {
-      const plaintext = 'hello-bossview-secret'
+      const plaintext = 'hello-skynex-secret'
       const encrypted = encrypt(plaintext)
       const decrypted = decrypt(encrypted)
 

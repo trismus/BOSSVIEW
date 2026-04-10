@@ -1,5 +1,5 @@
 /**
- * BOSSVIEW Jira Service Management Connector Adapter (Proof of Concept).
+ * SKYNEX Jira Service Management Connector Adapter (Proof of Concept).
  *
  * Fetches issues from Jira via REST API v2 and maps them to NormalizedEntity[].
  * Supports bearer, basic, and API token authentication.
@@ -186,7 +186,7 @@ export class JiraAdapter implements ConnectorAdapter {
         },
         customFields: {
           type: 'object',
-          description: 'Mapping of Jira custom field IDs to BOSSVIEW field names (e.g. {"customfield_34832": "hostname"})',
+          description: 'Mapping of Jira custom field IDs to SKYNEX field names (e.g. {"customfield_34832": "hostname"})',
           additionalProperties: { type: 'string' },
         },
       },
@@ -388,10 +388,10 @@ export class JiraAdapter implements ConnectorAdapter {
 
     // Map custom fields if configured
     if (config.customFields) {
-      for (const [jiraFieldId, bossviewFieldName] of Object.entries(config.customFields)) {
+      for (const [jiraFieldId, skynexFieldName] of Object.entries(config.customFields)) {
         const value = issue.fields[jiraFieldId]
         if (value !== undefined) {
-          data[bossviewFieldName] = value
+          data[skynexFieldName] = value
         }
       }
     }

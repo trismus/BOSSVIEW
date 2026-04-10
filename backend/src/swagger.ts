@@ -273,11 +273,11 @@ const notFound: Resp = {
 export const swaggerSpec: Record<string, any> = {
   openapi: '3.0.3',
   info: {
-    title: 'BOSSVIEW API',
+    title: 'SKYNEX API',
     version: '0.1.0',
-    description: 'IT Infrastructure Management Platform for Aviation Industry — REST API.\n\nBOSSVIEW provides centralized asset management, incident tracking, change management, vulnerability oversight, and infrastructure topology for the LSYFN aviation operations environment.',
+    description: 'IT Infrastructure Management Platform for Aviation Industry — REST API.\n\nSKYNEX provides centralized asset management, incident tracking, change management, vulnerability oversight, and infrastructure topology for the LSYFN aviation operations environment.',
     contact: {
-      name: 'BOSSVIEW Team',
+      name: 'SKYNEX Team',
     },
   },
   servers: [
@@ -615,7 +615,7 @@ export const swaggerSpec: Record<string, any> = {
       post: {
         tags: ['Assets'],
         summary: 'Bulk import assets from CSV',
-        description: 'Upload a CSV file to bulk import assets. Supports both BOSSVIEW native format and PROTrack (Quest KACE) format. The PROTrack format is auto-detected. Requires admin or engineer role.',
+        description: 'Upload a CSV file to bulk import assets. Supports both SKYNEX native format and PROTrack (Quest KACE) format. The PROTrack format is auto-detected. Requires admin or engineer role.',
         requestBody: {
           required: true,
           content: {

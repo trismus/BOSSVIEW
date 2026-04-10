@@ -1,5 +1,5 @@
 /**
- * BOSSVIEW CSV/JSON Import Connector Adapter.
+ * SKYNEX CSV/JSON Import Connector Adapter.
  *
  * Parses CSV files with field mapping (including PROTrack/Quest KACE format)
  * and returns NormalizedEntity[] for asset ingestion.

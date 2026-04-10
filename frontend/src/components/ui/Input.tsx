@@ -216,7 +216,7 @@ SelectField.displayName = 'SelectField';
 // Toggle Switch
 // ─────────────────────────────────────────────────────────────────────────────
 
-export interface ToggleProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'role'> {
+export interface ToggleProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'role' | 'size'> {
   /** Label text displayed next to the toggle */
   label?: string;
   /** Size of the toggle */

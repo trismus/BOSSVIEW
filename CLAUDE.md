@@ -4,7 +4,7 @@ Dieses File gibt Claude Code Kontext und Regeln für die Arbeit in diesem Reposi
 
 ## Projekt
 
-**BOSSVIEW** — Zentralisierte Web-Plattform für IT-Infrastruktur-Management in der Luftfahrtindustrie.
+**SKYNEX** — Zentralisierte Web-Plattform für IT-Infrastruktur-Management in der Luftfahrtindustrie.
 Ziel: Assets, Incidents, Changes, Netzwerk-Topologie und KPIs in einem Dashboard vereinen, mit automatisierter Report-Generierung und vollständigem Audit-Trail.
 
 ## Compliance-Anforderungen
@@ -27,13 +27,13 @@ Ziel: Assets, Incidents, Changes, Netzwerk-Topologie und KPIs in einem Dashboard
 ## Projektstruktur
 
 ```
-BOSSVIEW/                  ← Repo-Root
+SKYNEX/                    ← Repo-Root
 ├── CLAUDE.md
 ├── docker-compose.yml
 ├── .env.example
 ├── docs/                  ← Projekt-Dokumentation
-│   ├── BOSSVIEW_PRD_v1.md
-│   └── BOSSVIEW_Architecture_v1.md
+│   ├── SKYNEX_PRD_v1.md
+│   └── SKYNEX_Architecture_v1.md
 ├── frontend/              ← React SPA (noch anzulegen)
 ├── backend/               ← Express.js API + Connector Engine (noch anzulegen)
 ├── database/
@@ -58,7 +58,7 @@ Unter `docs/connector-references/` liegen die verbindlichen Referenzdokumente f�
 
 - **Quest KACE / PROTrack** (`quest-kace-protrack.md`) — CSV-Import aus Quest KACE SMA via PROTrack. ~470 Assets, 35 Spalten. Phase 1: generischer CSV-Import (P0). Phase 2: dedizierter KACE-API-Connector (P2). Enthält vollständiges Feld-Mapping, Transformationsregeln und Datenqualitäts-Themen.
 - **Qualys Vulnerability Scanner** (`qualys-vulnerability.md`) — Vulnerability-Daten (322 Vulns, 206 Workstation). Korrelation mit KACE-Assets über IP/FQDN. Alternativ über Jira-Connector (Trackspace, Projekt ISLSYZRH). Enthält Severity-Mapping, KPI-Definitionen und API-Endpunkte.
-- **n8n Workflows** (`n8n-workflows.md`) — Dokumentation der bestehenden n8n-Pipelines (PROTrack v7 Asset-Export, Qualys+KACE Vuln-Report). Enthält Hostname-Konventionen für Asset-Typ-Erkennung, FQDN-Normalisierung, Deduplizierungslogik und die Ablösematrix n8n→BOSSVIEW.
+- **n8n Workflows** (`n8n-workflows.md`) — Dokumentation der bestehenden n8n-Pipelines (PROTrack v7 Asset-Export, Qualys+KACE Vuln-Report). Enthält Hostname-Konventionen für Asset-Typ-Erkennung, FQDN-Normalisierung, Deduplizierungslogik und die Ablösematrix n8n→SKYNEX.
 - **Qualys-KACE Workflow JSON** (`qualys-kace-workflow.json`) — Originaler n8n-Workflow als Referenz. Enthält Klartext-Credentials — nur als API/Datenstruktur-Referenz nutzen, Credentials NICHT übernehmen.
 
 ### Externe Systeme

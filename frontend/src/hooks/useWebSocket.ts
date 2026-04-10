@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 
-export type BossviewEvent =
+export type SkynexEvent =
   | 'asset:created'
   | 'asset:updated'
   | 'asset:deleted'
@@ -12,7 +12,7 @@ export type BossviewEvent =
   | 'kpi:updated';
 
 interface WebSocketMessage {
-  event: BossviewEvent;
+  event: SkynexEvent;
   data?: unknown;
   timestamp: string;
 }
@@ -21,17 +21,17 @@ type EventHandler = (message: WebSocketMessage) => void;
 
 interface UseWebSocketReturn {
   isConnected: boolean;
-  on: (event: BossviewEvent, handler: EventHandler) => () => void;
+  on: (event: SkynexEvent, handler: EventHandler) => () => void;
 }
 
 /**
- * WebSocket hook for BOSSVIEW real-time events.
+ * WebSocket hook for SKYNEX real-time events.
  * Auto-connects on mount, auto-reconnects on disconnect.
  */
 export function useWebSocket(): UseWebSocketReturn {
   const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
-  const handlersRef = useRef<Map<BossviewEvent, Set<EventHandler>>>(new Map());
+  const handlersRef = useRef<Map<SkynexEvent, Set<EventHandler>>>(new Map());
 
   useEffect(() => {
     // Determine WebSocket URL from the page origin (same host, /ws path)
@@ -62,7 +62,7 @@ export function useWebSocket(): UseWebSocketReturn {
     });
 
     // Register listeners for all event types
-    const events: BossviewEvent[] = [
+    const events: SkynexEvent[] = [
       'asset:created',
       'asset:updated',
       'asset:deleted',
@@ -88,7 +88,7 @@ export function useWebSocket(): UseWebSocketReturn {
     };
   }, []);
 
-  const on = useCallback((event: BossviewEvent, handler: EventHandler): (() => void) => {
+  const on = useCallback((event: SkynexEvent, handler: EventHandler): (() => void) => {
     if (!handlersRef.current.has(event)) {
       handlersRef.current.set(event, new Set());
     }

@@ -1,5 +1,5 @@
 -- 003_vulnerabilities.sql
--- Vulnerability tracking tables for BOSSVIEW
+-- Vulnerability tracking tables for SKYNEX
 
 CREATE TABLE IF NOT EXISTS vulnerabilities (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

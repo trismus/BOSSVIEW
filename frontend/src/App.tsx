@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthProvider';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { AdminRoute } from './components/AdminRoute';
 import { Layout } from './components/Layout';
 import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
@@ -14,6 +15,8 @@ import { NamingConventionPage } from './pages/NamingConventionPage';
 import { DirectoryUsersPage } from './pages/DirectoryUsersPage';
 import { HelpPage } from './pages/HelpPage';
 import { DesignCheckPage } from './pages/DesignCheckPage';
+import { AdminUsersPage } from './pages/AdminUsersPage';
+import { ProfilePage } from './pages/ProfilePage';
 
 export function App() {
   return (
@@ -127,6 +130,26 @@ export function App() {
               <ProtectedRoute>
                 <Layout>
                   <DesignCheckPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/users"
+            element={
+              <AdminRoute>
+                <Layout>
+                  <AdminUsersPage />
+                </Layout>
+              </AdminRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <ProfilePage />
                 </Layout>
               </ProtectedRoute>
             }

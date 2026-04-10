@@ -1,5 +1,5 @@
 /**
- * BOSSVIEW Encryption Utilities — AES-256-GCM for connector credentials.
+ * SKYNEX Encryption Utilities — AES-256-GCM for connector credentials.
  *
  * Encrypted format: "iv:authTag:ciphertext" (all hex-encoded)
  * The ENCRYPTION_KEY from config must be exactly 32 bytes (64 hex chars)

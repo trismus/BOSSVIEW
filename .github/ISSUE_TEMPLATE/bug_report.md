@@ -28,7 +28,7 @@ Was passiert stattdessen?
 
 - **Browser:** (z.B. Chrome 124, Firefox 126)
 - **OS:** (z.B. Windows 11, macOS 15)
-- **BOSSVIEW Version / Branch:**
+- **SKYNEX Version / Branch:**
 
 ## Screenshots
 

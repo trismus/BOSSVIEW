@@ -1,5 +1,5 @@
 /**
- * BOSSVIEW Quest KACE SMA Connector Adapter.
+ * SKYNEX Quest KACE SMA Connector Adapter.
  *
  * Connects to Quest KACE Systems Management Appliance via REST API,
  * fetches machines and assets, and maps them to NormalizedEntity[].

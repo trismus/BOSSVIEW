@@ -24,11 +24,11 @@ Quest KACE Systems Management Appliance (SMA) ist das zentrale ITSM- und Asset-M
 
 ---
 
-## 2. CSV-Spalten → BOSSVIEW Feld-Mapping
+## 2. CSV-Spalten → SKYNEX Feld-Mapping
 
 ### 2.1 Organisation & Herkunft
 
-| # | CSV-Spalte | BOSSVIEW-Feld | DB-Tabelle | Typ | Hinweise |
+| # | CSV-Spalte | SKYNEX-Feld | DB-Tabelle | Typ | Hinweise |
 |---|-----------|---------------|------------|-----|----------|
 | 1 | `legal company name` | `assets.tags.company_name` | assets | jsonb | Immer "Lufthansa Systems FlightNav AG" |
 | 2 | `legal company short code` | `assets.tags.company_code` | assets | jsonb | Immer "LSY FN" |
@@ -38,14 +38,14 @@ Quest KACE Systems Management Appliance (SMA) ist das zentrale ITSM- und Asset-M
 
 ### 2.2 Support & Verantwortlichkeit
 
-| # | CSV-Spalte | BOSSVIEW-Feld | DB-Tabelle | Typ | Hinweise |
+| # | CSV-Spalte | SKYNEX-Feld | DB-Tabelle | Typ | Hinweise |
 |---|-----------|---------------|------------|-----|----------|
 | 6 | `secondlevelsupport Itsm tool` | `assets.tags.support_l2` | assets | jsonb | E-Mail oder Team-Name |
 | 7 | `thirdlevelsuppert Itsm tool` | `assets.tags.support_l3` | assets | jsonb | E-Mail oder Team-Name (Typo im Original beachten!) |
 
 ### 2.3 Kern-Asset-Daten
 
-| # | CSV-Spalte | BOSSVIEW-Feld | DB-Tabelle | Typ | Hinweise |
+| # | CSV-Spalte | SKYNEX-Feld | DB-Tabelle | Typ | Hinweise |
 |---|-----------|---------------|------------|-----|----------|
 | 8 | `asset type` | `assets.type` | assets | enum | Mapping: "workstation" → `workstation`, "virtual server" → `virtual_server` |
 | 9 | `ip address` | `assets.ip_address` | assets | inet | Kann leer sein (v.a. bei Workstations) |
@@ -57,7 +57,7 @@ Quest KACE Systems Management Appliance (SMA) ist das zentrale ITSM- und Asset-M
 
 ### 2.4 ITSM & Lifecycle
 
-| # | CSV-Spalte | BOSSVIEW-Feld | DB-Tabelle | Typ | Hinweise |
+| # | CSV-Spalte | SKYNEX-Feld | DB-Tabelle | Typ | Hinweise |
 |---|-----------|---------------|------------|-----|----------|
 | 15 | `business service name itsm tool` | `assets.tags.business_service` | assets | jsonb | z.B. "Quest KACE" |
 | 16 | `asset manufacturer` | `assets.hardware_info.manufacturer` | assets | jsonb | z.B. "Dell Inc.", "VMware, Inc.", "Apple Inc." |
@@ -68,7 +68,7 @@ Quest KACE Systems Management Appliance (SMA) ist das zentrale ITSM- und Asset-M
 
 ### 2.5 Kontakt & Standort
 
-| # | CSV-Spalte | BOSSVIEW-Feld | DB-Tabelle | Typ | Hinweise |
+| # | CSV-Spalte | SKYNEX-Feld | DB-Tabelle | Typ | Hinweise |
 |---|-----------|---------------|------------|-----|----------|
 | 21 | `hardware contact name & email adress` | `assets.tags.hw_contact` | assets | jsonb | E-Mail-Adresse |
 | 22 | `IT provider name` | `assets.tags.it_provider` | assets | jsonb | z.B. "LSYFN IT Infrastructure" |
@@ -78,7 +78,7 @@ Quest KACE Systems Management Appliance (SMA) ist das zentrale ITSM- und Asset-M
 
 ### 2.6 Applikations-Kontext (Erweiterte Felder)
 
-| # | CSV-Spalte | BOSSVIEW-Feld | DB-Tabelle | Typ | Hinweise |
+| # | CSV-Spalte | SKYNEX-Feld | DB-Tabelle | Typ | Hinweise |
 |---|-----------|---------------|------------|-----|----------|
 | 26 | `application name` | `assets.custom_fields.app_name` | assets | jsonb | z.B. "LSYFN Active Directory" |
 | 27 | `applicationID` | `assets.custom_fields.app_id` | assets | jsonb | z.B. "APP-17974" |
@@ -254,7 +254,7 @@ const questKaceConfig: ConnectorConfig = {
 
 ## 8. Zusätzliche Asset-Typen (aus n8n Workflows)
 
-Das bestehende n8n PROTrack Workflow kennt zwei weitere Asset-Typen, die im BOSSVIEW Schema ergänzt werden müssen:
+Das bestehende n8n PROTrack Workflow kennt zwei weitere Asset-Typen, die im SKYNEX Schema ergänzt werden müssen:
 
 | Asset-Typ | Hostnamen-Prefix | Data Center |
 |-----------|-----------------|-------------|
@@ -277,4 +277,4 @@ API Version: v14 (ab KACE 12.1+, kein CSRF Token mehr nötig)
 
 ---
 
-*Dieses Dokument dient als verbindliche Referenz für die Implementierung des Quest KACE CSV-Import-Connectors in BOSSVIEW. Änderungen am CSV-Format müssen hier dokumentiert werden.*
+*Dieses Dokument dient als verbindliche Referenz für die Implementierung des Quest KACE CSV-Import-Connectors in SKYNEX. Änderungen am CSV-Format müssen hier dokumentiert werden.*

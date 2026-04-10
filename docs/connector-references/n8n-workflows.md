@@ -2,7 +2,7 @@
 
 **Version:** 1.0
 **Datum:** 5. April 2026
-**Kontext:** Diese Workflows laufen aktuell in der n8n-Instanz bei LSYFN und generieren die Daten, die BOSSVIEW ablösen/integrieren soll.
+**Kontext:** Diese Workflows laufen aktuell in der n8n-Instanz bei LSYFN und generieren die Daten, die SKYNEX ablösen/integrieren soll.
 **Klassifikation:** Vertraulich — enthält System-Integrationsbeschreibungen
 
 ---
@@ -62,7 +62,7 @@
 | **Quest KACE** | `https://k1000.lidozrh.ch` | JWT (Cookie-based) | v14 | `/ams/shared/api/security/login`, `/api/inventory/machines`, `/api/asset/assets` |
 | **JAMF Pro** | `https://lidozrh.jamfcloud.com` | OAuth2 Client Credentials | v1 | `/api/oauth/token`, `/api/v1/computers-inventory` |
 
-### 1.3 Transformationslogik (Relevanz für BOSSVIEW)
+### 1.3 Transformationslogik (Relevanz für SKYNEX)
 
 **Hostname-Konventionen (Asset-Typ-Erkennung):**
 
@@ -169,7 +169,7 @@ CSV-Datei mit 35 Spalten (exakt das Format aus `quest-kace-protrack.md`) plus in
 
 ### 2.3 Jira Custom Fields (Qualys → Jira Mapping)
 
-| Custom Field | Jira ID | Inhalt | BOSSVIEW-Relevanz |
+| Custom Field | Jira ID | Inhalt | SKYNEX-Relevanz |
 |-------------|---------|--------|-------------------|
 | Hostname | `customfield_34832` | Betroffener Host | → Asset-Korrelation |
 | IP Address | `customfield_35049` | IP des Hosts | → Asset-Korrelation |
@@ -219,11 +219,11 @@ Self-contained HTML Dashboard im Lufthansa-Corporate-Design mit:
 
 ---
 
-## 3. Implikationen für BOSSVIEW
+## 3. Implikationen für SKYNEX
 
-### 3.1 Was BOSSVIEW ablöst
+### 3.1 Was SKYNEX ablöst
 
-| Aktuell (n8n) | Zukünftig (BOSSVIEW) |
+| Aktuell (n8n) | Zukünftig (SKYNEX) |
 |---------------|---------------------|
 | Monatlicher CSV-Export | Echtzeit-Synchronisierung über Connector Engine |
 | Statisches ProTack Mapping (hardcoded) | Dynamisches Mapping über UI-Konfiguration |
@@ -231,9 +231,9 @@ Self-contained HTML Dashboard im Lufthansa-Corporate-Design mit:
 | Manuelle Vulnerability-Reports | Automatisierte Vulnerability-KPIs mit Asset-Korrelation |
 | KACE + JAMF getrennt zusammengeführt | Einheitlicher Asset-Store mit Multi-Source-Tracking |
 
-### 3.2 Übernahme in BOSSVIEW Connectors
+### 3.2 Übernahme in SKYNEX Connectors
 
-| n8n Workflow-Logik | BOSSVIEW Connector | Priorität |
+| n8n Workflow-Logik | SKYNEX Connector | Priorität |
 |-------------------|-------------------|-----------|
 | KACE Login + Machines/Assets API | Quest KACE Connector (P2, `cmdb`) | Phase 2 |
 | JAMF OAuth2 + Computers API | JAMF Connector (P2, `cmdb`) | Phase 2 |
@@ -258,7 +258,7 @@ Self-contained HTML Dashboard im Lufthansa-Corporate-Design mit:
 | LSYFN Kairos Application | APP-20390 | lido.scrum.logistics@ |
 | LSYFN Post Office | APP-21022 | pausanias@ |
 
-**Neue Asset-Typen für BOSSVIEW Schema:**
+**Neue Asset-Typen für SKYNEX Schema:**
 - `physical_server` (Prefix LIDOZRHS, ZRHSTG)
 - `network_device` (Prefix ZRHSTSW, ZRHBASW, ZRH-NG-FW)
 
@@ -277,10 +277,10 @@ Self-contained HTML Dashboard im Lufthansa-Corporate-Design mit:
 
 ## 4. Security-Hinweis
 
-Die Workflow-Dateien enthalten Klartext-Credentials (KACE User/Password, JAMF Client ID/Secret). Diese müssen in BOSSVIEW über den verschlüsselten Config-Store (`ENCRYPTION_KEY`) gespeichert werden. Die n8n-Workflows dienen nur als Referenz für API-Endpunkte und Datenstrukturen.
+Die Workflow-Dateien enthalten Klartext-Credentials (KACE User/Password, JAMF Client ID/Secret). Diese müssen in SKYNEX über den verschlüsselten Config-Store (`ENCRYPTION_KEY`) gespeichert werden. Die n8n-Workflows dienen nur als Referenz für API-Endpunkte und Datenstrukturen.
 
-**WICHTIG:** Die Credential-Werte aus diesen Workflows dürfen nicht in den BOSSVIEW-Sourcecode oder Git-Repository übernommen werden.
+**WICHTIG:** Die Credential-Werte aus diesen Workflows dürfen nicht in den SKYNEX-Sourcecode oder Git-Repository übernommen werden.
 
 ---
 
-*Dieses Dokument dient als Referenz für die Migration der n8n-Datenpipelines nach BOSSVIEW. Die Workflow-Dateien werden im Repo unter `docs/connector-references/` archiviert.*
+*Dieses Dokument dient als Referenz für die Migration der n8n-Datenpipelines nach SKYNEX. Die Workflow-Dateien werden im Repo unter `docs/connector-references/` archiviert.*

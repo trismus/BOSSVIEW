@@ -1,5 +1,5 @@
 /**
- * BOSSVIEW Connector Service — Business logic for connector management.
+ * SKYNEX Connector Service — Business logic for connector management.
  */
 
 import { query, getClient } from '../db/pool'

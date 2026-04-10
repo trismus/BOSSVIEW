@@ -1230,7 +1230,7 @@ export function WorldMapView({ locations, wanLinks, onLocationClick }: WorldMapV
             fontFamily="JetBrains Mono, monospace"
             letterSpacing="3" opacity="0.8"
           >
-            BOSSVIEW :: GLOBAL INFRASTRUCTURE
+            SKYNEX :: GLOBAL INFRASTRUCTURE
           </text>
           <text
             x={166} y={114}

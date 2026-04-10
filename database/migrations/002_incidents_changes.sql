@@ -1,9 +1,9 @@
 -- ============================================
--- BOSSVIEW — Incidents & Changes Migration
+-- SKYNEX — Incidents & Changes Migration
 -- ============================================
 -- NOTE: If the database was already initialized with 001_init.sql via Docker,
 -- this migration must be run manually:
---   docker exec -i bossview-postgres psql -U bossview -d bossview < database/migrations/002_incidents_changes.sql
+--   docker exec -i skynex-postgres psql -U skynex -d skynex < database/migrations/002_incidents_changes.sql
 -- ============================================
 
 -- incidents table

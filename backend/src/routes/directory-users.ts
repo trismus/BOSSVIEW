@@ -1,5 +1,5 @@
 /**
- * BOSSVIEW Directory Users API Routes.
+ * SKYNEX Directory Users API Routes.
  *
  * Provides endpoints for querying imported user identities from external
  * systems (e.g., Quest KACE). These are NOT auth users — they represent

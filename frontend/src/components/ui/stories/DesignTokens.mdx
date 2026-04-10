@@ -1,0 +1,164 @@
+{/* Design Tokens Documentation */}
+
+import { Meta, ColorPalette, ColorItem, Typeset } from '@storybook/blocks';
+
+<Meta title="Design System/Tokens" />
+
+# SKYNEX Design Tokens
+
+The SKYNEX design system uses a "Tactical Command / Mission Control" aesthetic with deep space colors and neon accents.
+
+## Surface Hierarchy
+
+The "Nesting Depth Principle" — hierarchy is established by shifting background tones rather than drawing boxes.
+
+<ColorPalette>
+  <ColorItem
+    title="surface"
+    subtitle="#0b0e14 — The infinite base (Atmosphere)"
+    colors={{ Surface: '#0b0e14' }}
+  />
+  <ColorItem
+    title="surface-container-lowest"
+    subtitle="#000000 — Recessed input areas"
+    colors={{ 'Container Lowest': '#000000' }}
+  />
+  <ColorItem
+    title="surface-container-low"
+    subtitle="#10131a — Sidebars, secondary sections"
+    colors={{ 'Container Low': '#10131a' }}
+  />
+  <ColorItem
+    title="surface-container"
+    subtitle="#161a21 — Primary data containers"
+    colors={{ Container: '#161a21' }}
+  />
+  <ColorItem
+    title="surface-container-high"
+    subtitle="#1c2028 — Hover/active selection"
+    colors={{ 'Container High': '#1c2028' }}
+  />
+</ColorPalette>
+
+## Primary / Accent Colors
+
+<ColorPalette>
+  <ColorItem
+    title="primary"
+    subtitle="#99f7ff — Neon accent, KPIs"
+    colors={{ Primary: '#99f7ff' }}
+  />
+  <ColorItem
+    title="primary-container"
+    subtitle="#00f1fe — Gradient end-stop, CTA glow"
+    colors={{ 'Primary Container': '#00f1fe' }}
+  />
+  <ColorItem
+    title="on-primary"
+    subtitle="#001f22 — Text on primary"
+    colors={{ 'On Primary': '#001f22' }}
+  />
+</ColorPalette>
+
+## Status Colors
+
+<ColorPalette>
+  <ColorItem
+    title="error"
+    subtitle="#ff716c — Critical alerts"
+    colors={{ Error: '#ff716c' }}
+  />
+  <ColorItem
+    title="warning"
+    subtitle="#ffd16f — Degraded state"
+    colors={{ Warning: '#ffd16f' }}
+  />
+  <ColorItem
+    title="success"
+    subtitle="#7cffa8 — Healthy state"
+    colors={{ Success: '#7cffa8' }}
+  />
+  <ColorItem
+    title="info"
+    subtitle="#99f7ff — Neutral info"
+    colors={{ Info: '#99f7ff' }}
+  />
+</ColorPalette>
+
+## Text Colors
+
+<ColorPalette>
+  <ColorItem
+    title="on-surface"
+    subtitle="#e4e6eb — Primary text"
+    colors={{ 'On Surface': '#e4e6eb' }}
+  />
+  <ColorItem
+    title="on-surface-variant"
+    subtitle="#9ca3af — Secondary text"
+    colors={{ 'On Surface Variant': '#9ca3af' }}
+  />
+  <ColorItem
+    title="on-surface-dim"
+    subtitle="#6b7280 — Tertiary/metadata"
+    colors={{ 'On Surface Dim': '#6b7280' }}
+  />
+</ColorPalette>
+
+## Typography
+
+### Font Families
+
+| Role | Font | Purpose |
+|------|------|---------|
+| Display & Headline | **Space Grotesk** | KPIs and Page Titles |
+| Body & Titles | **Inter** | High legibility text |
+| Data & Technical | **JetBrains Mono** | IPs, timestamps, logs |
+
+### Type Scale
+
+| Token | Size | Line Height | Weight |
+|-------|------|-------------|--------|
+| display-lg | 57px | 64px | 700 |
+| display-md | 45px | 52px | 700 |
+| headline-lg | 32px | 40px | 600 |
+| title-lg | 22px | 28px | 600 |
+| title-md | 16px | 24px | 600 |
+| body-md | 14px | 20px | 400 |
+| label-md | 12px | 16px | 500 |
+
+## Spacing Scale (4px base)
+
+| Token | Value |
+|-------|-------|
+| space-1 | 4px |
+| space-2 | 8px |
+| space-3 | 12px |
+| space-4 | 16px |
+| space-6 | 24px |
+| space-8 | 32px |
+
+## Corner Radii
+
+| Token | Value | Usage |
+|-------|-------|-------|
+| radius-xs | 2px | Inline badges |
+| radius-sm | 2px | Cards, tight containers |
+| radius-md | 6px | Cards, buttons |
+| radius-lg | 10px | Modals |
+| radius-xl | 12px | Maximum — never exceed |
+
+## Elevation (Shadows)
+
+| Token | Value |
+|-------|-------|
+| elevation-sm | 0px 2px 8px rgba(0,0,0,0.3) |
+| elevation-md | 0px 6px 16px rgba(0,0,0,0.35) |
+| elevation-lg | 0px 12px 32px rgba(0,0,0,0.4) |
+
+## Key Rules
+
+1. **No 1px borders for sectioning** — Use tonal shifts instead
+2. **Glass effect for floating elements** — 20px backdrop-blur, 60% opacity
+3. **Corners never exceed radius-xl (12px)**
+4. **JetBrains Mono for any string containing numbers**

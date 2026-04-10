@@ -1,5 +1,5 @@
 /**
- * BOSSVIEW JAMF Pro Connector Adapter.
+ * SKYNEX JAMF Pro Connector Adapter.
  *
  * Connects to JAMF Pro via REST API (v1 computers-inventory),
  * fetches Mac/workstation inventory, and maps to NormalizedEntity[].
@@ -222,7 +222,7 @@ async function fetchAllComputers(
 }
 
 /**
- * Map a JAMF computer to a BOSSVIEW NormalizedEntity.
+ * Map a JAMF computer to a SKYNEX NormalizedEntity.
  *
  * JAMF manages Apple workstations (Macs). The mapping follows the
  * PROTrack n8n workflow transform conventions:

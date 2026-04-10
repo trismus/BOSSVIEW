@@ -8,7 +8,7 @@ import { redis } from '../db/redis'
 
 const router = Router()
 
-const KPI_CACHE_KEY = 'bossview:dashboard:kpis'
+const KPI_CACHE_KEY = 'skynex:dashboard:kpis'
 const KPI_CACHE_TTL = 60 // seconds
 
 interface VulnSummary {

@@ -1,4 +1,4 @@
-# BOSSVIEW — System Architecture
+# SKYNEX — System Architecture
 
 **Version:** 1.0
 **Datum:** 2. April 2026
@@ -9,7 +9,7 @@
 
 ## 1. Architecture Overview
 
-BOSSVIEW ist eine containerisierte Web-Applikation mit modularer Architektur, die über ein flexibles **Connector-Framework** Daten von zahlreichen externen Systemen aggregiert, verarbeitet und in einem einheitlichen Dashboard darstellt.
+SKYNEX ist eine containerisierte Web-Applikation mit modularer Architektur, die über ein flexibles **Connector-Framework** Daten von zahlreichen externen Systemen aggregiert, verarbeitet und in einem einheitlichen Dashboard darstellt.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -26,7 +26,7 @@ BOSSVIEW ist eine containerisierte Web-Applikation mit modularer Architektur, di
           ┌────────────────────┼────────────────────┐
           ▼                    ▼                    ▼
 ┌──────────────────┐ ┌──────────────────┐ ┌──────────────────┐
-│   BOSSVIEW API   │ │  Connector Engine │ │  Report Service  │
+│   SKYNEX API   │ │  Connector Engine │ │  Report Service  │
 │   (Express.js)   │ │  (Node.js Worker) │ │  (Node.js)       │
 │                  │ │                  │ │                  │
 │ • REST API       │ │ • Scheduler      │ │ • PDF Generation │
@@ -86,7 +86,7 @@ BOSSVIEW ist eine containerisierte Web-Applikation mit modularer Architektur, di
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│                  bossview-network                     │
+│                  skynex-network                     │
 │                  (bridge, internal)                   │
 │                                                      │
 │  nginx ──── frontend                                 │
@@ -180,7 +180,7 @@ interface SyncContext {
 }
 
 interface SyncResult {
-  entities: NormalizedEntity[];  // Transformierte Daten im BOSSVIEW-Format
+  entities: NormalizedEntity[];  // Transformierte Daten im SKYNEX-Format
   metadata: {
     totalFetched: number;
     created: number;
@@ -238,7 +238,7 @@ Connectors werden über die Web-UI konfiguriert. Die Konfiguration wird verschl�
     },
     projects: ["INFRA", "OPS"],  // Welche Projekte synchronisiert werden
     issueTypes: ["Incident", "Change Request"],
-    fieldMapping: {              // Mapping Jira-Felder → BOSSVIEW-Felder
+    fieldMapping: {              // Mapping Jira-Felder → SKYNEX-Felder
       "customfield_10001": "affected_asset",
       "customfield_10042": "sla_target"
     }
@@ -466,7 +466,7 @@ CREATE TABLE audit_logs (
 );
 
 -- Nur INSERT erlaubt (kein UPDATE/DELETE)
-REVOKE UPDATE, DELETE ON audit_logs FROM bossview_app;
+REVOKE UPDATE, DELETE ON audit_logs FROM skynex_app;
 
 -- Automatischer Trigger für alle relevanten Tabellen
 CREATE OR REPLACE FUNCTION audit_trigger_func() RETURNS trigger AS $$
@@ -490,7 +490,7 @@ $$ LANGUAGE plpgsql;
 
 ## 6. Frontend Architecture
 
-### Design System — "BOSSVIEW Dark Ops"
+### Design System — "SKYNEX Dark Ops"
 
 Basierend auf den Referenz-Dashboards (PROTrack & Qualys):
 
@@ -722,7 +722,7 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 ### Verzeichnisstruktur
 
 ```
-bossview/
+skynex/
 ├── docker-compose.yml              # Basis-Stack
 ├── docker-compose.dev.yml          # Development Overrides
 ├── docker-compose.prod.yml         # Production Overrides
@@ -773,8 +773,8 @@ bossview/
 │   └── backup/                     # Backup Scripts
 │
 └── docs/
-    ├── BOSSVIEW_PRD_v1.md
-    └── BOSSVIEW_Architecture_v1.md
+    ├── SKYNEX_PRD_v1.md
+    └── SKYNEX_Architecture_v1.md
 ```
 
 ---

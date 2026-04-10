@@ -9,7 +9,7 @@ import {
 
 const TEST_USER = {
   id: '550e8400-e29b-41d4-a716-446655440000',
-  email: 'admin@bossview.test',
+  email: 'admin@skynex.test',
   role: 'admin',
   displayName: 'Test Admin',
 }
@@ -72,7 +72,7 @@ describe('authService', () => {
 
   describe('hashPassword / verifyPassword', () => {
     it('should hash a password and verify it correctly', async () => {
-      const password = 'BossView-Secure-2024!'
+      const password = 'Skynex-Secure-2024!'
       const hash = await hashPassword(password)
 
       expect(hash).not.toBe(password)

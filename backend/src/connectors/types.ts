@@ -1,5 +1,5 @@
 /**
- * BOSSVIEW Connector Engine — Type definitions for the adapter interface.
+ * SKYNEX Connector Engine — Type definitions for the adapter interface.
  */
 
 export type ConnectorCategory = 'itsm' | 'monitoring' | 'cmdb' | 'security' | 'import' | 'workflow'

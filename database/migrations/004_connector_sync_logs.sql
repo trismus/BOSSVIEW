@@ -1,8 +1,8 @@
 -- ============================================
--- BOSSVIEW — Connector Sync Logs Table
+-- SKYNEX — Connector Sync Logs Table
 -- ============================================
 -- Run manually if database was already initialized:
---   docker exec -i bossview-postgres psql -U bossview -d bossview < database/migrations/004_connector_sync_logs.sql
+--   docker exec -i skynex-postgres psql -U skynex -d skynex < database/migrations/004_connector_sync_logs.sql
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS connector_sync_logs (

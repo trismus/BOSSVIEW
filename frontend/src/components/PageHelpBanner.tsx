@@ -9,7 +9,7 @@ interface PageHelpBannerProps {
 }
 
 function getStorageKey(pageKey: string): string {
-  return `bossview-help-dismissed-${pageKey}`;
+  return `skynex-help-dismissed-${pageKey}`;
 }
 
 export function PageHelpBanner({

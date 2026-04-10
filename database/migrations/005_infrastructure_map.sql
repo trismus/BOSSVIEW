@@ -1,5 +1,5 @@
 -- ============================================
--- BOSSVIEW — Infrastructure Map Schema
+-- SKYNEX — Infrastructure Map Schema
 -- Issue #52: DB Migration for Virtual Infrastructure Map
 -- ============================================
 

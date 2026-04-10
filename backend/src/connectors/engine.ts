@@ -1,5 +1,5 @@
 /**
- * BOSSVIEW Connector Engine — Background sync worker.
+ * SKYNEX Connector Engine — Background sync worker.
  *
  * Polls the connector_configs table for enabled connectors with schedules
  * and runs sync operations at configured intervals. Each connector sync
@@ -403,7 +403,7 @@ async function runSyncCycle(): Promise<void> {
 }
 
 async function main(): Promise<void> {
-  console.warn('BOSSVIEW Connector Engine starting...')
+  console.warn('SKYNEX Connector Engine starting...')
 
   // Initialize the adapter registry
   initializeRegistry()

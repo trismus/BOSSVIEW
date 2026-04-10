@@ -444,3 +444,32 @@ export interface InfraTopology {
   links: InfraDeviceLink[];
   racks: InfraRack[];
 }
+
+// ── System Users (managed by admin) ──
+
+export type SystemUserRole = 'admin' | 'engineer' | 'manager' | 'auditor' | 'readonly';
+
+export interface SystemUser {
+  id: string;
+  email: string;
+  display_name: string | null;
+  role: SystemUserRole;
+  is_active: boolean;
+  last_login_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SystemUserCreateInput {
+  email: string;
+  password: string;
+  display_name?: string;
+  role: SystemUserRole;
+}
+
+export interface SystemUserUpdateInput {
+  email?: string;
+  display_name?: string;
+  role?: SystemUserRole;
+  is_active?: boolean;
+}

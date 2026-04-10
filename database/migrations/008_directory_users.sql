@@ -1,5 +1,5 @@
 -- Migration 008: Directory Users (imported from external systems like KACE)
--- Stores user identities from directory/CMDB sources, separate from BOSSVIEW auth users.
+-- Stores user identities from directory/CMDB sources, separate from SKYNEX auth users.
 -- Includes asset-user assignments for tracking device ownership.
 
 -- Directory Users

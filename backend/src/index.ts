@@ -19,6 +19,7 @@ import connectorsRouter from './routes/connectors'
 import vulnerabilitiesRouter from './routes/vulnerabilities'
 import infrastructureRouter from './routes/infrastructure'
 import directoryUsersRouter from './routes/directory-users'
+import usersRouter from './routes/users'
 
 const app = express()
 const httpServer = createServer(app)
@@ -61,7 +62,7 @@ app.get('/api/docs/json', (_req, res) => {
   res.json(swaggerSpec)
 })
 app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
-  customSiteTitle: 'BOSSVIEW API Documentation',
+  customSiteTitle: 'SKYNEX API Documentation',
   customCss: '.swagger-ui .topbar { display: none }',
 }))
 
@@ -76,6 +77,7 @@ app.use('/api/v1/connectors', apiLimiter, connectorsRouter)
 app.use('/api/v1/vulnerabilities', apiLimiter, vulnerabilitiesRouter)
 app.use('/api/v1/infrastructure', apiLimiter, infrastructureRouter)
 app.use('/api/v1/directory-users', apiLimiter, directoryUsersRouter)
+app.use('/api/v1/users', apiLimiter, usersRouter)
 
 // 404 handler
 app.use((_req, res) => {
@@ -104,7 +106,7 @@ async function start(): Promise<void> {
   }
 
   httpServer.listen(config.PORT, () => {
-    console.warn(`BOSSVIEW API running on port ${config.PORT} [${config.NODE_ENV}]`)
+    console.warn(`SKYNEX API running on port ${config.PORT} [${config.NODE_ENV}]`)
   })
 }
 

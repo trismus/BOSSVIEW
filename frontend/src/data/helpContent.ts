@@ -21,8 +21,8 @@ export const helpSections: HelpSection[] = [
     subsections: [
       {
         id: 'overview',
-        title: 'Overview of BOSSVIEW',
-        content: `BOSSVIEW is a centralized IT infrastructure management platform designed for the aviation industry. It combines asset management, incident tracking, change management, vulnerability monitoring, and network topology into a single dashboard.
+        title: 'Overview of SKYNEX',
+        content: `SKYNEX is a centralized IT infrastructure management platform designed for the aviation industry. It combines asset management, incident tracking, change management, vulnerability monitoring, and network topology into a single dashboard.
 
 Key capabilities:
 - **Asset Inventory** — Track all IT assets with full lifecycle management
@@ -379,7 +379,7 @@ The map supports zoom and pan for navigating between regions.`,
       {
         id: 'naming-schema',
         title: 'LSYFN Naming Schema',
-        content: `BOSSVIEW uses the LSYFN naming convention for all network devices:
+        content: `SKYNEX uses the LSYFN naming convention for all network devices:
 
 \`\`\`
 [prefix][location][device-type][sequence]
@@ -503,7 +503,7 @@ Results update as you type. Use pagination to browse large directories.`,
       {
         id: 'available-connectors',
         title: 'Available Connectors',
-        content: `BOSSVIEW integrates with the following external systems:
+        content: `SKYNEX integrates with the following external systems:
 
 - **Quest KACE SMA** — IT asset inventory (hardware, software, users). Primary data source for assets.
 - **JAMF Pro** — Apple device management. Imports macOS/iOS device data.
@@ -537,7 +537,7 @@ Each connector can be configured independently with its own schedule and credent
 2. Find the connector you want to sync
 3. Click the "Sync Now" button
 
-The sync runs in the background. Progress is shown in the sync status indicator. You can continue using BOSSVIEW while the sync runs.`,
+The sync runs in the background. Progress is shown in the sync status indicator. You can continue using SKYNEX while the sync runs.`,
       },
       {
         id: 'sync-logs',
@@ -564,7 +564,7 @@ The sync runs in the background. Progress is shown in the sync status indicator.
       {
         id: 'user-roles',
         title: 'User Roles',
-        content: `BOSSVIEW uses Role-Based Access Control (RBAC) with five roles:
+        content: `SKYNEX uses Role-Based Access Control (RBAC) with five roles:
 
 | Role | Description |
 |------|-------------|
@@ -590,7 +590,7 @@ Permissions are enforced on both the frontend (UI visibility) and backend (API a
       {
         id: 'audit-trail',
         title: 'Audit Trail',
-        content: `Every data modification in BOSSVIEW is logged in an append-only audit trail:
+        content: `Every data modification in SKYNEX is logged in an append-only audit trail:
 
 **Logged information:**
 - User who made the change

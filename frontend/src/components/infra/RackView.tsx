@@ -699,7 +699,7 @@ export function RackView({ siteName, racks, devices, locationId: _locationId, on
             className="uppercase tracking-[3px]"
             style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: COLORS.cyan }}
           >
-            BOSSVIEW :: RACK VIEW
+            SKYNEX :: RACK VIEW
           </div>
           {error && (
             <div

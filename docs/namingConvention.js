@@ -1,5 +1,5 @@
 /**
- * BOSSVIEW — Naming Convention Module
+ * SKYNEX — Naming Convention Module
  *
  * Zentrale Logik für das LSYFN-Namensschema.
  * Wird von Frontend UND Backend importiert.

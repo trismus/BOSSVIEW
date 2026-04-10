@@ -7,7 +7,7 @@ import { vi } from 'vitest'
 
 // Set environment variables BEFORE any imports that use config
 process.env.NODE_ENV = 'test'
-process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/bossview_test'
+process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/skynex_test'
 process.env.REDIS_URL = 'redis://localhost:6379'
 process.env.JWT_SECRET = 'test-jwt-secret-that-is-at-least-32-characters-long'
 process.env.JWT_EXPIRY = '15m'

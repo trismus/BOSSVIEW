@@ -1,5 +1,5 @@
 /**
- * BOSSVIEW Seed Script
+ * SKYNEX Seed Script
  * Creates initial users and sample assets if the database is empty.
  * Safe to run multiple times — checks for existing data before inserting.
  */
@@ -15,10 +15,10 @@ interface SeedUser {
 }
 
 const SEED_USERS: SeedUser[] = [
-  { email: 'admin@bossview.local', password: 'Admin123!', displayName: 'System Admin', role: 'admin' },
-  { email: 'engineer@bossview.local', password: 'Engineer123!', displayName: 'IT Engineer', role: 'engineer' },
-  { email: 'manager@bossview.local', password: 'Manager123!', displayName: 'IT Manager', role: 'manager' },
-  { email: 'auditor@bossview.local', password: 'Auditor123!', displayName: 'Compliance Auditor', role: 'auditor' },
+  { email: 'admin@skynex.local', password: 'Admin123!', displayName: 'System Admin', role: 'admin' },
+  { email: 'engineer@skynex.local', password: 'Engineer123!', displayName: 'IT Engineer', role: 'engineer' },
+  { email: 'manager@skynex.local', password: 'Manager123!', displayName: 'IT Manager', role: 'manager' },
+  { email: 'auditor@skynex.local', password: 'Auditor123!', displayName: 'Compliance Auditor', role: 'auditor' },
 ]
 
 interface SeedAsset {
@@ -202,7 +202,7 @@ const SEED_ASSETS: SeedAsset[] = [
 ]
 
 async function seed(): Promise<void> {
-  console.warn('BOSSVIEW Seed — checking database...')
+  console.warn('SKYNEX Seed — checking database...')
 
   // Check if users already exist
   const existingUsers = await query<{ count: string }>('SELECT COUNT(*) as count FROM users')
@@ -230,7 +230,7 @@ async function seed(): Promise<void> {
 
     // Get admin user ID for created_by
     const adminResult = await query<{ id: string }>(
-      `SELECT id FROM users WHERE email = 'admin@bossview.local'`
+      `SELECT id FROM users WHERE email = 'admin@skynex.local'`
     )
     const adminId = adminResult.rows[0]?.id ?? null
 
@@ -266,7 +266,7 @@ async function seed(): Promise<void> {
 
   if (!incidentsTableExists.rows[0].exists) {
     console.warn('Seed — incidents table does not exist. Run migration 002 first:')
-    console.warn('  docker exec -i bossview-postgres psql -U bossview -d bossview < database/migrations/002_incidents_changes.sql')
+    console.warn('  docker exec -i skynex-postgres psql -U skynex -d skynex < database/migrations/002_incidents_changes.sql')
   } else {
     const existingIncidents = await query<{ count: string }>('SELECT COUNT(*) as count FROM incidents')
     if (parseInt(existingIncidents.rows[0].count, 10) > 0) {
@@ -276,13 +276,13 @@ async function seed(): Promise<void> {
 
       // Get user IDs for references
       const engineerResult = await query<{ id: string }>(
-        `SELECT id FROM users WHERE email = 'engineer@bossview.local'`
+        `SELECT id FROM users WHERE email = 'engineer@skynex.local'`
       )
       const managerResult = await query<{ id: string }>(
-        `SELECT id FROM users WHERE email = 'manager@bossview.local'`
+        `SELECT id FROM users WHERE email = 'manager@skynex.local'`
       )
       const adminResult2 = await query<{ id: string }>(
-        `SELECT id FROM users WHERE email = 'admin@bossview.local'`
+        `SELECT id FROM users WHERE email = 'admin@skynex.local'`
       )
 
       const engineerId = engineerResult.rows[0]?.id ?? null
@@ -433,10 +433,10 @@ async function seed(): Promise<void> {
       console.warn('Seed — creating sample changes...')
 
       const engineerResult2 = await query<{ id: string }>(
-        `SELECT id FROM users WHERE email = 'engineer@bossview.local'`
+        `SELECT id FROM users WHERE email = 'engineer@skynex.local'`
       )
       const managerResult2 = await query<{ id: string }>(
-        `SELECT id FROM users WHERE email = 'manager@bossview.local'`
+        `SELECT id FROM users WHERE email = 'manager@skynex.local'`
       )
 
       const engId = engineerResult2.rows[0]?.id ?? null

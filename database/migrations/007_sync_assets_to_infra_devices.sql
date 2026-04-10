@@ -1,5 +1,5 @@
 -- ============================================
--- BOSSVIEW — Sync Assets to Infrastructure Devices
+-- SKYNEX — Sync Assets to Infrastructure Devices
 -- Issue #62: Auto-assign assets to topology maps
 -- ============================================
 -- Idempotent: safe to run multiple times.

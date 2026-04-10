@@ -1,8 +1,8 @@
 -- ============================================
--- BOSSVIEW — Connector Configurations Table
+-- SKYNEX — Connector Configurations Table
 -- ============================================
 -- Run manually if database was already initialized:
---   docker exec -i bossview-postgres psql -U bossview -d bossview < database/migrations/003_connector_configs.sql
+--   docker exec -i skynex-postgres psql -U skynex -d skynex < database/migrations/003_connector_configs.sql
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS connector_configs (

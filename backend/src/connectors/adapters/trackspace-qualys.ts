@@ -1,11 +1,11 @@
 /**
- * BOSSVIEW Trackspace Qualys Vulnerability Connector.
+ * SKYNEX Trackspace Qualys Vulnerability Connector.
  *
  * Fetches open Vulnerability tickets from Jira/Trackspace (Qualys-sourced),
- * groups them by vulnerability title, and maps to BOSSVIEW vulnerability entities.
+ * groups them by vulnerability title, and maps to SKYNEX vulnerability entities.
  *
  * Asset-to-vulnerability linking (hostname → asset) is handled by the engine
- * using the LOCAL BOSSVIEW database — no separate KACE connection needed,
+ * using the LOCAL SKYNEX database — no separate KACE connection needed,
  * since KACE assets are already synced via the Quest KACE connector.
  *
  * Reference: docs/connector-references/qualys-vulnerability.md
@@ -115,7 +115,7 @@ function buildIncrementalJql(project: string, since: Date): string {
   return `project = ${project} AND type = Vulnerability AND updated >= "${sinceStr}" ORDER BY summary ASC`
 }
 
-// Map Jira ticket status to BOSSVIEW vulnerability status
+// Map Jira ticket status to SKYNEX vulnerability status
 function mapJiraStatus(jiraStatus: string | null): 'open' | 'fixed' | 'ignored' | 'accepted' {
   if (!jiraStatus) return 'open'
   const s = jiraStatus.toLowerCase().trim()

@@ -1,5 +1,5 @@
 /**
- * BOSSVIEW Connector Registry — Manages available connector adapters.
+ * SKYNEX Connector Registry — Manages available connector adapters.
  */
 
 import type { ConnectorAdapter } from './types'

@@ -6,7 +6,7 @@ Sicherheitslücken **nicht** über öffentliche GitHub Issues melden.
 
 Bitte stattdessen direkt per E-Mail an das Team wenden:
 
-**Kontakt:** security@bossview.local
+**Kontakt:** security@skynex.local
 
 Folgende Informationen beifügen:
 - Beschreibung der Schwachstelle
@@ -25,7 +25,7 @@ Wir bestätigen den Eingang innerhalb von 48 Stunden und informieren über die w
 
 ## Compliance
 
-BOSSVIEW wird nach **ISO 27001** entwickelt und betrieben. Dies umfasst:
+SKYNEX wird nach **ISO 27001** entwickelt und betrieben. Dies umfasst:
 - Vollständiger Audit-Trail für alle Datenänderungen
 - Rollenbasierte Zugriffskontrolle (RBAC)
 - Verschlüsselung sensibler Daten

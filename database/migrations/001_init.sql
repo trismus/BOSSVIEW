@@ -1,5 +1,5 @@
 -- ============================================
--- BOSSVIEW — Initial Database Schema
+-- SKYNEX — Initial Database Schema
 -- ============================================
 
 -- Extensions

@@ -244,7 +244,7 @@ export function InfrastructurePage() {
               className="font-bold tracking-wider"
               style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 12, color: COLORS.cyan }}
             >
-              BOSSVIEW
+              SKYNEX
             </span>
           </div>
           <span style={{ color: COLORS.textMuted, fontSize: 10 }}>|</span>
@@ -414,7 +414,7 @@ export function InfrastructurePage() {
         <span
           style={{ fontSize: 8, color: COLORS.textMuted, fontFamily: 'JetBrains Mono, monospace' }}
         >
-          BOSSVIEW v1.0 · LSYFN INFRASTRUCTURE MANAGEMENT
+          SKYNEX v1.0 · LSYFN INFRASTRUCTURE MANAGEMENT
         </span>
         <span
           style={{ fontSize: 8, color: COLORS.textMuted, fontFamily: 'JetBrains Mono, monospace' }}

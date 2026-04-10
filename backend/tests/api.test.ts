@@ -15,7 +15,7 @@ function makeAuthToken(role: string = 'admin'): string {
   return jwt.sign(
     {
       sub: '550e8400-e29b-41d4-a716-446655440000',
-      email: `${role}@bossview.test`,
+      email: `${role}@skynex.test`,
       role,
     },
     process.env.JWT_SECRET!,
@@ -67,7 +67,7 @@ describe('API integration tests', () => {
 
       const res = await request(app)
         .post('/api/v1/auth/login')
-        .send({ email: 'nobody@bossview.test', password: 'wrong' })
+        .send({ email: 'nobody@skynex.test', password: 'wrong' })
 
       expect(res.status).toBe(401)
       expect(res.body.code).toBe('INVALID_CREDENTIALS')

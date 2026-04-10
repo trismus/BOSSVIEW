@@ -10,7 +10,7 @@ import config from './config'
 let io: SocketIOServer | null = null
 let pgListenClient: PgClient | null = null
 
-export type BossviewEvent =
+export type SkynexEvent =
   | 'asset:created'
   | 'asset:updated'
   | 'asset:deleted'
@@ -193,7 +193,7 @@ async function startInfraListener(): Promise<void> {
  * Emit an event to all connected clients.
  * Safe to call even if WebSocket is not initialized — it will no-op.
  */
-export function emitEvent(event: BossviewEvent, data?: unknown): void {
+export function emitEvent(event: SkynexEvent, data?: unknown): void {
   if (!io) return
   io.emit(event, { event, data, timestamp: new Date().toISOString() })
 }
