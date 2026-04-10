@@ -1,0 +1,40 @@
+{
+  "extends": ["stylelint-config-standard"],
+  "plugins": ["stylelint-declaration-strict-value"],
+  "rules": {
+    "scale-unlimited/declaration-strict-value": [
+      ["/color$/", "fill", "stroke", "background", "border-color", "outline-color"],
+      {
+        "ignoreValues": [
+          "transparent",
+          "inherit",
+          "initial",
+          "unset",
+          "currentColor",
+          "none"
+        ],
+        "ignoreFunctions": true,
+        "disableFix": true,
+        "message": "Use CSS variables (var(--skynex-*)) or Tailwind classes instead of hardcoded color values. See CONTRIBUTING.md for design system guidelines."
+      }
+    ],
+    "at-rule-no-unknown": [
+      true,
+      {
+        "ignoreAtRules": ["tailwind", "apply", "layer", "config", "variants", "responsive", "screen"]
+      }
+    ],
+    "function-no-unknown": [
+      true,
+      {
+        "ignoreFunctions": ["theme", "screen"]
+      }
+    ],
+    "import-notation": null
+  },
+  "ignoreFiles": [
+    "dist/**/*",
+    "node_modules/**/*",
+    "src/styles/tokens.css"
+  ]
+}
