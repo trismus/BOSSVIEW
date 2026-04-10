@@ -37,10 +37,20 @@ export default {
           '0%': { transform: 'translateX(100%)' },
           '100%': { transform: 'translateX(0)' },
         },
+        'toast-enter': {
+          '0%': { transform: 'translateX(100%)', opacity: '0' },
+          '100%': { transform: 'translateX(0)', opacity: '1' },
+        },
+        'toast-exit': {
+          '0%': { transform: 'translateX(0)', opacity: '1' },
+          '100%': { transform: 'translateX(100%)', opacity: '0' },
+        },
       },
       animation: {
         ...(skynexTheme.theme.extend.animation ?? {}),
         'slide-in-right': 'slide-in-right 0.2s ease-out',
+        'toast-enter': 'toast-enter 0.2s ease-out',
+        'toast-exit': 'toast-exit 0.2s ease-in forwards',
       },
     },
   },
