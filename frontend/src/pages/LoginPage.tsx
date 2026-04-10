@@ -36,7 +36,6 @@ export function LoginPage() {
           <div className="flex justify-center mb-4">
             <Logo variant="lockup" height={288} aria-label="SKYNEX — Mission Control for IT" />
           </div>
-          <p className="text-slate-400 mt-2">IT Infrastructure Management</p>
         </div>
 
         {/* Login form */}
@@ -99,12 +98,6 @@ export function LoginPage() {
             {isSubmitting ? 'Signing in...' : 'Sign in'}
           </button>
 
-          {/* Dev credentials hint */}
-          <div className="border-t border-slate-700 pt-4">
-            <p className="text-xs text-slate-500 text-center">
-              Dev: admin@skynex.local / Admin123!
-            </p>
-          </div>
         </form>
       </div>
     </div>
