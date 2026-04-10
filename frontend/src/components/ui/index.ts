@@ -29,3 +29,7 @@ export type { PopoverProps, PopoverTriggerProps, PopoverContentProps, PopoverClo
 export { KPIWidget, type KPIWidgetProps } from './KPIWidget';
 export { DataTable } from './DataTable';
 export type { DataTableColumn, DataTableProps, SortState, SortDirection } from './DataTable';
+
+// Navigation
+export { Sidebar, SidebarSection, SidebarItem, SidebarDivider, useSidebarKeyboardNavigation } from './Sidebar';
+export type { SidebarProps, SidebarSectionProps, SidebarItemProps } from './Sidebar';
