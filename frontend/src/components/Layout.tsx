@@ -3,6 +3,8 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useWebSocket } from '../hooks/useWebSocket';
 import { QuickHelpModal } from './QuickHelpModal';
+import { Logo } from './brand/Logo';
+import { AppShell } from './ui/AppShell';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -46,116 +48,108 @@ export function Layout({ children }: LayoutProps) {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  return (
-    <div className="min-h-screen bg-slate-900 flex">
-      {/* Sidebar */}
-      <aside className="w-64 bg-slate-800 border-r border-slate-700 flex flex-col">
-        {/* Logo */}
-        <div className="h-16 flex items-center gap-3 px-6 border-b border-slate-700">
-          <img
-            src="/logo.png"
-            alt="BOSSVIEW"
-            className="w-8 h-8"
-            style={{
-              filter: 'invert(1) drop-shadow(0 0 8px rgba(6,182,212,0.4))',
-            }}
-          />
-          <span className="text-xl font-bold text-white tracking-tight">
-            BOSS<span className="text-blue-500">VIEW</span>
-          </span>
-        </div>
+  // ─── Sidebar content ────────────────────────────────────────────────────────
+  const sidebarContent = (
+    <>
+      {/* Logo */}
+      <Link
+        to="/"
+        className="h-14 flex items-center justify-center px-6 hover:opacity-80 transition-opacity"
+        aria-label="SKYNEX — Mission Control for IT"
+      >
+        <Logo variant="lockup" height={28} />
+      </Link>
 
-        {/* Navigation */}
-        <nav className="flex-1 px-3 py-4 space-y-1">
-          {navigation.map((item) => {
-            const isActive = location.pathname === item.path;
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-blue-600/20 text-blue-400'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
-                }`}
-              >
-                <item.icon className="w-5 h-5" />
-                {item.name}
-              </Link>
-            );
-          })}
-        </nav>
-
-        {/* Help link */}
-        <div className="px-3 pb-2">
-          <div className="border-t border-slate-700 pt-2">
+      {/* Navigation */}
+      <nav className="flex-1 px-3 py-4 space-y-1">
+        {navigation.map((item) => {
+          const isActive = location.pathname === item.path;
+          return (
             <Link
-              to="/help"
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                location.pathname === '/help'
-                  ? 'bg-blue-600/20 text-blue-400'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700/50'
+              key={item.path}
+              to={item.path}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-skx-md text-sm font-medium transition-colors ${
+                isActive
+                  ? 'bg-primary/15 text-primary'
+                  : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'
               }`}
             >
-              <HelpIcon className="w-5 h-5" />
-              Help
+              <item.icon className="w-5 h-5" />
+              {item.name}
             </Link>
-          </div>
-        </div>
+          );
+        })}
+      </nav>
 
-        {/* User info at bottom */}
-        <div className="p-4 border-t border-slate-700">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-sm font-medium text-white">
-              {user?.displayName?.[0] ?? user?.email[0]?.toUpperCase() ?? '?'}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-slate-200 truncate">
-                {user?.displayName ?? user?.email}
-              </p>
-              <p className="text-xs text-slate-500 capitalize">{user?.role}</p>
-            </div>
-          </div>
-        </div>
-      </aside>
-
-      {/* Main content */}
-      <div className="flex-1 flex flex-col">
-        {/* Header */}
-        <header className="h-16 bg-slate-800/50 border-b border-slate-700 flex items-center justify-between px-6">
-          <div>
-            <h1 className="text-lg font-semibold text-slate-200">
-              {location.pathname === '/help'
-                ? 'Help & Documentation'
-                : (navigation.find((n) => n.path === location.pathname)?.name ?? 'BOSSVIEW')}
-            </h1>
-          </div>
-          <div className="flex items-center gap-4">
-            <div
-              className="flex items-center gap-1.5"
-              title={isConnected ? 'Live connection active' : 'Disconnected'}
-            >
-              <div
-                className={`w-2 h-2 rounded-full ${isConnected ? 'bg-emerald-400 animate-pulse' : 'bg-red-400'}`}
-              />
-              <span className="text-xs text-slate-500">{isConnected ? 'Live' : 'Offline'}</span>
-            </div>
-            <button
-              onClick={logout}
-              className="text-sm text-slate-400 hover:text-slate-200 transition-colors px-3 py-1.5 rounded hover:bg-slate-700"
-            >
-              Logout
-            </button>
-          </div>
-        </header>
-
-        {/* Page content */}
-        <main className="flex-1 p-6 overflow-auto">{children}</main>
+      {/* Help link */}
+      <div className="px-3 pb-2">
+        <Link
+          to="/help"
+          className={`flex items-center gap-3 px-3 py-2.5 rounded-skx-md text-sm font-medium transition-colors ${
+            location.pathname === '/help'
+              ? 'bg-primary/15 text-primary'
+              : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container-high'
+          }`}
+        >
+          <HelpIcon className="w-5 h-5" />
+          Help
+        </Link>
       </div>
+
+      {/* User info at bottom */}
+      <div className="p-4 border-t border-ghost">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-sm font-medium text-primary">
+            {user?.displayName?.[0] ?? user?.email[0]?.toUpperCase() ?? '?'}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-on-surface truncate">
+              {user?.displayName ?? user?.email}
+            </p>
+            <p className="text-xs text-on-surface-dim capitalize">{user?.role}</p>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+
+  // ─── Topbar content ─────────────────────────────────────────────────────────
+  const topbarContent = (
+    <div className="flex-1 flex items-center justify-between">
+      <h1 className="text-title-md font-display text-on-surface">
+        {location.pathname === '/help'
+          ? 'Help & Documentation'
+          : (navigation.find((n) => n.path === location.pathname)?.name ?? 'SKYNEX')}
+      </h1>
+      <div className="flex items-center gap-4">
+        <div
+          className="flex items-center gap-1.5"
+          title={isConnected ? 'Live connection active' : 'Disconnected'}
+        >
+          <div
+            className={`w-2 h-2 rounded-full ${isConnected ? 'bg-success animate-pulse' : 'bg-error'}`}
+          />
+          <span className="text-xs text-on-surface-dim">{isConnected ? 'Live' : 'Offline'}</span>
+        </div>
+        <button
+          onClick={logout}
+          className="text-sm text-on-surface-variant hover:text-on-surface transition-colors px-3 py-1.5 rounded-skx-md hover:bg-surface-container-high"
+        >
+          Logout
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      <AppShell sidebar={sidebarContent} topbar={topbarContent}>
+        {children}
+      </AppShell>
 
       {/* Quick Help Modal */}
       <QuickHelpModal isOpen={quickHelpOpen} onClose={handleQuickHelpClose} />
-    </div>
+    </>
   );
 }
 
