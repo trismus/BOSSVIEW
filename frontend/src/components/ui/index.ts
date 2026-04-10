@@ -24,3 +24,8 @@ export { Modal, ModalHeader, ModalBody, ModalFooter } from './Modal';
 export type { ModalProps, ModalHeaderProps, ModalBodyProps, ModalFooterProps } from './Modal';
 export { Popover, PopoverTrigger, PopoverContent, PopoverClose } from './Popover';
 export type { PopoverProps, PopoverTriggerProps, PopoverContentProps, PopoverCloseProps } from './Popover';
+
+// Data Visualization
+export { KPIWidget, type KPIWidgetProps } from './KPIWidget';
+export { DataTable } from './DataTable';
+export type { DataTableColumn, DataTableProps, SortState, SortDirection } from './DataTable';
