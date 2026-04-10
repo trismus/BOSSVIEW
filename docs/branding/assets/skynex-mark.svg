@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-label="SKYNEX mark">
+  <defs>
+    <linearGradient id="skxMarkNeon" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#99f7ff"/>
+      <stop offset="100%" stop-color="#00f1fe"/>
+    </linearGradient>
+    <radialGradient id="skxMarkNodeGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#00f1fe" stop-opacity="1"/>
+      <stop offset="40%" stop-color="#00f1fe" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#00f1fe" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="skxMarkGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <g transform="translate(80, 80)">
+    <!-- Ambient halo -->
+    <circle cx="0" cy="0" r="64" fill="none" stroke="#00f1fe" stroke-width="0.5" opacity="0.15"/>
+    <!-- Radar rings -->
+    <circle cx="0" cy="0" r="58" fill="none" stroke="#99f7ff" stroke-width="1.5" opacity="0.95"/>
+    <circle cx="0" cy="0" r="40" fill="none" stroke="#99f7ff" stroke-width="1" opacity="0.5"/>
+    <circle cx="0" cy="0" r="22" fill="none" stroke="#99f7ff" stroke-width="0.75" opacity="0.3"/>
+    <!-- Crosshair -->
+    <line x1="-66" y1="0" x2="-50" y2="0" stroke="#99f7ff" stroke-width="1.5"/>
+    <line x1="50" y1="0" x2="66" y2="0" stroke="#99f7ff" stroke-width="1.5"/>
+    <line x1="0" y1="-66" x2="0" y2="-50" stroke="#99f7ff" stroke-width="1.5"/>
+    <line x1="0" y1="50" x2="0" y2="66" stroke="#99f7ff" stroke-width="1.5"/>
+    <!-- Flight path -->
+    <path d="M -52 32 Q 0 -62 58 -12" fill="none" stroke="url(#skxMarkNeon)" stroke-width="3" stroke-linecap="round" filter="url(#skxMarkGlow)"/>
+    <!-- Nodes with halos -->
+    <circle cx="-52" cy="32" r="10" fill="url(#skxMarkNodeGlow)"/>
+    <circle cx="-52" cy="32" r="3.5" fill="#00f1fe"/>
+    <circle cx="-22" cy="-8" r="8" fill="url(#skxMarkNodeGlow)"/>
+    <circle cx="-22" cy="-8" r="3" fill="#00f1fe"/>
+    <circle cx="16" cy="-28" r="8" fill="url(#skxMarkNodeGlow)"/>
+    <circle cx="16" cy="-28" r="3" fill="#00f1fe"/>
+    <circle cx="58" cy="-12" r="12" fill="url(#skxMarkNodeGlow)"/>
+    <circle cx="58" cy="-12" r="4" fill="#00f1fe"/>
+    <!-- Center node -->
+    <circle cx="0" cy="0" r="10" fill="url(#skxMarkNodeGlow)"/>
+    <circle cx="0" cy="0" r="4" fill="#99f7ff"/>
+  </g>
+</svg>
